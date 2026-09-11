@@ -478,6 +478,9 @@ func (d *DetailView) View() string {
 
 	title := d.buildTitle(contentWidth)
 
+	header := d.renderSummaryHeader(contentWidth)
+	visible = max(visible-len(header), 1)
+
 	var contentLines []string
 	if count := d.listTabItemCount(); count > 0 {
 		contentLines = d.renderBlockList(contentWidth, visible)
@@ -493,7 +496,7 @@ func (d *DetailView) View() string {
 	totalLines := len(contentLines)
 	contentLines = d.clampAndSliceScroll(contentLines, visible)
 
-	body := strings.Join(contentLines, "\n")
+	body := strings.Join(append(header, contentLines...), "\n")
 
 	footer := ""
 	if count := d.listTabItemCount(); count > 0 {
@@ -634,6 +637,30 @@ func (d *DetailView) buildTitle(maxWidth int) string {
 
 	sep := sepStyle.Render(" - ")
 	return prefix + sep + strings.Join(tabParts, sep)
+}
+
+// renderSummaryHeader returns the pinned summary lines shown above the tab
+// content. Lines are excluded from the scrolled region, so callers must
+// subtract their count from the visible row budget.
+func (d *DetailView) renderSummaryHeader(width int) []string {
+	if d.issue == nil || d.issue.Summary == "" {
+		return nil
+	}
+
+	const maxLines = 2
+	style := lipgloss.NewStyle().Foreground(theme.ColorWhite).Bold(true)
+
+	wrapped := wrapText(d.issue.Summary, width-2)
+	if len(wrapped) > maxLines {
+		wrapped = wrapped[:maxLines]
+		wrapped[maxLines-1] = components.TruncateEnd(wrapped[maxLines-1], max(width-3, 1)) + "…"
+	}
+
+	lines := make([]string, 0, len(wrapped)+1)
+	for _, l := range wrapped {
+		lines = append(lines, " "+style.Render(l))
+	}
+	return append(lines, "")
 }
 
 func (d *DetailView) renderDescription(width int) []string {
