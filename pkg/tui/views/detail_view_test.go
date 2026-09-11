@@ -624,6 +624,23 @@ func TestDetailView_View_DescriptionBodyShown(t *testing.T) {
 	}
 }
 
+func TestDetailView_View_SummaryRemainsVisibleWhenScrolled(t *testing.T) {
+	t.Parallel()
+	detail := makeFocusedDetail()
+	detail.SetSize(80, 8)
+	detail.SetIssue(&jira.Issue{
+		Key:         testKey,
+		Summary:     "Pinned issue summary",
+		Description: strings.Repeat("description line\n", 30),
+	})
+	detail.scrollY = 10
+
+	output := stripANSI(detail.View())
+	if !strings.Contains(output, "Pinned issue summary") {
+		t.Errorf("scrolled detail view = %q, want pinned issue summary", output)
+	}
+}
+
 func TestDetailView_View_CommentsTab_ShowsAuthor(t *testing.T) {
 	t.Parallel()
 	detail := makeFocusedDetail()
