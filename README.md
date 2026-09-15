@@ -10,6 +10,8 @@
 
 Terminal UI for Jira. Like [lazygit](https://github.com/jesseduffield/lazygit) but for Jira.
 
+Based on [textfuel/lazyjira](https://github.com/textfuel/lazyjira), created by textfuel and its contributors. The original MIT license and copyright notice are preserved in [LICENSE](LICENSE).
+
 Jira's web UI is painfully slow. Changing a ticket status takes multiple clicks, pages take seconds to load, and you spend more time fighting the interface than actually working. lazyjira gives you a fast, keyboard-driven terminal UI so you can browse issues, update statuses, read descriptions and more with minimum latency.
 
 <p>
