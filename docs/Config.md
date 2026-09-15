@@ -324,17 +324,21 @@ gui:
 
 ### Issue list fields
 
-Controls which columns appear in the issue list. Available fields.
+`issueListFields` controls which columns appear and their order. A fixed header below the tabs labels each column. Panels shorter than four lines show issues without the header.
 
-| Field | Width | Description |
-|-------|-------|-------------|
-| `key` | auto | Issue key like PROJ-123 |
-| `status` | 1 char | Status indicator |
-| `summary` | fills remaining | Issue title |
-| `priority` | 8 chars | Priority name |
-| `assignee` | 12 chars | Assignee display name |
-| `type` | 10 chars | Issue type |
-| `updated` | 8 chars | Time since last update |
+Headers and values use the terminal's ANSI palette. Each field keeps its color when columns are reordered; status indicators use the Status column color for every state. The selected row keeps its highlight background.
+
+| Field | Width | ANSI color | Description |
+|-------|-------|------------|-------------|
+| `key` | auto, minimum 3 | cyan (6) | Issue key like PROJ-123 |
+| `status` | minimum 6 | green (2) | Status indicator |
+| `summary` | fills remaining | white (7) | Issue title |
+| `priority` | 8 chars, wider for icons | yellow (3) | Priority name or configured icon |
+| `assignee` | 12 chars | bright cyan (14) | Assignee display name |
+| `type` | 10 chars for names, minimum 4 for icons | magenta (5) | Issue type or configured icon |
+| `updated` | 8 chars | bright blue (12) | Time since last update |
+
+Column widths accommodate their full labels and configured icons. Rows share the same widths, including when only some values have icon mappings. Narrow panels clip columns at the right edge.
 
 ## Issue tabs
 
