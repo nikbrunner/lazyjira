@@ -71,7 +71,11 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 	fixedWidth += len(columns)
 	for i := range columns {
 		if columns[i].field == fieldSummary {
-			columns[i].width = max(width-fixedWidth, len(columns[i].label))
+			summaryWidth := len(columns[i].label)
+			for _, issue := range m.issues {
+				summaryWidth = max(summaryWidth, ansi.StringWidth(issue.Summary))
+			}
+			columns[i].width = max(min(summaryWidth, width-fixedWidth), len(columns[i].label))
 		}
 	}
 	return columns

@@ -334,13 +334,13 @@ Headers and values use the terminal's ANSI palette. Each field keeps its color w
 |-------|-------|------------|-------------|
 | `key` | auto, minimum 3 | cyan (6) | Issue key like PROJ-123 |
 | `status` | minimum 6 | green (2) | Status indicator |
-| `summary` | fills remaining | white (7) | Issue title |
+| `summary` | longest summary, capped by available space | white (7) | Issue title |
 | `priority` | 8 chars, wider for icons | yellow (3) | Priority name or configured icon |
 | `assignee` | 12 chars | bright cyan (14) | Assignee display name |
 | `type` | 10 chars for names, minimum 4 for icons | magenta (5) | Issue type or configured icon |
 | `updated` | 8 chars | bright blue (12) | Time since last update |
 
-Column widths accommodate their full labels and configured icons. Rows share the same widths, including when only some values have icon mappings. Narrow panels clip columns at the right edge.
+Column widths accommodate their full labels and configured icons. Rows share the same widths, including when only some values have icon mappings. Summary fits the longest summary in the current filtered list, including rows outside the viewport, up to the available width. Extra space stays after the last column. Narrow panels clip columns at the right edge.
 
 ## Issue tabs
 

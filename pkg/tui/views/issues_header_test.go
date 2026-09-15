@@ -41,6 +41,65 @@ func TestIssuesList_HeaderFollowsFields(t *testing.T) {
 	}
 }
 
+func TestIssuesList_SummaryFitsContentWithinAvailableWidth(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name       string
+		summary    string
+		width      int
+		updatedCol int
+	}{
+		{"short text retains header width", "Short", 80, 14},
+		{"longest summary", "Longest summary", 80, 22},
+		{"display width", "界界界界", 80, 15},
+		{"available width caps summary", strings.Repeat("x", 100), 40, 31},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			list := NewIssuesList()
+			list.SetFields([]string{"key", "summary", "updated"})
+			list.SetIssues([]jira.Issue{
+				{Key: "A-1", Summary: "Short", Updated: time.Now().Add(-2 * time.Hour)},
+				{Key: "A-2", Summary: tt.summary},
+			})
+			list.SetSize(tt.width, 4)
+			lines := strings.Split(ansi.Strip(list.View()), "\n")
+			if got := displayColumn(t, lines[1], "Updated"); got != tt.updatedCol {
+				t.Errorf("Updated header starts at %d, want %d", got, tt.updatedCol)
+			}
+			if got := displayColumn(t, lines[2], "2h"); got != tt.updatedCol {
+				t.Errorf("updated value starts at %d, want %d", got, tt.updatedCol)
+			}
+			for _, line := range lines {
+				if got := ansi.StringWidth(line); got != tt.width {
+					t.Errorf("panel width = %d, want %d", got, tt.width)
+				}
+			}
+		})
+	}
+}
+
+func TestIssuesList_SummaryWidthFollowsFilteredIssues(t *testing.T) {
+	t.Parallel()
+	list := NewIssuesList()
+	list.SetFields([]string{"key", "summary", "updated"})
+	list.SetIssues([]jira.Issue{
+		{Key: "A-1", Summary: "Short"},
+		{Key: "A-2", Summary: "Longest summary"},
+	})
+	list.SetSize(80, 6)
+	list.SetFilter("Short")
+	lines := strings.Split(ansi.Strip(list.View()), "\n")
+	if got := displayColumn(t, lines[1], "Updated"); got != 14 {
+		t.Errorf("filtered Updated starts at %d, want 14", got)
+	}
+	list.ClearFilter()
+	lines = strings.Split(ansi.Strip(list.View()), "\n")
+	if got := displayColumn(t, lines[1], "Updated"); got != 22 {
+		t.Errorf("unfiltered Updated starts at %d, want 22", got)
+	}
+}
+
 func TestIssuesList_HeaderAlignsWithMixedIconsAndFallbacks(t *testing.T) {
 	t.Parallel()
 	list := NewIssuesList()
