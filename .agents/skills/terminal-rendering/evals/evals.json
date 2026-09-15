@@ -1,0 +1,23 @@
+{
+  "skill_name": "terminal-rendering",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A TUI menu gives each cell its own ANSI foreground color. The selected row background stops after the first cell, but the test passes because it finds a background escape code. Explain the cause, propose the smallest rendering fix, and describe a regression test that catches the actual failure without changing navigation.",
+      "expected_output": "Identify inner ANSI resets; apply selection styling to cells, separators, and padding; check effective background state across the whole row and neighboring boundaries rather than escape-code presence.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "A terminal table becomes misaligned when one value contains 界 or an emoji and the panel narrows. Headers and values have separate width calculations. Propose a correction that preserves styled Unicode text and stable alignment while scrolling, and name the edge cases to test.",
+      "expected_output": "Use display-cell widths and ANSI-aware truncation, share width calculations between headers and rows, define the measurement population, and test narrow widths, wide Unicode, empty values, separators, and padding.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Add a keyboard shortcut that changes a Jira issue's status and refreshes the active tab. The terminal layout and styling are unchanged. Is terminal-rendering relevant to this task, and what work belongs outside its scope?",
+      "expected_output": "Recognize that Jira operations, input handling, and state refresh are outside this skill's scope; do not introduce rendering changes or force a rendering investigation.",
+      "files": []
+    }
+  ]
+}

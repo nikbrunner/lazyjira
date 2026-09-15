@@ -1,0 +1,11 @@
+lefthook: mise exec lefthook -- lefthook
+
+pre-commit:
+  jobs:
+    - name: staged-go-format
+      run: make check-staged
+
+pre-push:
+  jobs:
+    - name: project-checks
+      run: make check

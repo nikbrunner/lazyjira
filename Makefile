@@ -1,7 +1,11 @@
-.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check check-demo tidy fix release preview e2e e2e-gen e2e-update nix-deps
+.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check check-demo tidy fix release preview e2e e2e-gen e2e-update nix-deps hooks check-staged
 
 build:
 	go build -o lazyjira ./cmd/lazyjira
+
+hooks:
+	mise install lefthook
+	mise exec lefthook -- lefthook install
 
 build-demo:
 	go build -tags demo -o lazyjira ./cmd/lazyjira
@@ -29,6 +33,20 @@ clean:
 	rm -f lazyjira
 
 check: lint vet build test
+
+check-staged:
+	@bash -euo pipefail -c '\
+		status=0; \
+		while IFS= read -r -d "" path; do \
+			if ! unformatted=$$(git show ":$$path" | gofmt -l); then \
+				printf "Cannot check staged Go file: %s\n" "$$path" >&2; \
+				status=1; \
+			elif [[ -n "$$unformatted" ]]; then \
+				printf "Staged Go file needs gofmt: %s\n" "$$path" >&2; \
+				status=1; \
+			fi; \
+		done < <(git diff --cached --name-only --diff-filter=ACMR -z -- "*.go"); \
+		exit "$$status"'
 
 tidy:
 	go mod tidy
