@@ -1008,7 +1008,7 @@ func (f *CreateForm) renderFields(formW, panelH int) string {
 		f.fieldOffset = maxOffset
 	}
 
-	selStyle := lipgloss.NewStyle().Background(theme.ColorHighlight).Foreground(lipgloss.Color("15"))
+	selStyle := lipgloss.NewStyle().Background(theme.ColorHighlight)
 	errStyle := lipgloss.NewStyle().Foreground(theme.ColorRed)
 	reqMark := lipgloss.NewStyle().Foreground(theme.ColorRed).Bold(true).Render("*")
 

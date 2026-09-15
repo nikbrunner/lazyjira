@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
 
 // ColorPalette holds the semantic color values for a theme.
@@ -236,6 +237,7 @@ func Init(opts Options) error {
 	}
 
 	built := preset.Build()
+	built.Colors.Highlight = selectionBackground(lipgloss.DefaultRenderer().Output().BackgroundColor())
 	palette := applyOverrides(built.Colors, opts.Colors, "themeColors")
 	if preset.IsLight {
 		palette = applyOverrides(palette, opts.ColorsLight, "themeLight")
@@ -246,6 +248,19 @@ func Init(opts Options) error {
 	Default = buildTheme(palette, built.AuthorPalette)
 	syncColors()
 	return nil
+}
+
+func selectionBackground(background termenv.Color) lipgloss.Color {
+	color := termenv.ConvertToRGB(background)
+	_, _, lightness := color.Hsl()
+	target := 1.0
+	if lightness >= 0.5 {
+		target = 0
+	}
+	color.R += (target - color.R) * 0.08
+	color.G += (target - color.G) * 0.08
+	color.B += (target - color.B) * 0.08
+	return lipgloss.Color(color.Hex())
 }
 
 // SetTheme is a thin wrapper around Init kept for callers (and tests) that

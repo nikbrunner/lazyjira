@@ -1,10 +1,53 @@
 package theme
 
 import (
+	"io"
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 )
+
+func TestSelectionBackground(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		background termenv.Color
+		want       lipgloss.Color
+	}{
+		{"dark terminal", termenv.RGBColor("#20262c"), "#32373d"},
+		{"light terminal", termenv.RGBColor("#e0e0e0"), "#cecece"},
+		{"black", termenv.RGBColor("#000000"), "#141414"},
+		{"white", termenv.RGBColor("#ffffff"), "#ebebeb"},
+		{"ANSI fallback", termenv.ANSIColor(0), "#141414"},
+		{"no color", termenv.NoColor{}, "#141414"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := selectionBackground(tt.background); got != tt.want {
+				t.Errorf("highlight = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInitDerivesSelectionBackground(t *testing.T) {
+	renderer := lipgloss.DefaultRenderer()
+	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(io.Discard))
+	t.Cleanup(func() {
+		lipgloss.SetDefaultRenderer(renderer)
+		_ = SetTheme("default")
+	})
+	for _, preset := range []string{"default", "catppuccin-mocha", "catppuccin-latte"} {
+		if err := Init(Options{Preset: preset}); err != nil {
+			t.Fatal(err)
+		}
+		if ColorHighlight != lipgloss.Color("#141414") {
+			t.Errorf("%s highlight = %q, want neutral fallback #141414", preset, ColorHighlight)
+		}
+		if Default.SelectedItem.GetBackground() != lipgloss.Color("#141414") {
+			t.Errorf("%s selected row style does not use the derived highlight", preset)
+		}
+	}
+}
 
 func TestSetThemeDefault(t *testing.T) {
 	if err := SetTheme("default"); err != nil {
@@ -19,8 +62,6 @@ func TestSetThemeDefault(t *testing.T) {
 }
 
 func TestSetThemeEmpty(t *testing.T) {
-	// Empty preset must resolve to the legacy ANSI 16 default so that
-	// upgrading users who never set gui.theme see no visual change.
 	if err := SetTheme(""); err != nil {
 		t.Fatalf("SetTheme(''): %v", err)
 	}

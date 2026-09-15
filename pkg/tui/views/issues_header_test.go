@@ -186,9 +186,11 @@ func TestIssuesList_ColumnColorsUseANSIForHeadersAndValues(t *testing.T) {
 				}
 			}
 		}
-		if focused && !strings.Contains(lines[2], "44") {
-			t.Error("selected row lost its background")
+		wantBackground := ""
+		if focused {
+			wantBackground = "44"
 		}
+		assertRowBackground(t, lines[2], 120, wantBackground)
 	}
 }
 

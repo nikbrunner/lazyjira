@@ -280,7 +280,7 @@ func (m *InputModal) HintView() string {
 	contentW := min(max(m.width*6/10, 30), m.width-4)
 	innerW := contentW - 2
 
-	selStyle := lipgloss.NewStyle().Background(theme.ColorHighlight).Foreground(lipgloss.Color("15"))
+	selStyle := lipgloss.NewStyle().Background(theme.ColorHighlight)
 	normalStyle := lipgloss.NewStyle()
 
 	maxHints := min(5, len(m.hints))

@@ -650,21 +650,23 @@ func (m *IssuesList) buildTitle(maxTitleW int) string {
 }
 
 func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, width int, selected bool) string {
+	style := m.theme.NormalItem
+	if selected && m.Focused {
+		style = m.theme.SelectedItem
+	}
 	parts := make([]string, len(columns))
 	for i, column := range columns {
 		value := m.issueFieldValue(issue, column.field)
 		cell := padRight(components.TruncateEnd(value, column.width), column.width)
-		parts[i] = lipgloss.NewStyle().Foreground(column.color).Render(cell)
+		parts[i] = style.Foreground(column.color).Render(cell)
 	}
-	line := " " + strings.Join(parts, " ")
+	space := style.Render(" ")
+	line := space + strings.Join(parts, space)
 	if ansi.StringWidth(line) > width {
 		line = ansi.Truncate(line, width, "")
 	}
 
-	if selected && m.Focused {
-		return m.theme.SelectedItem.Width(width).Render(line)
-	}
-	return m.theme.NormalItem.Width(width).Render(line)
+	return style.Width(width).Render(line)
 }
 
 // padRight pads s with spaces to width w using visible ANSI-aware width
