@@ -190,7 +190,7 @@ gui:
 
 `collapsedPanelHeight` sets the height of non-focused left panels in lines (default 5, minimum 3).
 
-`theme` selects the color palette. Supported values: `default` (ANSI 16, original look), `auto`, [Catppuccin](https://github.com/catppuccin/catppuccin) presets (`catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`). Omitting the `theme` key or setting it to `""` keeps the legacy `default` ANSI 16 palette for backward compatibility. Use `theme: auto` to opt into runtime detection: lazyjira inspects your terminal background and picks `catppuccin-mocha` (dark) or `catppuccin-latte` (light). An unknown theme name is an error. Hex-based themes require a terminal with truecolor support.
+`theme` selects the color palette. Supported values: `default` (terminal ANSI colors), `auto`, [Catppuccin](https://github.com/catppuccin/catppuccin) presets (`catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`). Omitting the `theme` key or setting it to `""` selects the `default` palette. Use `theme: auto` to opt into runtime detection: lazyjira inspects your terminal background and picks `catppuccin-mocha` (dark) or `catppuccin-latte` (light). An unknown theme name is an error. Hex-based themes require a terminal with truecolor support.
 
 ```yaml
 gui:
@@ -283,6 +283,8 @@ gui:
     highlight: "#45475a"
 ```
 
+Selection backgrounds are derived from the terminal background at startup: 8% lighter on dark backgrounds, or 8% darker on light backgrounds. This applies to lists and menus in every preset. Explicit `highlight` overrides take precedence. If the terminal cannot report its background, detection uses `COLORFGBG` where available, otherwise black. Terminals without truecolor approximate the derived shade with their available palette.
+
 `selectCreatedIssue` controls whether the app auto-selects a newly created issue in the list. If the issue does not match the current tab, the app switches to the All tab. Enabled by default.
 
 ```yaml
@@ -326,7 +328,7 @@ gui:
 
 `issueListFields` controls which columns appear and their order. A fixed header below the tabs labels each column. Panels shorter than four lines show issues without the header.
 
-Headers and values use the terminal's ANSI palette. Each field keeps its color when columns are reordered; status indicators use the Status column color for every state. The selected row keeps its highlight background.
+Headers and values use the terminal's ANSI palette. Each field keeps its color when columns are reordered; status indicators use the Status column color for every state. The selected row uses the highlight background across its full width, including spaces between columns.
 
 | Field | Width | ANSI color | Description |
 |-------|-------|------------|-------------|
