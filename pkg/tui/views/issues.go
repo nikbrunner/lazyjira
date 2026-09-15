@@ -52,7 +52,16 @@ type IssuesList struct {
 }
 
 func NewIssuesList() *IssuesList {
-	return &IssuesList{theme: theme.Default, jqlTabIdx: -1, hierarchyTabIdx: -1}
+	return &IssuesList{ListBase: components.ListBase{HeaderRows: 1}, theme: theme.Default, jqlTabIdx: -1, hierarchyTabIdx: -1}
+}
+
+func (m *IssuesList) SetSize(w, h int) {
+	m.ListBase.SetSize(w, h)
+	m.HeaderRows = 0
+	if h >= 4 {
+		m.HeaderRows = 1
+	}
+	m.AdjustOffset()
 }
 
 func (m *IssuesList) SetFields(fields []string) { m.fields = fields }
@@ -434,9 +443,9 @@ func (m *IssuesList) applyFilter() {
 	m.SetItemCount(len(m.issues))
 }
 
-// ContentHeight returns natural height of items plus 2 borders with a minimum of 7
+// ContentHeight includes the column header and borders, with a minimum of 7.
 func (m *IssuesList) ContentHeight() int {
-	return m.ListBase.ContentHeight(7)
+	return max(m.ItemCount()+3, 7)
 }
 
 func (m *IssuesList) SelectedIssue() *jira.Issue {
@@ -477,11 +486,15 @@ func (m *IssuesList) View() string {
 	}
 
 	visible := m.VisibleRows()
+	columns := m.issueColumns(contentWidth)
 
 	var rows []string
+	if m.HeaderRows > 0 {
+		rows = append(rows, renderIssueHeader(columns, contentWidth))
+	}
 	end := min(m.Offset+visible, len(m.issues))
 	for i := m.Offset; i < end; i++ {
-		rows = append(rows, m.renderIssueRow(m.issues[i], contentWidth, i == m.Cursor))
+		rows = append(rows, m.renderIssueRow(m.issues[i], columns, contentWidth, i == m.Cursor))
 	}
 
 	content := strings.Join(rows, "\n")
@@ -491,7 +504,7 @@ func (m *IssuesList) View() string {
 		footer = fmt.Sprintf("%d of %d", m.Cursor+1, len(m.issues))
 	}
 	scroll := &components.ScrollInfo{Total: len(m.issues), Visible: visible, Offset: m.Offset}
-	return components.RenderPanelFull(title, footer, content, m.Width, visible, m.Focused, scroll)
+	return components.RenderPanelFull(title, footer, content, m.Width, visible+m.HeaderRows, m.Focused, scroll)
 }
 
 // ClickTabAt handles clicks on the title bar to switch tabs and returns true if the tab changed
@@ -597,93 +610,12 @@ func (m *IssuesList) buildTitle(maxTitleW int) string {
 	return prefix + strings.Join(parts, sep)
 }
 
-func (m *IssuesList) renderIssueRow(issue jira.Issue, width int, selected bool) string {
-	fields := m.fields
-	if len(fields) == 0 {
-		fields = []string{"key", fieldStatus, "summary"}
-	}
-
-	currTypeIcon := typeIcon(m.typeIcons, issue.IssueType)
-	currStatusIcon := statusIcon(m.statusIcons, issue.Status)
-	currPriorityIcon := priorityIcon(m.priorityIcons, issue.Priority)
-
-	fixedWidth := 1
-	if len(fields) > 1 {
-		fixedWidth += len(fields) - 1
-	}
-	for _, f := range fields {
-		switch f {
-		case "key":
-			fixedWidth += m.keyColWidth
-		case fieldStatus:
-			fixedWidth += max(1, m.statusIconCols)
-		case "priority":
-			if currPriorityIcon != "" {
-				fixedWidth += m.priorityIconCols
-			} else {
-				fixedWidth += 8
-			}
-		case "assignee":
-			fixedWidth += 12
-		case "type":
-			if currTypeIcon != "" {
-				fixedWidth += m.typeIconCols
-			} else {
-				fixedWidth += 10
-			}
-		case "updated":
-			fixedWidth += 8
-		case "summary":
-		}
-	}
-	summaryWidth := max(width-fixedWidth, 5)
-
-	var parts []string
-	for _, f := range fields {
-		switch f {
-		case "key":
-			parts = append(parts, padRight(issue.Key, m.keyColWidth))
-		case "summary":
-			parts = append(parts, padRight(components.TruncateEnd(issue.Summary, summaryWidth), summaryWidth))
-		case fieldStatus:
-			if currStatusIcon != "" {
-				parts = append(parts, padRight(currStatusIcon, m.statusIconCols))
-			} else {
-				if selected {
-					parts = append(parts, padRight(statusEmojiPlain(issue.Status), m.statusIconCols))
-				} else {
-					parts = append(parts, padRight(statusEmoji(issue.Status), m.statusIconCols))
-				}
-			}
-		case "priority":
-			if currPriorityIcon != "" {
-				parts = append(parts, padRight(currPriorityIcon, m.priorityIconCols))
-			} else {
-				name := ""
-				if issue.Priority != nil {
-					name = issue.Priority.Name
-				}
-				parts = append(parts, padRight(components.TruncateEnd(name, 8), 8))
-			}
-		case "assignee":
-			name := ""
-			if issue.Assignee != nil {
-				name = issue.Assignee.DisplayName
-			}
-			parts = append(parts, padRight(components.TruncateEnd(name, 12), 12))
-		case "type":
-			if currTypeIcon != "" {
-				parts = append(parts, padRight(currTypeIcon, m.typeIconCols))
-			} else {
-				name := ""
-				if issue.IssueType != nil {
-					name = issue.IssueType.Name
-				}
-				parts = append(parts, padRight(components.TruncateEnd(name, 10), 10))
-			}
-		case "updated":
-			parts = append(parts, padRight(issueTimeAgo(issue.Updated), 8))
-		}
+func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, width int, selected bool) string {
+	parts := make([]string, len(columns))
+	for i, column := range columns {
+		value := m.issueFieldValue(issue, column.field)
+		cell := padRight(components.TruncateEnd(value, column.width), column.width)
+		parts[i] = lipgloss.NewStyle().Foreground(column.color).Render(cell)
 	}
 	line := " " + strings.Join(parts, " ")
 	if ansi.StringWidth(line) > width {

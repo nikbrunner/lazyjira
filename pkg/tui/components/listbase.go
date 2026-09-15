@@ -24,6 +24,7 @@ type ListBase struct {
 	Offset     int
 	Width      int
 	Height     int
+	HeaderRows int
 	Focused    bool
 	ResolveNav NavResolver
 	itemCount  int
@@ -46,11 +47,11 @@ func (l *ListBase) SetItemCount(n int) {
 func (l *ListBase) ItemCount() int { return l.itemCount }
 
 func (l *ListBase) VisibleRows() int {
-	return max(l.Height-2, 1)
+	return max(l.Height-2-l.HeaderRows, 1)
 }
 
 func (l *ListBase) ContentHeight(minH int) int {
-	return max(l.itemCount+2, minH)
+	return max(l.itemCount+2+l.HeaderRows, minH)
 }
 
 func (l *ListBase) AdjustOffset() {
@@ -64,7 +65,10 @@ func (l *ListBase) ScrollBy(delta int) {
 }
 
 func (l *ListBase) ClickAt(relY int) bool {
-	idx := l.Offset + relY - 1 // -1 for top border
+	if l.HeaderRows > 0 && (relY <= l.HeaderRows || relY >= l.Height-1) {
+		return false
+	}
+	idx := l.Offset + relY - 1 - l.HeaderRows
 	if idx >= 0 && idx < l.itemCount {
 		l.Cursor = idx
 		l.AdjustOffset()
