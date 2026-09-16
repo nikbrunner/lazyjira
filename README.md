@@ -1,12 +1,15 @@
+# lazyjira
+
 <p align="center">
   <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/textfuel/lazyjira" alt="Go"></a>
   <a href="https://github.com/textfuel/lazyjira/releases"><img src="https://img.shields.io/github/v/release/textfuel/lazyjira" alt="Release"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <br>
   <a href="https://github.com/textfuel/lazyjira/releases"><img src="https://img.shields.io/github/downloads/textfuel/lazyjira/total?label=downloads" alt="Downloads"></a>
 </p>
 
-# lazyjira
+<p align="center">
+  <img src="assets/lazygit.png" width="100%" alt="lazyjira banner">
+</p>
 
 Terminal UI for Jira. Like [lazygit](https://github.com/jesseduffield/lazygit) but for Jira.
 
