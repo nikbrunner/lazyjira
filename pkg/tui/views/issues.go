@@ -52,13 +52,15 @@ type IssuesList struct {
 }
 
 func NewIssuesList() *IssuesList {
-	return &IssuesList{ListBase: components.ListBase{HeaderRows: 1}, theme: theme.Default, jqlTabIdx: -1, hierarchyTabIdx: -1}
+	return &IssuesList{ListBase: components.ListBase{HeaderRows: 2}, theme: theme.Default, jqlTabIdx: -1, hierarchyTabIdx: -1}
 }
 
 func (m *IssuesList) SetSize(w, h int) {
 	m.ListBase.SetSize(w, h)
 	m.HeaderRows = 0
-	if h >= 4 {
+	if h >= 5 {
+		m.HeaderRows = 2
+	} else if h >= 4 {
 		m.HeaderRows = 1
 	}
 	m.AdjustOffset()
@@ -443,9 +445,9 @@ func (m *IssuesList) applyFilter() {
 	m.SetItemCount(len(m.issues))
 }
 
-// ContentHeight includes the column header and borders, with a minimum of 7.
+// ContentHeight includes the column header, separator, and borders, with a minimum of 7.
 func (m *IssuesList) ContentHeight() int {
-	return max(m.ItemCount()+3, 7)
+	return max(m.ItemCount()+4, 7)
 }
 
 func (m *IssuesList) SelectedIssue() *jira.Issue {
@@ -491,6 +493,13 @@ func (m *IssuesList) View() string {
 	var rows []string
 	if m.HeaderRows > 0 {
 		rows = append(rows, renderIssueHeader(columns, contentWidth))
+	}
+	if m.HeaderRows > 1 {
+		color := theme.ColorNone
+		if m.Focused {
+			color = theme.ColorGreen
+		}
+		rows = append(rows, lipgloss.NewStyle().Foreground(color).Render(strings.Repeat("─", contentWidth)))
 	}
 	end := min(m.Offset+visible, len(m.issues))
 	for i := m.Offset; i < end; i++ {

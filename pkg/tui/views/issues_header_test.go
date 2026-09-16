@@ -41,6 +41,33 @@ func TestIssuesList_HeaderFollowsFields(t *testing.T) {
 	}
 }
 
+func TestIssuesList_HeaderSeparator(t *testing.T) {
+	t.Parallel()
+	for _, width := range []int{24, 80} {
+		for _, empty := range []bool{false, true} {
+			t.Run(fmt.Sprintf("width=%d/empty=%v", width, empty), func(t *testing.T) {
+				t.Parallel()
+				list := NewIssuesList()
+				if !empty {
+					list.SetIssues([]jira.Issue{{Key: "A-1", Summary: "界界"}})
+				}
+				list.SetSize(width, 5)
+				lines := strings.Split(ansi.Strip(list.View()), "\n")
+				if len(lines) != 5 {
+					t.Fatalf("height = %d, want 5", len(lines))
+				}
+				want := "│" + strings.Repeat("─", width-2) + "│"
+				if lines[2] != want {
+					t.Errorf("separator = %q, want %q", lines[2], want)
+				}
+				if !empty && !strings.Contains(lines[3], "A-1") {
+					t.Errorf("first issue missing below separator: %q", lines[3])
+				}
+			})
+		}
+	}
+}
+
 func TestIssuesList_SummaryFitsContentWithinAvailableWidth(t *testing.T) {
 	t.Parallel()
 	for _, tt := range []struct {
@@ -128,7 +155,7 @@ func TestIssuesList_HeaderAlignsWithMixedIconsAndFallbacks(t *testing.T) {
 	} {
 		want := displayColumn(t, lines[1], tt.header)
 		for i, value := range []string{tt.first, tt.second} {
-			if got := displayColumn(t, lines[i+2], value); got != want {
+			if got := displayColumn(t, lines[i+3], value); got != want {
 				t.Errorf("%s starts at %d, header %s at %d", value, got, tt.header, want)
 			}
 		}
@@ -145,8 +172,8 @@ func TestIssuesList_HeaderReservesScrollingAndClickSpace(t *testing.T) {
 	list.SetIssues(issues)
 	list.SetSize(60, 6)
 	list.ScrollBy(9)
-	if list.VisibleRows() != 3 || list.Offset != 7 {
-		t.Fatalf("visible/offset = %d/%d, want 3/7", list.VisibleRows(), list.Offset)
+	if list.VisibleRows() != 2 || list.Offset != 8 {
+		t.Fatalf("visible/offset = %d/%d, want 2/8", list.VisibleRows(), list.Offset)
 	}
 	lines := strings.Split(ansi.Strip(list.View()), "\n")
 	if len(lines) != 6 || !strings.Contains(lines[1], "Key") || !strings.Contains(lines[4], "ROW-9") {
@@ -155,17 +182,20 @@ func TestIssuesList_HeaderReservesScrollingAndClickSpace(t *testing.T) {
 	if list.ClickAt(1) || list.Cursor != 9 {
 		t.Fatal("header click selected an issue")
 	}
-	if list.ClickAt(2) || list.Cursor != 7 {
-		t.Fatalf("first issue click: cursor = %d, want 7", list.Cursor)
+	if list.ClickAt(2) || list.Cursor != 9 {
+		t.Fatal("separator click selected an issue")
 	}
-	if !list.ClickAt(2) {
+	if list.ClickAt(3) || list.Cursor != 8 {
+		t.Fatalf("first issue click: cursor = %d, want 8", list.Cursor)
+	}
+	if !list.ClickAt(3) {
 		t.Fatal("double-click on first visible issue was not detected")
 	}
-	if list.ClickAt(5) || list.Cursor != 7 {
+	if list.ClickAt(5) || list.Cursor != 8 {
 		t.Fatal("bottom border click selected an issue")
 	}
-	if got := list.ContentHeight(); got != 13 {
-		t.Errorf("natural height = %d, want 13", got)
+	if got := list.ContentHeight(); got != 14 {
+		t.Errorf("natural height = %d, want 14", got)
 	}
 }
 
@@ -188,7 +218,7 @@ func TestIssuesList_HeaderReservesKeyboardPageAndResizeSpace(t *testing.T) {
 
 func TestIssuesList_HeaderFitsSmallPanels(t *testing.T) {
 	t.Parallel()
-	for _, height := range []int{1, 3, 4, 6} {
+	for _, height := range []int{1, 3, 4, 5, 6} {
 		t.Run(strconv.Itoa(height), func(t *testing.T) {
 			t.Parallel()
 			list := NewIssuesList()
@@ -240,7 +270,7 @@ func TestIssuesList_ColumnColorsUseANSIForHeadersAndValues(t *testing.T) {
 			{"Updated", "2h", 94},
 		} {
 			for i, text := range []string{tt.header, tt.value} {
-				if got := foregroundAt(t, lines[i+1], text); got != tt.color {
+				if got := foregroundAt(t, lines[i*2+1], text); got != tt.color {
 					t.Errorf("focused=%v %s foreground = %d, want ANSI %d", focused, text, got, tt.color)
 				}
 			}
@@ -249,7 +279,15 @@ func TestIssuesList_ColumnColorsUseANSIForHeadersAndValues(t *testing.T) {
 		if focused {
 			wantBackground = "44"
 		}
-		assertRowBackground(t, lines[2], 120, wantBackground)
+		assertRowBackground(t, lines[2], 120, "")
+		wantSeparatorColor := 0
+		if focused {
+			wantSeparatorColor = 32
+		}
+		if got := foregroundAt(t, lines[2], "─"); got != wantSeparatorColor {
+			t.Errorf("separator foreground = %d, want %d", got, wantSeparatorColor)
+		}
+		assertRowBackground(t, lines[3], 120, wantBackground)
 	}
 }
 

@@ -326,7 +326,7 @@ gui:
 
 ### Issue list fields
 
-`issueListFields` controls which columns appear and their order. A fixed header below the tabs labels each column. Panels shorter than four lines show issues without the header.
+`issueListFields` controls which columns appear and their order. A fixed header below the tabs labels each column. A horizontal separator below the header matches the panel border color. Panels shorter than five lines omit the separator; panels shorter than four lines show issues without the header.
 
 Headers and values use the terminal's ANSI palette. Each field keeps its color when columns are reordered; status indicators use the Status column color for every state. The selected row uses the highlight background across its full width, including spaces between columns.
 

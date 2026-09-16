@@ -34,8 +34,9 @@ func TestIssuesList_SelectedBackgroundCoversRow(t *testing.T) {
 		list.SetSize(width, 6)
 		lines := strings.Split(list.View(), "\n")
 		assertRowBackground(t, lines[1], width, "")
-		assertRowBackground(t, lines[2], width, "48;2;48;56;64")
-		assertRowBackground(t, lines[3], width, "")
+		assertRowBackground(t, lines[2], width, "")
+		assertRowBackground(t, lines[3], width, "48;2;48;56;64")
+		assertRowBackground(t, lines[4], width, "")
 	}
 }
 
