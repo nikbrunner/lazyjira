@@ -60,6 +60,7 @@ const (
 	editField
 	editFieldText
 	editBranch
+	editWorktreePath
 	editCreateField
 	editCreateDesc
 )
@@ -70,6 +71,7 @@ type editCtx struct {
 	commentID      string
 	fieldID        string
 	fieldIndex     int
+	branchName     string
 	converterState any
 }
 
@@ -593,11 +595,17 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case views.ExpandBlockMsg:
 		return a.handleExpandBlock(msg)
 
+	case gitWorktreeCreatedMsg:
+		a.gitRepoPath = msg.path
+		model, cmd := a.handleGitBranchSwitch(msg.branch)
+		a.helpBar.SetStatusMsg("Created worktree: " + msg.path)
+		return model, cmd
 	case gitBranchCreatedMsg:
 		return a.handleGitBranchSwitch(msg.name)
 	case gitCheckoutDoneMsg:
 		return a.handleGitBranchSwitch(msg.name)
 	case gitErrorMsg:
+		a.helpBar.SetStatusMsg("")
 		a.statusPanel.SetError(msg.err.Error())
 		return a, nil
 	case errorMsg:

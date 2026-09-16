@@ -162,6 +162,17 @@ func (a *App) handleInputConfirmed(msg components.InputConfirmedMsg) (tea.Model,
 			a.optimisticFieldUpdate(ctx.issueKey, ctx.fieldID, msg.Text)
 			return a, updateIssueField(a.client, ctx.issueKey, ctx.fieldID, msg.Text)
 		}
+	case editWorktreePath:
+		if strings.TrimSpace(msg.Text) != "" {
+			path, err := git.ResolveWorktreePath(a.gitRepoPath, msg.Text)
+			if err != nil {
+				a.statusPanel.SetError(err.Error())
+				return a, nil
+			}
+			a.helpBar.SetStatusMsg("Creating worktree: " + path)
+			return a, gitCreateWorktree(a.gitRepoPath, ctx.branchName, path)
+		}
+		return a, nil
 	case editBranch:
 		if msg.Text != "" {
 			switch git.ResolveBranchAction(a.gitRepoPath, msg.Text) {

@@ -44,6 +44,7 @@ const (
 	ActCreateBranch     Action = "createBranch"
 	ActCopyBranchName   Action = "copyBranchName"
 	ActCopyWorktreeName Action = "copyWorktreeName"
+	ActCreateWorktree   Action = "createWorktree"
 	ActCreateIssue      Action = "createIssue"
 	ActCreateSubtask    Action = "createSubtask"
 	ActDuplicateIssue   Action = "duplicateIssue"
@@ -100,6 +101,7 @@ func DefaultKeymap() Keymap {
 		ActCreateBranch:     {"B"},
 		ActCopyBranchName:   {"b"},
 		ActCopyWorktreeName: {"w"},
+		ActCreateWorktree:   {"W"},
 		ActDuplicateIssue:   {"ctrl+n"},
 		ActCreateSubtask:    {"S"},
 		ActShowParent:       {"backspace"},
@@ -158,6 +160,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActCreateBranch, kcfg.Issues.CreateBranch)
 	set(ActCopyBranchName, kcfg.Issues.CopyBranchName)
 	set(ActCopyWorktreeName, kcfg.Issues.CopyWorktreeName)
+	set(ActCreateWorktree, kcfg.Issues.CreateWorktree)
 	set(ActCreateIssue, kcfg.Issues.CreateIssue)
 	set(ActCreateSubtask, kcfg.Issues.CreateSubtask)
 	// Detail

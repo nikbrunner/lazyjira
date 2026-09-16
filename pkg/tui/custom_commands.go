@@ -261,9 +261,11 @@ func (a *App) executeCustomCommand(rc config.ResolvedCustomCommand, data any) te
 	}
 
 	refresh := rc.Refresh
+	repoPath := a.gitRepoPath
 
 	if rc.ShouldSuspend() {
 		c := exec.CommandContext(a.ctx, shell, "-c", cmdStr) //nolint:gosec // user-configured custom commands are intentionally arbitrary shell commands
+		c.Dir = repoPath
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
@@ -279,6 +281,7 @@ func (a *App) executeCustomCommand(rc config.ResolvedCustomCommand, data any) te
 	return func() tea.Msg {
 		defer a.cmdWg.Done()
 		c := exec.CommandContext(a.ctx, shell, "-c", cmdStr) //nolint:gosec // user-configured custom commands are intentionally arbitrary shell commands
+		c.Dir = repoPath
 		c.Cancel = func() error {
 			return c.Process.Signal(syscall.SIGTERM)
 		}

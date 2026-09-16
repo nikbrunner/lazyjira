@@ -21,6 +21,14 @@ func IsRepo(dir string) bool {
 }
 
 func RepoName(dir string) (string, error) {
+	path, err := MainWorktreePath(dir)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Base(path), nil
+}
+
+func MainWorktreePath(dir string) (string, error) {
 	cmd := exec.CommandContext(context.Background(), "git", "-C", dir, "worktree", "list", "--porcelain", "-z")
 	out, err := cmd.Output()
 	if err != nil {
@@ -28,7 +36,7 @@ func RepoName(dir string) (string, error) {
 	}
 	// Git lists the main worktree first, including from a linked worktree.
 	first, _, _ := strings.Cut(string(out), "\x00")
-	return filepath.Base(strings.TrimPrefix(first, "worktree ")), nil
+	return strings.TrimPrefix(first, "worktree "), nil
 }
 
 // CurrentBranch returns the current branch name, or an empty string when in detached HEAD state

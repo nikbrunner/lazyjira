@@ -59,6 +59,8 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a.handleActionEdit()
 	case ActCreateBranch:
 		return a.handleActionCreateBranch()
+	case ActCreateWorktree:
+		return a.handleActionCreateWorktree()
 	case ActCopyBranchName, ActCopyWorktreeName:
 		return a.handleActionCopyName(action)
 	case ActShowParent:
@@ -793,12 +795,8 @@ func (a *App) handleActionCopyName(action Action) (tea.Model, tea.Cmd) {
 	kind := "branch"
 	if action == ActCopyWorktreeName {
 		kind = "worktree"
-		repoName := ""
-		if a.gitRepoPath != "" {
-			repoName, _ = git.RepoName(a.gitRepoPath)
-		}
 		var err error
-		name, err = git.GenerateWorktreeName(repoName, cur.Key, cur.Summary, a.cfg.Git.WorktreeFormat)
+		name, err = a.worktreeName(cur)
 		if err != nil {
 			a.statusPanel.SetError("copy worktree name: " + err.Error())
 			return a, nil

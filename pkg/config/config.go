@@ -72,6 +72,7 @@ type Config struct {
 	Fields           []FieldConfig         `yaml:"fields"`
 	DeprecatedFields []FieldConfig         `yaml:"customFields,omitempty"`
 	Git              GitConfig             `yaml:"git"`
+	Worktree         WorktreeConfig        `yaml:"worktree"`
 	CustomCommands   []CustomCommandConfig `yaml:"customCommands"`
 	Converter        string                `yaml:"converter"`
 	Renderer         string                `yaml:"renderer"`
@@ -97,6 +98,10 @@ type GitConfig struct {
 	AsciiOnly       bool               `yaml:"asciiOnly"`
 	BranchFormat    []BranchFormatRule `yaml:"branchFormat"`
 	WorktreeFormat  string             `yaml:"worktreeFormat"`
+}
+
+type WorktreeConfig struct {
+	DefaultPath string `yaml:"defaultPath"`
 }
 
 type BranchFormatRule struct {
@@ -167,6 +172,7 @@ type IssueKeys struct {
 	CopyWorktreeName string `yaml:"copyWorktreeName"`
 	CloseJQLTab      string `yaml:"closeJQLTab"`
 	CreateBranch     string `yaml:"createBranch"`
+	CreateWorktree   string `yaml:"createWorktree"`
 	CreateIssue      string `yaml:"createIssue"`
 	CreateSubtask    string `yaml:"createSubtask"`
 }
@@ -295,6 +301,7 @@ func DefaultConfig() *Config {
 			},
 		},
 		IssueTabs: DefaultIssueTabs(),
+		Worktree:  WorktreeConfig{DefaultPath: ".."},
 		Cache: CacheConfig{
 			Enabled: true,
 			TTL:     "5m",
