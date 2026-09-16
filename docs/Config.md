@@ -103,7 +103,9 @@ keybinding:
         urlPicker: u
         copyURL: "y"
         closeJQLTab: x
-        createBranch: b
+        copyBranchName: b
+        createBranch: B
+        copyWorktreeName: w
     projects:
         select: ' '
         open: enter
@@ -131,6 +133,7 @@ git:
     closeOnCheckout: false
     asciiOnly: false
     branchFormat: []
+    worktreeFormat: "{{if .RepoName}}{{.RepoName}}-{{end}}{{.Key}}-{{.Summary}}"
 ```
 
 ## Server type
@@ -398,10 +401,12 @@ keybinding:
   issues:
     transition: "t"
     browser: "o"
-    createBranch: "b"
+    copyBranchName: "b"
+    createBranch: "B"
+    copyWorktreeName: "w"
 ```
 
-Only include keys you want to change. Missing keys keep their defaults.
+Only include keys you want to change. Missing keys keep their defaults unless an explicitly configured key displaces them. Rebind a displaced action to another key if needed.
 
 The `navigation` section controls list navigation keys used across all panels. These default to vim-style keys (`j`/`k`/`g`/`G`/`ctrl+d`/`ctrl+u`).
 
@@ -438,30 +443,52 @@ git:
   branchFormat:
     - when:
         type: "Bug"
-      template: "bugfix/{{.Key}}-{{.Summary | slugify}}"
+      template: "bugfix/{{.Key}}-{{.Summary}}"
     - when:
         type: "Sub-task"
-      template: "{{.ParentKey}}/{{.Key}}_{{.Summary | slugify}}"
+      template: "{{.ParentKey}}/{{.Key}}_{{.Summary}}"
     - when:
         type: "*"
-      template: "{{.Key}}-{{.Summary | slugify}}"
+      template: "{{.Key}}-{{.Summary}}"
 ```
 
-### Branch format rules
+### Branch names
 
-Each rule has a `when` condition and a `template`. Rules are evaluated in order and the first match wins. Use `type: "*"` as a catch-all.
+Press `b` in the issues, info, or detail panel to copy a branch name for the current issue. Press `B` in the issues panel to open branch creation with the exact same name. Both use `git.branchFormat`, including its issue-type rules and 60-byte name limit. Truncation preserves complete UTF-8 characters. The default is `{{.Key}}-{{.Summary}}`, for example `websdk-218-web-ui-audit-skills`.
+
+Each rule has a `when` condition and a `template`. Rules are evaluated in order and the first match wins. Use `type: "*"` as a catch-all. If no rule matches or a template is invalid, the default format applies.
 
 Template variables.
 
 | Variable | Description |
 |----------|-------------|
-| `{{.Key}}` | Issue key like PROJ-123 |
-| `{{.ProjectKey}}` | Project prefix extracted from key (e.g. PROJ) |
-| `{{.Number}}` | Issue number extracted from key (e.g. 123) |
-| `{{.Summary}}` | Issue summary |
-| `{{.Summary \| slugify}}` | Summary as a slug, lowercase with dashes |
+| `{{.Key}}` | Lowercase issue key, e.g. `websdk-218` |
+| `{{.ProjectKey}}` | Lowercase project prefix, e.g. `websdk` |
+| `{{.Number}}` | Issue number, e.g. `218` |
+| `{{.Summary}}` | Summary as a lowercase slug; respects `asciiOnly` |
 | `{{.Type}}` | Issue type name (e.g. Bug, Story, Task) |
-| `{{.ParentKey}}` | Parent issue key (empty if no parent) |
+| `{{.ParentKey}}` | Lowercase parent issue key (empty if no parent) |
+
+### Worktree names
+
+Press `w` in the issues, info, or detail panel to copy a repository-prefixed name for a worktree. This action only copies text; it does not create a worktree.
+
+```yaml
+git:
+  worktreeFormat: "{{if .RepoName}}{{.RepoName}}-{{end}}{{.Key}}-{{.Summary}}"
+```
+
+The format above is the default, for example `web-ui-websdk-218-web-ui-audit-skills`. The repository name comes from the main checkout's directory, including from linked worktrees or subdirectories. Outside Git, the default omits the repository prefix.
+
+| Variable | Description |
+|----------|-------------|
+| `{{.RepoName}}` | Main checkout's directory name as a lowercase ASCII slug, e.g. `web-ui` |
+| `{{.Key}}` | Lowercase issue key, e.g. `websdk-218` |
+| `{{.Summary}}` | Issue summary as a lowercase ASCII slug |
+
+Slugs replace runs of characters outside `a-z` and `0-9` with hyphens and trim edge hyphens. The rendered string is lowercased, limited to 50 characters, and stripped of trailing hyphens. A project label in the summary remains part of the slug. Invalid templates report an error without copying.
+
+A status message confirms each copy. Remap the actions with `keybinding.issues.copyBranchName`, `createBranch`, and `copyWorktreeName`. Custom commands bound to the same key take precedence.
 
 ## Markdown conversion (`converter`)
 

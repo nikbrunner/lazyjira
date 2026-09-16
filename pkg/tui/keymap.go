@@ -12,40 +12,42 @@ type Action string
 
 // Actions each can be remapped to different keys via config
 const (
-	ActQuit           Action = "quit"
-	ActHelp           Action = "help"
-	ActSearch         Action = "search"
-	ActSwitchPanel    Action = "switchPanel"
-	ActFocusRight     Action = "focusRight"
-	ActFocusLeft      Action = "focusLeft"
-	ActSelect         Action = "select" // primary: mark active + open
-	ActOpen           Action = "open"   // secondary: open/preview without marking
-	ActPrevTab        Action = "prevTab"
-	ActNextTab        Action = "nextTab"
-	ActFocusDetail    Action = "focusDetail"
-	ActFocusStatus    Action = "focusStatus"
-	ActFocusIssues    Action = "focusIssues"
-	ActFocusInfo      Action = "focusInfo"
-	ActFocusProj      Action = "focusProjects"
-	ActCopyURL        Action = "copyURL"
-	ActBrowser        Action = "browser"
-	ActURLPicker      Action = "urlPicker"
-	ActTransition     Action = "transition"
-	ActRefresh        Action = "refresh"
-	ActRefreshAll     Action = "refreshAll"
-	ActInfoTab        Action = "infoTab" // legacy: now focuses Info panel
-	ActEdit           Action = "edit"
-	ActComments       Action = "comments"
-	ActNew            Action = "new"
-	ActPriority       Action = "editPriority"
-	ActAssignee       Action = "editAssignee"
-	ActJQLSearch      Action = "jqlSearch"
-	ActCloseJQLTab    Action = "closeJQLTab"
-	ActCreateBranch   Action = "createBranch"
-	ActCreateIssue    Action = "createIssue"
-	ActCreateSubtask  Action = "createSubtask"
-	ActDuplicateIssue Action = "duplicateIssue"
-	ActShowParent     Action = "showParent"
+	ActQuit             Action = "quit"
+	ActHelp             Action = "help"
+	ActSearch           Action = "search"
+	ActSwitchPanel      Action = "switchPanel"
+	ActFocusRight       Action = "focusRight"
+	ActFocusLeft        Action = "focusLeft"
+	ActSelect           Action = "select" // primary: mark active + open
+	ActOpen             Action = "open"   // secondary: open/preview without marking
+	ActPrevTab          Action = "prevTab"
+	ActNextTab          Action = "nextTab"
+	ActFocusDetail      Action = "focusDetail"
+	ActFocusStatus      Action = "focusStatus"
+	ActFocusIssues      Action = "focusIssues"
+	ActFocusInfo        Action = "focusInfo"
+	ActFocusProj        Action = "focusProjects"
+	ActCopyURL          Action = "copyURL"
+	ActBrowser          Action = "browser"
+	ActURLPicker        Action = "urlPicker"
+	ActTransition       Action = "transition"
+	ActRefresh          Action = "refresh"
+	ActRefreshAll       Action = "refreshAll"
+	ActInfoTab          Action = "infoTab" // legacy: now focuses Info panel
+	ActEdit             Action = "edit"
+	ActComments         Action = "comments"
+	ActNew              Action = "new"
+	ActPriority         Action = "editPriority"
+	ActAssignee         Action = "editAssignee"
+	ActJQLSearch        Action = "jqlSearch"
+	ActCloseJQLTab      Action = "closeJQLTab"
+	ActCreateBranch     Action = "createBranch"
+	ActCopyBranchName   Action = "copyBranchName"
+	ActCopyWorktreeName Action = "copyWorktreeName"
+	ActCreateIssue      Action = "createIssue"
+	ActCreateSubtask    Action = "createSubtask"
+	ActDuplicateIssue   Action = "duplicateIssue"
+	ActShowParent       Action = "showParent"
 
 	ActNavDown     Action = "navDown"
 	ActNavUp       Action = "navUp"
@@ -66,39 +68,41 @@ type Keymap map[Action][]string
 // DefaultKeymap returns the default key bindings
 func DefaultKeymap() Keymap {
 	return Keymap{
-		ActQuit:           {"q", "ctrl+c"},
-		ActHelp:           {"?"},
-		ActSearch:         {"/"},
-		ActSwitchPanel:    {"tab"},
-		ActFocusRight:     {"l", "right"},
-		ActFocusLeft:      {"h", "left", "esc"},
-		ActSelect:         {" "},
-		ActOpen:           {"enter"},
-		ActPrevTab:        {"["},
-		ActNextTab:        {"]"},
-		ActFocusDetail:    {"0"},
-		ActFocusStatus:    {"1"},
-		ActFocusIssues:    {"2"},
-		ActFocusInfo:      {"3"},
-		ActFocusProj:      {"4"},
-		ActCopyURL:        {"y"},
-		ActBrowser:        {"o"},
-		ActURLPicker:      {"u"},
-		ActTransition:     {"t"},
-		ActRefresh:        {"r"},
-		ActRefreshAll:     {"R"},
-		ActInfoTab:        {"i"},
-		ActEdit:           {"e"},
-		ActComments:       {"c"},
-		ActNew:            {"n"},
-		ActPriority:       {"p"},
-		ActAssignee:       {"a"},
-		ActJQLSearch:      {"s"},
-		ActCloseJQLTab:    {"x"},
-		ActCreateBranch:   {"b"},
-		ActDuplicateIssue: {"ctrl+n"},
-		ActCreateSubtask:  {"S"},
-		ActShowParent:     {"backspace"},
+		ActQuit:             {"q", "ctrl+c"},
+		ActHelp:             {"?"},
+		ActSearch:           {"/"},
+		ActSwitchPanel:      {"tab"},
+		ActFocusRight:       {"l", "right"},
+		ActFocusLeft:        {"h", "left", "esc"},
+		ActSelect:           {" "},
+		ActOpen:             {"enter"},
+		ActPrevTab:          {"["},
+		ActNextTab:          {"]"},
+		ActFocusDetail:      {"0"},
+		ActFocusStatus:      {"1"},
+		ActFocusIssues:      {"2"},
+		ActFocusInfo:        {"3"},
+		ActFocusProj:        {"4"},
+		ActCopyURL:          {"y"},
+		ActBrowser:          {"o"},
+		ActURLPicker:        {"u"},
+		ActTransition:       {"t"},
+		ActRefresh:          {"r"},
+		ActRefreshAll:       {"R"},
+		ActInfoTab:          {"i"},
+		ActEdit:             {"e"},
+		ActComments:         {"c"},
+		ActNew:              {"n"},
+		ActPriority:         {"p"},
+		ActAssignee:         {"a"},
+		ActJQLSearch:        {"s"},
+		ActCloseJQLTab:      {"x"},
+		ActCreateBranch:     {"B"},
+		ActCopyBranchName:   {"b"},
+		ActCopyWorktreeName: {"w"},
+		ActDuplicateIssue:   {"ctrl+n"},
+		ActCreateSubtask:    {"S"},
+		ActShowParent:       {"backspace"},
 
 		ActNavDown:     {"j", "down", "ctrl+j"},
 		ActNavUp:       {"k", "up", "ctrl+k"},
@@ -118,9 +122,13 @@ func DefaultKeymap() Keymap {
 // with any non-empty values from the user's keybinding config.
 func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	km := DefaultKeymap()
+	configuredActions := make(map[Action]bool)
+	configuredKeys := make(map[string]bool)
 	set := func(action Action, val string) {
 		if val != "" {
 			km[action] = []string{val}
+			configuredActions[action] = true
+			configuredKeys[val] = true
 		}
 	}
 	// Universal
@@ -148,6 +156,8 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActCopyURL, kcfg.Issues.CopyURL)
 	set(ActCloseJQLTab, kcfg.Issues.CloseJQLTab)
 	set(ActCreateBranch, kcfg.Issues.CreateBranch)
+	set(ActCopyBranchName, kcfg.Issues.CopyBranchName)
+	set(ActCopyWorktreeName, kcfg.Issues.CopyWorktreeName)
 	set(ActCreateIssue, kcfg.Issues.CreateIssue)
 	set(ActCreateSubtask, kcfg.Issues.CreateSubtask)
 	// Detail
@@ -164,6 +174,11 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActNavBottom, kcfg.Navigation.Bottom)
 	set(ActNavHalfDown, kcfg.Navigation.HalfDown)
 	set(ActNavHalfUp, kcfg.Navigation.HalfUp)
+	for action, keys := range km {
+		if !configuredActions[action] {
+			km[action] = slices.DeleteFunc(keys, func(key string) bool { return configuredKeys[key] })
+		}
+	}
 	return km
 }
 

@@ -96,6 +96,7 @@ type GitConfig struct {
 	CloseOnCheckout bool               `yaml:"closeOnCheckout"`
 	AsciiOnly       bool               `yaml:"asciiOnly"`
 	BranchFormat    []BranchFormatRule `yaml:"branchFormat"`
+	WorktreeFormat  string             `yaml:"worktreeFormat"`
 }
 
 type BranchFormatRule struct {
@@ -155,17 +156,19 @@ type UniversalKeys struct {
 }
 
 type IssueKeys struct {
-	Select        string `yaml:"select"`
-	Open          string `yaml:"open"`
-	FocusRight    string `yaml:"focusRight"`
-	Transition    string `yaml:"transition"`
-	Browser       string `yaml:"browser"`
-	URLPicker     string `yaml:"urlPicker"`
-	CopyURL       string `yaml:"copyURL"`
-	CloseJQLTab   string `yaml:"closeJQLTab"`
-	CreateBranch  string `yaml:"createBranch"`
-	CreateIssue   string `yaml:"createIssue"`
-	CreateSubtask string `yaml:"createSubtask"`
+	Select           string `yaml:"select"`
+	Open             string `yaml:"open"`
+	FocusRight       string `yaml:"focusRight"`
+	Transition       string `yaml:"transition"`
+	Browser          string `yaml:"browser"`
+	URLPicker        string `yaml:"urlPicker"`
+	CopyURL          string `yaml:"copyURL"`
+	CopyBranchName   string `yaml:"copyBranchName"`
+	CopyWorktreeName string `yaml:"copyWorktreeName"`
+	CloseJQLTab      string `yaml:"closeJQLTab"`
+	CreateBranch     string `yaml:"createBranch"`
+	CreateIssue      string `yaml:"createIssue"`
+	CreateSubtask    string `yaml:"createSubtask"`
 }
 
 type ProjectKeys struct {

@@ -106,6 +106,10 @@ func TestSanitize(t *testing.T) {
 		{"trailing dot", "branch.", "branch"},
 		{"trailing slash", "branch/", "branch"},
 		{"max length truncation", "a-" + strings.Repeat("b", 100), "a-" + strings.Repeat("b", 58)},
+		{"UTF-8 truncation boundary", strings.Repeat("a", 59) + "é", strings.Repeat("a", 59)},
+		{"UTF-8 fits exact byte limit", strings.Repeat("a", 58) + "é", strings.Repeat("a", 58) + "é"},
+		{"hyphen before split rune", strings.Repeat("a", 58) + "-é", strings.Repeat("a", 58)},
+		{"four-byte rune boundary", strings.Repeat("a", 58) + "🌟", strings.Repeat("a", 58)},
 		{"slash preserved", "parent/child", "parent/child"},
 		{"leading slash stripped", "/child", "child"},
 	}

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"unicode/utf8"
 
 	"github.com/textfuel/lazyjira/v2/pkg/ascii"
 )
@@ -71,8 +72,11 @@ func Sanitize(name string) string {
 	name = strings.TrimSuffix(name, ".lock")
 
 	if len(name) > maxBranchLen {
-		name = name[:maxBranchLen]
-		name = strings.TrimRight(name, "-./")
+		end := maxBranchLen
+		for end > 0 && !utf8.RuneStart(name[end]) {
+			end--
+		}
+		name = strings.TrimRight(name[:end], "-./")
 	}
 
 	return name

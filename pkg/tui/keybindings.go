@@ -67,7 +67,9 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActAssignee, "change assignee"),
 			a.bind(ActBrowser, "open issue in browser"),
 			a.bind(ActURLPicker, "open URL picker"),
+			a.bind(ActCopyBranchName, "copy branch name"),
 			a.bind(ActCreateBranch, "create branch"),
+			a.bind(ActCopyWorktreeName, "copy worktree name"),
 			a.bind(ActNew, "create issue"),
 			a.bind(ActDuplicateIssue, "duplicate issue"),
 			a.bind(ActCloseJQLTab, "close JQL tab"),
@@ -86,6 +88,8 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActAssignee, "change assignee"),
 			a.bind(ActBrowser, "open issue in browser"),
 			a.bind(ActURLPicker, "open URL picker"),
+			a.bind(ActCopyBranchName, "copy branch name"),
+			a.bind(ActCopyWorktreeName, "copy worktree name"),
 			a.bind(ActFocusRight, "next panel"),
 			a.bind(ActFocusLeft, "previous panel"),
 		)
@@ -117,6 +121,8 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActAssignee, "change assignee"),
 			a.bind(ActBrowser, "open in browser"),
 			a.bind(ActURLPicker, "open URL picker"),
+			a.bind(ActCopyBranchName, "copy branch name"),
+			a.bind(ActCopyWorktreeName, "copy worktree name"),
 		)
 		if a.detailView.ActiveTab() == views.TabComments {
 			bindings = append(bindings,
@@ -220,7 +226,9 @@ func (a *App) helpBarItems() []components.HelpItem {
 			components.HelpItem{Key: km.Keys(ActEdit), Description: "edit"},
 			components.HelpItem{Key: km.Keys(ActTransition), Description: "transition"},
 			components.HelpItem{Key: km.Keys(ActPriority), Description: "priority"},
+			components.HelpItem{Key: km.Keys(ActCopyBranchName), Description: "copy branch"},
 			components.HelpItem{Key: km.Keys(ActCreateBranch), Description: "branch"},
+			components.HelpItem{Key: km.Keys(ActCopyWorktreeName), Description: "copy worktree"},
 			components.HelpItem{Key: km.Keys(ActNew), Description: "create"},
 			components.HelpItem{Key: km.Keys(ActJQLSearch), Description: "JQL search"},
 		)

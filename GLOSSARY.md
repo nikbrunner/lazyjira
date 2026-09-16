@@ -14,6 +14,14 @@
 | **Assignee** | The Jira user assigned to an issue. | Owner |
 | **Updated age** | The elapsed time since an issue's last update, displayed as a relative value such as `2h`. | Issue age, creation age |
 
+## Git integration
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Repository name** | The main checkout's directory name. Linked worktrees share this name. Available as the `RepoName` slug in the worktree format. | Project name when referring to a Git repository |
+| **Branch format rule** | A `git.branchFormat` entry that selects a naming template by issue type. Copying and creating a branch use the same rule. | Copy-only format |
+| **Worktree format** | The `git.worktreeFormat` template for a name copied to the clipboard for a worktree. Its default includes the repository name. | Worktree creation command |
+
 ## Issue-list layout
 
 | Term | Definition | Aliases to avoid |

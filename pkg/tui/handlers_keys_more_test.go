@@ -117,7 +117,7 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 		},
 		{
 			name:        "create branch without repo reports error",
-			key:         runeKey('b'),
+			key:         runeKey('B'),
 			wantHandled: true,
 			assert: func(t *testing.T, app *App, cmd tea.Cmd) {
 				t.Helper()

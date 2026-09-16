@@ -59,6 +59,8 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a.handleActionEdit()
 	case ActCreateBranch:
 		return a.handleActionCreateBranch()
+	case ActCopyBranchName, ActCopyWorktreeName:
+		return a.handleActionCopyName(action)
 	case ActShowParent:
 		if cmd, ok := a.showParent(); ok {
 			return a, cmd
@@ -779,20 +781,38 @@ func (a *App) handleActionEdit() (tea.Model, tea.Cmd) {
 	return a, launchEditor(md, ".md")
 }
 
-// handleActionCreateBranch opens the branch creation input
-func (a *App) handleActionCreateBranch() (tea.Model, tea.Cmd) {
-	if a.side != sideLeft || a.leftFocus != focusIssues {
+func (a *App) handleActionCopyName(action Action) (tea.Model, tea.Cmd) {
+	if a.side == sideLeft && a.leftFocus != focusIssues && a.leftFocus != focusInfo {
 		return a, nil
 	}
-	if a.gitRepoPath == "" {
-		a.statusPanel.SetError("not a git repository")
+	cur := a.currentIssue()
+	if cur == nil {
 		return a, nil
 	}
-	sel := a.currentIssue()
-	if sel == nil {
-		return a, nil
+	var name string
+	kind := "branch"
+	if action == ActCopyWorktreeName {
+		kind = "worktree"
+		repoName := ""
+		if a.gitRepoPath != "" {
+			repoName, _ = git.RepoName(a.gitRepoPath)
+		}
+		var err error
+		name, err = git.GenerateWorktreeName(repoName, cur.Key, cur.Summary, a.cfg.Git.WorktreeFormat)
+		if err != nil {
+			a.statusPanel.SetError("copy worktree name: " + err.Error())
+			return a, nil
+		}
+	} else {
+		name = a.branchName(cur)
 	}
-	parts := strings.SplitN(sel.Key, "-", 2)
+	copyToClipboard(name)
+	a.helpBar.SetStatusMsg("Copied " + kind + " name: " + name)
+	return a, nil
+}
+
+func (a *App) branchName(sel *jira.Issue) string {
+	parts := strings.SplitN(strings.ToLower(sel.Key), "-", 2)
 	projKey := parts[0]
 	number := ""
 	if len(parts) > 1 {
@@ -807,10 +827,10 @@ func (a *App) handleActionCreateBranch() (tea.Model, tea.Cmd) {
 	}
 	parentKey := ""
 	if sel.Parent != nil {
-		parentKey = sel.Parent.Key
+		parentKey = strings.ToLower(sel.Parent.Key)
 	}
 	data := git.BranchTemplateData{
-		Key:        sel.Key,
+		Key:        strings.ToLower(sel.Key),
 		ProjectKey: projKey,
 		Number:     number,
 		Summary:    git.SanitizeSummary(sel.Summary, a.cfg.Git.AsciiOnly),
@@ -824,8 +844,23 @@ func (a *App) handleActionCreateBranch() (tea.Model, tea.Cmd) {
 			break
 		}
 	}
-	name := git.GenerateBranchName(data, tmplStr)
-	a.inputModal.Show("Create branch", name)
+	return git.GenerateBranchName(data, tmplStr)
+}
+
+// handleActionCreateBranch opens the branch creation input
+func (a *App) handleActionCreateBranch() (tea.Model, tea.Cmd) {
+	if a.side != sideLeft || a.leftFocus != focusIssues {
+		return a, nil
+	}
+	if a.gitRepoPath == "" {
+		a.statusPanel.SetError("not a git repository")
+		return a, nil
+	}
+	sel := a.currentIssue()
+	if sel == nil {
+		return a, nil
+	}
+	a.inputModal.Show("Create branch", a.branchName(sel))
 	a.editContext = editCtx{kind: editBranch}
 	if result, err := git.SearchBranches(a.gitRepoPath, sel.Key); err == nil {
 		hints := make([]string, 0, len(result.Local)+len(result.Remote))

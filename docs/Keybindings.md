@@ -38,7 +38,9 @@ Detail scroll keys (`J`/`K`/`ctrl+f`/`ctrl+b`) can be remapped via `keybinding.d
 | `o` | Open in browser |
 | `u` | Pick URL from description |
 | `y` | Copy issue URL |
-| `b` | Create branch from issue |
+| `b` | Copy branch name (issues, info, or detail panel) |
+| `B` | Create branch from issue using the same name as `b` |
+| `w` | Copy repository-prefixed worktree name (issues, info, or detail panel) |
 | `s` | JQL search |
 | `x` | Close JQL tab |
 
