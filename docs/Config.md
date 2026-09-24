@@ -586,6 +586,8 @@ Each command has:
 | `contexts` | Optional list of UI contexts the command fires in. Defaults to `[issues, info, detail]`. |
 | `suspend` | Optional. `true` (default) hands the terminal to the child process; set `false` for background commands like clipboard copies or notifications. |
 
+For background commands, the last non-empty output line appears in a toast for three seconds. Write a short success message to stdout if you want confirmation; command failures appear in Status.
+
 ### Contexts
 
 A command fires when one of its declared contexts matches the current UI state.

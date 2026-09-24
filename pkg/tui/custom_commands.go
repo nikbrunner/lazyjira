@@ -274,7 +274,7 @@ func (a *App) handleCustomCommandFinished(msg customCommandFinishedMsg) (tea.Mod
 		return a, tea.Batch(cmds...)
 	}
 	if tail := lastNonEmptyLine(msg.output); tail != "" {
-		a.helpBar.SetStatusMsg(tail)
+		cmds = append(cmds, a.showCopyToast(tail))
 	}
 	// Refresh the previewed issue only when the command declares refresh: true.
 	if msg.refresh {

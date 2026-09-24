@@ -217,6 +217,8 @@ type App struct {
 	gitDetectedKey string
 
 	customCmds []config.ResolvedCustomCommand
+	toastText  string
+	toastEpoch int
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -562,6 +564,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleEditorFinished(msg)
 	case customCommandFinishedMsg:
 		return a.handleCustomCommandFinished(msg)
+	case copyToastExpiredMsg:
+		return a.handleCopyToastExpired(msg)
 	case components.DiffConfirmedMsg:
 		return a.handleDiffConfirmed(msg)
 	case components.DiffCancelledMsg:
@@ -766,6 +770,7 @@ func (a *App) View() string {
 
 	full := lipgloss.JoinVertical(lipgloss.Left, content, bottomBar)
 
+	full = a.renderCopyToast(full)
 	full = a.overlays.Render(full, a.width, a.height)
 	if a.showHelp {
 		full = a.renderHelpOverlay(full)
