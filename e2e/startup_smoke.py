@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Launch the real binary twice with isolated credentials and a local Jira stub."""
 
+import errno
 import fcntl
 import http.server
 import json
@@ -66,7 +67,14 @@ def launch(config_dir):
             raise AssertionError("startup fell back to the credential wizard")
         deadline = time.monotonic() + 3
         while process.poll() is None and time.monotonic() < deadline:
-            os.write(master, b"q")
+            try:
+                os.write(master, b"q")
+            except OSError as exc:
+                if exc.errno != errno.EIO:
+                    raise
+                if process.poll() is None:
+                    raise
+                break
             ready, _, _ = select.select([master], [], [], 0.2)
             if ready:
                 try:
