@@ -431,7 +431,7 @@ func TestHierarchy_GoBack_SkipsWhenLeftFocusNotIssues(t *testing.T) {
 	a.issuesList.AddHierarchyTab(hierarchyTitleChildren, []jira.Issue{{Key: "CHILD-1"}})
 	a.issuesList.HierarchyStack().Push(navstack.NavFrame{ParentKey: "P-1"})
 
-	for _, focus := range []focusPanel{focusInfo, focusStatus, focusProjects} {
+	for _, focus := range []focusPanel{focusInfo, focusProjects, focusProjects} {
 		a.leftFocus = focus
 		if _, handled := a.goBack(); handled {
 			t.Errorf("leftFocus=%v: goBack() handled=true, want false", focus)

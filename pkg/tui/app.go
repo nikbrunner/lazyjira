@@ -25,11 +25,10 @@ var Version = "dev"
 type focusPanel int
 
 const (
-	focusStatus focusPanel = iota
+	focusProjects focusPanel = iota
+	focusIssueTabs
 	focusIssues
 	focusInfo
-	focusProjects
-	focusIssueTabs
 )
 
 type focusSide int
@@ -147,15 +146,16 @@ type App struct {
 	detailView  *views.DetailView
 	logPanel    *views.LogPanel
 
-	keymap     Keymap
-	helpBar    components.HelpBar
-	searchBar  components.SearchBar
-	modal      components.Modal
-	jqlModal   components.JQLModal
-	diffView   components.DiffView
-	inputModal components.InputModal
-	createForm components.CreateForm
-	overlays   components.OverlayStack
+	keymap        Keymap
+	helpBar       components.HelpBar
+	searchBar     components.SearchBar
+	modal         components.Modal
+	jqlModal      components.JQLModal
+	diffView      components.DiffView
+	inputModal    components.InputModal
+	createForm    components.CreateForm
+	projectPicker components.ProjectPicker
+	overlays      components.OverlayStack
 
 	jqlFields []jira.AutocompleteField
 
@@ -260,6 +260,8 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	}
 
 	statusPanel := views.NewStatusPanel(projectKey, cfg.Jira.Email, cfg.Jira.Host)
+	statusPanel.SetAuthMethod(string(authMethod))
+	statusPanel.SetVersion(Version)
 	issuesList := views.NewIssuesList()
 	if len(cfg.GUI.IssueListFields) > 0 {
 		issuesList.SetFields(cfg.GUI.IssueListFields)
@@ -382,6 +384,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	})
 
 	app.overlays = components.OverlayStack{
+		&app.projectPicker,
 		&app.createForm,
 		&app.jqlModal,
 		&app.inputModal,
@@ -482,6 +485,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleBatchPrefetched(msg)
 	case projectsLoadedMsg:
 		return a.handleProjectsLoaded(msg)
+	case components.ProjectPickerSelectedMsg:
+		return a.handleProjectPickerSelected(msg)
+	case components.ProjectPickerCancelledMsg:
+		a.focusPane(focusProjects)
+		return a, nil
 
 	case transitionDoneMsg:
 		return a.handleTransitionDone()
@@ -705,14 +713,52 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.detailView.UpdateIssueData(msg.issue)
 		a.issuesList.PatchIssue(msg.issue)
 		return a, nil
-	case views.ProjectHoveredMsg:
-		if msg.Project != nil {
-			a.detailView.SetProject(msg.Project)
-		}
-		return a, nil
 	}
 
 	return a, a.routeToPanel(msg)
+}
+
+func (a *App) openProjectPicker() {
+	if a.searchBar.IsActive() {
+		updated, cancelCmd := a.searchBar.Update(tea.KeyMsg{Type: tea.KeyEsc})
+		a.searchBar = updated
+		if cancelCmd != nil {
+			a.handleSearchCancelled()
+		}
+	}
+	choices := make([]components.ProjectChoice, 0, len(a.projectList.AllProjects()))
+	for _, project := range a.projectList.AllProjects() {
+		choices = append(choices, components.ProjectChoice{Key: project.Key, Name: project.Name})
+	}
+	a.projectPicker.Show(choices)
+	a.overlays.SetSize(a.width, a.height)
+}
+
+func (a *App) handleProjectPickerSelected(msg components.ProjectPickerSelectedMsg) (tea.Model, tea.Cmd) {
+	for _, project := range a.projectList.AllProjects() {
+		if project.Key == msg.Project.Key {
+			prefetch := a.selectProject(&project)
+			a.focusPane(focusProjects)
+			return a, tea.Batch(a.fetchActiveTab(), prefetch)
+		}
+	}
+	a.focusPane(focusProjects)
+	return a, nil
+}
+
+func (a *App) renderProjectSelector(width, height int) string {
+	label := "Select project"
+	for _, project := range a.projectList.AllProjects() {
+		if project.Key == a.projectKey {
+			label = project.Key
+			if project.Name != "" {
+				label += " · " + project.Name
+			}
+			break
+		}
+	}
+	label = components.TruncateEnd(label+"  ↵", max(width-4, 1))
+	return components.RenderPanel("Project ["+a.keymap.Keys(ActFocusProj)+"]", label, width, max(height-2, 1), a.side == sideLeft && a.leftFocus == focusProjects)
 }
 
 func (a *App) View() string {
@@ -734,20 +780,16 @@ func (a *App) View() string {
 			content = a.detailView.View()
 		}
 	} else {
-		leftCol := lipgloss.JoinVertical(lipgloss.Left,
-			a.renderIssueTabs(layout.tabs.width, layout.tabs.height),
-			a.infoPanel.View(),
-			a.projectList.View(),
-		)
-		rightCol := lipgloss.JoinVertical(lipgloss.Left,
-			a.issuesList.View(),
-			a.detailView.View(),
-		)
-		content = lipgloss.JoinVertical(lipgloss.Left,
+		top := lipgloss.JoinHorizontal(lipgloss.Top,
+			a.renderProjectSelector(layout.projects.width, layout.projects.height),
 			a.statusPanel.View(),
-			lipgloss.JoinHorizontal(lipgloss.Top, leftCol, rightCol),
-			a.logPanel.View(),
 		)
+		workspaceTop := lipgloss.JoinHorizontal(lipgloss.Top,
+			a.renderIssueTabs(layout.tabs.width, layout.tabs.height), a.issuesList.View())
+		workspaceBottom := lipgloss.JoinHorizontal(lipgloss.Top,
+			a.infoPanel.View(), a.detailView.View())
+		content = lipgloss.JoinVertical(lipgloss.Left,
+			top, workspaceTop, workspaceBottom, a.logPanel.View())
 	}
 
 	a.helpBar.SetItems(a.helpBarItems())
@@ -1200,8 +1242,6 @@ func (a *App) updateFocusState() {
 
 	if a.side == sideLeft {
 		switch a.leftFocus {
-		case focusStatus:
-			a.statusPanel.SetFocused(true)
 		case focusIssues:
 			a.issuesList.SetFocused(true)
 		case focusIssueTabs, focusDetailPane:

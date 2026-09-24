@@ -27,11 +27,12 @@ func TestHitTest_UsesSharedLayout(t *testing.T) {
 		want     panelID
 		wantRelY int
 	}{
-		{"status", 5, 0, panelStatus, 0},
+		{"selector", 5, 0, panelProjects, 0},
+		{"status", 30, 0, panelStatus, 0},
 		{"issue tabs", 5, 4, panelTabs, 1},
 		{"issues", 30, 3, panelIssues, 0},
 		{"info", 5, 14, panelInfo, 1},
-		{"projects", 5, 25, panelProjects, 2},
+		{"lower left", 5, 25, panelInfo, 12},
 		{"detail", 30, 18, panelDetail, 5},
 		{"log", 30, 35, panelLog, 1},
 		{"help bar is not a pane", 5, 39, panelNone, 0},
@@ -69,6 +70,22 @@ func TestMouseScroll_FocusesPanel(t *testing.T) {
 
 		if app.side != sideLeft || app.leftFocus != focusIssues {
 			t.Errorf("focus = (%v,%v), want left/issues", app.side, app.leftFocus)
+		}
+	})
+
+	t.Run("selector wheel is inert and does not preview projects", func(t *testing.T) {
+		t.Parallel()
+		app := appWithPanelDims(t, 120)
+		app.keymap = DefaultKeymap()
+		app.projectList.SetProjects([]jira.Project{{Key: "A", Name: "Alpha"}, {Key: "B", Name: "Beta"}})
+		app.projectList.Cursor = 1
+		app.detailView.SetIssue(&jira.Issue{Key: "ISSUE-1"})
+		app.side, app.leftFocus = sideRight, focusIssues
+
+		_, _ = app.mouseScroll(panelProjects, 3)
+
+		if app.side != sideRight || app.leftFocus != focusIssues || app.projectList.Cursor != 1 || app.detailView.IssueKey() != "ISSUE-1" {
+			t.Fatalf("selector wheel changed app state: side=%v focus=%v projectCursor=%d detail=%q", app.side, app.leftFocus, app.projectList.Cursor, app.detailView.IssueKey())
 		}
 	})
 

@@ -153,10 +153,10 @@ type UniversalKeys struct {
 	PrevTab        string `yaml:"prevTab"`
 	NextTab        string `yaml:"nextTab"`
 	FocusDetail    string `yaml:"focusDetail"`
-	FocusStatus    string `yaml:"focusStatus"`
 	FocusIssues    string `yaml:"focusIssues"`
 	FocusInfo      string `yaml:"focusInfo"`
 	FocusProj      string `yaml:"focusProjects"`
+	FocusIssueTabs string `yaml:"focusIssueTabs"`
 	ToggleMaximize string `yaml:"toggleMaximize"`
 	JQLSearch      string `yaml:"jqlSearch"`
 }

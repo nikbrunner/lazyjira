@@ -38,7 +38,7 @@ func TestContextBindings_ContainsQuit(t *testing.T) {
 		},
 		{
 			name:  "status focus",
-			setup: func(app *App) { app.side = sideLeft; app.leftFocus = focusStatus },
+			setup: func(app *App) { app.side = sideLeft; app.leftFocus = focusProjects },
 		},
 		{
 			name:  "detail side",
@@ -111,7 +111,7 @@ func TestHelpBarItems_NotEmpty(t *testing.T) {
 		},
 		{
 			name:  "status panel",
-			setup: func(app *App) { app.side = sideLeft; app.leftFocus = focusStatus },
+			setup: func(app *App) { app.side = sideLeft; app.leftFocus = focusProjects },
 		},
 		{
 			name:  "detail right panel",

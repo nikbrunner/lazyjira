@@ -1,4 +1,4 @@
-.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check check-demo tidy fix release preview e2e e2e-gen e2e-update nix-deps hooks check-staged
+.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check startup-smoke check-demo tidy fix release preview e2e e2e-gen e2e-update nix-deps hooks check-staged
 
 build:
 	go build -o lazyjira ./cmd/lazyjira
@@ -32,7 +32,10 @@ test:
 clean:
 	rm -f lazyjira
 
-check: lint vet build test
+check: lint vet build test startup-smoke
+
+startup-smoke: build
+	python3 e2e/startup_smoke.py
 
 check-staged:
 	@bash -euo pipefail -c '\

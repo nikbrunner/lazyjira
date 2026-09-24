@@ -119,7 +119,7 @@ keybinding:
 				app.leftFocus = focusProjects
 				want = ""
 			case "status":
-				app.leftFocus = focusStatus
+				app.leftFocus = focusProjects
 				want = ""
 			case "no issue":
 				app.previewKey = ""

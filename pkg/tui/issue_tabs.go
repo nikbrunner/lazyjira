@@ -13,8 +13,8 @@ import (
 
 func issueTabVisibleCount(tabCount, innerHeight int) int {
 	visible := innerHeight
-	if tabCount > visible {
-		visible = max(1, innerHeight-2)
+	if tabCount > visible && innerHeight > 2 {
+		visible = innerHeight - 2
 	}
 	return visible
 }
@@ -48,8 +48,17 @@ func (a *App) ensureActiveIssueTabVisible() {
 	}
 }
 
+func (a *App) issueTabsTitle(width int) string {
+	title := "Issue tabs"
+	if hint := a.keymap.Keys(ActFocusIssueTabs); hint != "" {
+		title = "[" + hint + "] " + title
+	}
+	return ansi.Truncate(title, max(width-3, 0), "…")
+}
+
 func (a *App) renderIssueTabs(width, height int) string {
 	innerWidth := max(0, width-2)
+	title := a.issueTabsTitle(width)
 	innerHeight := max(0, height-2)
 	tabs := a.issuesList.Tabs()
 	rows := make([]string, innerHeight)
@@ -62,6 +71,18 @@ func (a *App) renderIssueTabs(width, height int) string {
 		visible := issueTabVisibleCount(len(tabs), innerHeight)
 		lastOffset := max(0, len(tabs)-visible)
 		a.tabOffset = min(max(a.tabOffset, 0), lastOffset)
+		if innerHeight <= 2 {
+			for row := range min(visible, innerHeight, len(tabs)-a.tabOffset) {
+				index := a.tabOffset + row
+				label := "  " + tabs[index].Name
+				if index == a.issuesList.GetTabIndex() {
+					label = theme.Default.Title.Render("› " + tabs[index].Name)
+				}
+				rows[row] = ansi.Truncate(label, innerWidth, "…")
+			}
+			focused := a.side == sideLeft && a.leftFocus == focusIssueTabs
+			return components.RenderPanel(title, strings.Join(rows, "\n"), width, innerHeight, focused)
+		}
 		row := 0
 		if len(tabs) > visible {
 			if a.tabOffset > 0 {
@@ -83,13 +104,20 @@ func (a *App) renderIssueTabs(width, height int) string {
 		}
 	}
 	focused := a.side == sideLeft && a.leftFocus == focusIssueTabs
-	return components.RenderPanel("Issue tabs", strings.Join(rows, "\n"), width, innerHeight, focused)
+	return components.RenderPanel(title, strings.Join(rows, "\n"), width, innerHeight, focused)
 }
 
 func (a *App) issueTabAtRow(y int) (index, overflow int) {
 	layout := a.geometry()
 	innerHeight := max(0, layout.tabs.height-2)
 	tabs := a.issuesList.Tabs()
+	if innerHeight <= 2 {
+		index = a.tabOffset + y - 1
+		if index >= 0 && index < len(tabs) && index < a.tabOffset+issueTabVisibleCount(len(tabs), innerHeight) {
+			return index, 0
+		}
+		return -1, 0
+	}
 	if len(tabs) <= innerHeight {
 		index = a.tabOffset + y - 1
 		if index >= 0 && index < len(tabs) {

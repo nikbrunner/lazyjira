@@ -47,7 +47,7 @@ func TestHandleFocusAction(t *testing.T) {
 			action Action
 			want   focusPanel
 		}{
-			{ActFocusStatus, focusStatus},
+			{ActFocusIssueTabs, focusIssueTabs},
 			{ActFocusIssues, focusIssues},
 			{ActFocusInfo, focusInfo},
 			{ActFocusProj, focusProjects},

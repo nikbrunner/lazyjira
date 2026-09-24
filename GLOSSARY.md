@@ -24,6 +24,17 @@
 | **Worktree location** | The parent directory configured by `worktree.defaultPath`. Relative locations resolve from the main checkout. | Branch name |
 | **Worktree destination** | The full path confirmed when creating a worktree, combining its location and directory name by default. | Worktree location |
 
+## Workspace and panes
+
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Jira project** | A Jira collection of issues identified by a shared project key. | Space without qualification |
+| **Project selector** | The compact workspace control showing the active Jira project. | Project picker |
+| **Project picker** | The overlay listing Jira projects available for selection. | Project selector |
+| **App status panel** | The display-only panel showing app version, account, authentication method, host, and connection state. | Account status panel, Info |
+| **Issue info pane** | The interactive pane for an issue's fields, links, and subtasks. | Account info, Info without qualification |
+| **Issue details pane** | The interactive pane for an issue's description, comments, and history. | Issue info pane |
+
 ## Issue-list layout
 
 | Term | Definition | Aliases to avoid |
@@ -56,6 +67,9 @@
 
 ## Relationships
 
+- The **Project selector** shows the active **Jira project** and opens the **Project picker** to select another.
+- The **App status panel** shows app and connection information without taking focus.
+- The **Issue info pane** provides field editing and relationship navigation; the **Issue details pane** presents issue description, comments, and history.
 - The **Issue tabs pane** lists the **Issue tabs**; its active tab determines the **Issue list** shown in the **Issues panel**.
 - An **Issue tab** contains zero or more **Issues**; an **Issue** can appear in more than one tab.
 - A **Local filter** narrows the active tab's loaded issues into the current **Issue list**.
@@ -79,9 +93,16 @@
 > **Dev:** "Does the **Selection highlight** replace the **Column colors**?"
 >
 > **Domain expert:** "No. Column colors belong to the text; the highlight covers the selected row's entire background, including gaps and trailing space."
+>
+> **Dev:** "If the **App status panel** cannot take focus, can I still edit fields in the **Issue info pane**?"
+>
+> **Domain expert:** "Yes. The **Issue info pane** stays interactive; the **Project selector** opens the **Project picker** to switch **Jira projects**."
 
 ## Flagged ambiguities
 
+- Atlassian Cloud calls a **Jira project** a "Jira space"; this repository uses project in its API and code. A Confluence space is a different entity.
+- Bare "Info" can mean account/connection information or issue metadata; use **App status panel** or **Issue info pane**.
+- Bare "Status" can mean connection state in the **App status panel** or an issue's workflow **Status**; qualify it when the context is unclear.
 - "Header" can mean a panel title, the issue-detail heading, or the table labels; use **Column header row** for the labels above issue rows.
 - "Issue list" can mean the entire bordered panel or only the rows on screen; use **Issues panel**, **Issue list**, and **Viewport** for those distinct scopes.
 - "Field" is Jira data, while **Column** is its presentation in the issue list; not every field is displayed as a column.

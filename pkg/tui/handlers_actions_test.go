@@ -8,6 +8,7 @@ import (
 	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
 	"github.com/textfuel/lazyjira/v2/pkg/jira"
 	"github.com/textfuel/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
 	"github.com/textfuel/lazyjira/v2/pkg/tui/views"
 )
 
@@ -145,8 +146,13 @@ func TestHandleActionSelect_ProjectsOpensProject(t *testing.T) {
 
 	_, _ = app.handleActionSelect()
 
-	testkit.AssertEqual(t, "projectKey after select", app.projectKey, testProject)
-	testkit.AssertEqual(t, "leftFocus after select", app.leftFocus, focusIssues)
+	if !app.projectPicker.IsVisible() {
+		t.Fatal("selector action should open project picker")
+	}
+	app.projectPicker.Show([]components.ProjectChoice{{Key: testProject, Name: "Test Project"}})
+	_, _ = app.Update(components.ProjectPickerSelectedMsg{Project: components.ProjectChoice{Key: testProject, Name: "Test Project"}})
+	testkit.AssertEqual(t, "projectKey after selection", app.projectKey, testProject)
+	testkit.AssertEqual(t, "leftFocus after selection", app.leftFocus, focusProjects)
 }
 
 func TestHandleActionOpen_IssuesSwitchesToDetail(t *testing.T) {
@@ -177,7 +183,9 @@ func TestHandleActionOpen_ProjectsOpensProject(t *testing.T) {
 
 	_, _ = app.handleActionOpen()
 
-	testkit.AssertEqual(t, "projectKey after open", app.projectKey, testProject)
+	if !app.projectPicker.IsVisible() {
+		t.Fatal("selector Enter should open project picker")
+	}
 }
 
 func TestHandleActionURLPicker_ShowsModalWhenURLsExist(t *testing.T) {
@@ -260,8 +268,11 @@ func TestOpenProject_UpdatesProjectKey(t *testing.T) {
 
 	_, _ = app.openProject()
 
-	testkit.AssertEqual(t, "projectKey", app.projectKey, testProject)
-	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusIssues)
+	if !app.projectPicker.IsVisible() {
+		t.Fatal("openProject should open picker")
+	}
+	testkit.AssertEqual(t, "projectKey", app.projectKey, "")
+	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusProjects)
 }
 
 func TestOpenProject_NoopWithNoSelection(t *testing.T) {

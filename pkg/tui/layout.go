@@ -70,18 +70,19 @@ func (a *App) geometry() appLayout {
 		return layout
 	}
 
-	layout.status = rect{0, 0, a.width, statusHeight}
+	sideWidth := a.sideWidth()
+	mainWidth := a.width - sideWidth
+	layout.projects = rect{0, 0, sideWidth, statusHeight}
+	layout.status = rect{sideWidth, 0, mainWidth, statusHeight}
 	layout.log = rect{0, a.height - helpHeight - logHeight, a.width, logHeight}
 	bodyY := statusHeight
 	bodyHeight := layout.log.y - bodyY
-	sideWidth := a.sideWidth()
-	mainWidth := a.width - sideWidth
-	tabsHeight := min(bodyHeight-6, max(5, bodyHeight/3))
-	layout.tabs = rect{0, bodyY, sideWidth, tabsHeight}
-	layout.info = rect{0, layout.tabs.y + layout.tabs.height, sideWidth, (bodyHeight - layout.tabs.height) / 2}
-	layout.projects = rect{0, layout.info.y + layout.info.height, sideWidth, bodyY + bodyHeight - (layout.info.y + layout.info.height)}
-	layout.issues = rect{sideWidth, bodyY, mainWidth, bodyHeight / 3}
-	layout.detail = rect{sideWidth, bodyY + layout.issues.height, mainWidth, bodyHeight - layout.issues.height}
+	issuesHeight := bodyHeight / 3
+	detailHeight := bodyHeight - issuesHeight
+	layout.tabs = rect{0, bodyY, sideWidth, issuesHeight}
+	layout.issues = rect{sideWidth, bodyY, mainWidth, issuesHeight}
+	layout.info = rect{0, bodyY + issuesHeight, sideWidth, detailHeight}
+	layout.detail = rect{sideWidth, bodyY + issuesHeight, mainWidth, detailHeight}
 	return layout
 }
 

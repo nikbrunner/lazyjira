@@ -1,0 +1,20 @@
+# Workspace layout implementation plan
+
+The proposed layout in [`ui.tldraw`](../ui.tldraw) is the visual reference. `docs/assets/ui-layouts.jpg` predates the board annotations. Pane names follow [`GLOSSARY.md`](../GLOSSARY.md).
+
+## Target behavior
+
+- The top row contains the focusable Project selector (`0`) on the left and the display-only App status panel on the right. App status shows connection state, account, host, auth method, and version within available width; connection errors take priority.
+- Issue tabs (`1`) and Issues (`2`) share the upper workspace row. Issue info (`3`) and Issue details (`4`) share the lower row. Issue tabs scroll independently when their row fills; the pane boundaries stay aligned. Issue info keeps its field editing, links, subtasks, and tabs.
+- Enter or a click on the Project selector opens a project picker overlay. Typing filters projects by key or name immediately, only while the picker is open. Keyboard navigation, Enter to confirm, and Esc to cancel stay inside the overlay. Confirming or cancelling returns focus to the selector. Moving through picker results does not preview projects in Issue details.
+- The default direct-focus keys are `0` selector, `1` Issue tabs, `2` Issues, `3` Issue info, and `4` Issue details. All five are configurable. `focusStatus` is removed; `focusProjects` targets the selector and `focusIssueTabs` targets Issue tabs. Startup focus remains on Issues. `HJKL` follows adjacent focusable panes without diagonal jumps: `K` from Issues does nothing because App status is display-only.
+- Project switching keeps current query semantics: tabs using `{{.ProjectKey}}` change with the project; fixed JQL and temporary search tabs retain their queries.
+- Keep the existing sidebar width policy, one-third/two-thirds Issues/Details height split, maximize behavior, command log, and help bar.
+
+## Implementation order
+
+1. **Geometry and rendering.** Update `pkg/tui/layout.go` and `App.View` in `pkg/tui/app.go` to compose two aligned workspace rows below the split top row. Size the selector, App status, Issue tabs, Issues, Issue info, and Issue details from the same geometry used by mouse hit-testing. Keep the current minimum-size behavior and independent Issue tabs viewport. Render the compact selector from the active project; fit App status content by terminal display width, leaving room for borders and errors. Use the `terminal-rendering` skill for truncation and styled text.
+2. **Project picker.** Reuse the loaded project data and `selectProject` flow. Add a picker-specific immediate-filter mode or a small dedicated overlay, without changing `/` search behavior in other modals. Register it with `OverlayStack` so typing, navigation, confirmation, and cancellation are intercepted before global and custom keybindings. Do not send picker hover events to Issue details.
+3. **Focus and input.** Adjust the focus model, `pkg/tui/focus.go`, key handlers, mouse hit-testing/click routing, help hints, and custom-command contexts for the new pane positions. The selector opens on Enter/click; App status never receives focus. Remove the Status-focus splash trigger while preserving selected-issue previews and Issue info actions. Preserve maximize and issue-collection switching from other panes.
+4. **Configuration and docs.** Change `pkg/tui/keymap.go` and `pkg/config/config.go` to remove `focusStatus`, add configurable `focusIssueTabs`, and set the agreed defaults. Update `docs/Config.md`, `docs/Keybindings.md`, and any in-app help or example config that describes pane positions and shortcuts. Keep `GLOSSARY.md` aligned if implementation terminology differs.
+5. **Verification.** Cover aligned rectangles at wide and 80×21 sizes, overflow/resize of Issue tabs, status truncation and error precedence, picker filtering and key interception, Enter/click/open/confirm/Esc focus behavior, no hover preview, all five configurable focus keys, spatial navigation, Issue info interaction, maximize, and project-specific versus fixed JQL. Run `make check`; check the local preview launcher symlink before building this checkout's binary for manual inspection.

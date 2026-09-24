@@ -10,24 +10,23 @@ Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspa
 |-----|--------|
 | `j` / `k` | Move down / up in focused lists; switch collections in the Issue tabs pane |
 | `g` / `G` | Jump to top / bottom |
-| `ctrl+d` / `ctrl+u` | Scroll Details by one line from Issues or Info; half-page movement in Projects, Details, and help |
+| `ctrl+d` / `ctrl+u` | Scroll Details by one line from Issues or Info; half-page movement in Details and help |
 | `ctrl+f` / `ctrl+b` | Half-page detail scroll from Issues or Info |
 | `tab` / `shift+tab` | Switch issue collection without changing focus |
 | `H` / `J` / `K` / `L` | Move focus according to the pane map below |
-| `0` `1` `2` `3` `4` | Focus Status, Issues, Details, Info, Projects |
+| `0` `1` `2` `3` `4` | Focus Project selector, Issue tabs, Issues, Issue info, Issue details |
 | `+` | Maximize or restore focused Issues or Details pane |
 | `enter` in Issue tabs | Focus Issues without changing collection |
 
-Lowercase `h`/`l` and Left/Right do not move focus by default. The Issue tabs pane does not have a direct-focus number.
+The Project selector opens a searchable picker with `enter` or a click. The Issue tabs pane is directly focusable; `enter` there focuses Issues.
 
 | Focused pane | `H` | `J` | `K` | `L` |
 | --- | --- | --- | --- | --- |
-| Status | — | Issue tabs | — | — |
-| Issue tabs | — | Info | Status | Issues |
-| Issues | Issue tabs | Details | Status | — |
-| Details | Issue tabs | — | Issues | — |
-| Info | — | Projects | Issue tabs | Details |
-| Projects | — | — | Info | Details |
+| Project selector | — | Issue tabs | — | — |
+| Issue tabs | — | Info | Project selector | Issues |
+| Issues | Issue tabs | Details | — | — |
+| Details | Info | — | Issues | — |
+| Info | — | — | Issue tabs | Details |
 
 `[` / `]` switch issue collections from Issues or the Issue tabs pane, Details tabs from Details, and Info tabs from Info. Detail scroll keys can be remapped via `keybinding.detail`; list navigation keys can be remapped via `keybinding.navigation`.
 

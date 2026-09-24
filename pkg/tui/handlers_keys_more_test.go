@@ -290,12 +290,9 @@ func TestHandleFocusAction_FullCycles(t *testing.T) {
 		action Action
 		want   focusPanel
 	}{
-		{"right from status", sideLeft, focusStatus, ActFocusRight, focusIssues},
-		{"right from info", sideLeft, focusInfo, ActFocusRight, focusProjects},
-		{"right from projects wraps to status", sideLeft, focusProjects, ActFocusRight, focusStatus},
-		{"left from status wraps to projects", sideLeft, focusStatus, ActFocusLeft, focusProjects},
-		{"left from projects", sideLeft, focusProjects, ActFocusLeft, focusInfo},
-		{"left from info", sideLeft, focusInfo, ActFocusLeft, focusIssues},
+		{"right from tabs", sideLeft, focusIssueTabs, ActFocusRight, focusIssues},
+		{"left from issues", sideLeft, focusIssues, ActFocusLeft, focusIssueTabs},
+		{"left from info returns to issues", sideLeft, focusInfo, ActFocusLeft, focusIssues},
 	}
 
 	for _, testCase := range cases {

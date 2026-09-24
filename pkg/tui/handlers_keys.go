@@ -68,6 +68,10 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ActSelect:
 		return a.handleActionSelect()
 	case ActOpen:
+		if a.side == sideLeft && a.leftFocus == focusProjects {
+			a.openProjectPicker()
+			return a, nil
+		}
 		if a.side == sideLeft && a.leftFocus == focusIssueTabs {
 			a.focusPane(focusIssues)
 			return a, nil
@@ -273,33 +277,25 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 
 	case ActFocusRight:
 		if a.side == sideLeft {
-			switch a.leftFocus {
-			case focusStatus:
+			if a.leftFocus == focusIssueTabs {
 				a.leftFocus = focusIssues
-			case focusIssueTabs:
-				a.leftFocus = focusIssues
-			case focusIssues:
-				a.leftFocus = focusInfo
-			case focusInfo:
-				a.leftFocus = focusProjects
-			case focusProjects:
-				a.leftFocus = focusStatus
-			case focusDetailPane:
+				a.updateFocusState()
+				return a, nil, true
 			}
-			a.updateFocusState()
-			return a, nil, true
+			if a.leftFocus == focusInfo {
+				a.focusPane(focusDetailPane)
+				return a, nil, true
+			}
 		}
 
 	case ActFocusLeft:
 		if a.side == sideLeft {
-			switch a.leftFocus {
-			case focusStatus:
-				a.leftFocus = focusProjects
-			case focusIssueTabs:
-				a.leftFocus = focusStatus
-			case focusIssues:
-				a.leftFocus = focusStatus
-			case focusInfo:
+			if a.leftFocus == focusIssues {
+				a.leftFocus = focusIssueTabs
+				a.updateFocusState()
+				return a, nil, true
+			}
+			if a.leftFocus == focusInfo {
 				tab := a.infoPanel.ActiveTab()
 				var cmd tea.Cmd
 				if tab == views.InfoTabSubtasks || tab == views.InfoTabLinks {
@@ -308,12 +304,7 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 				a.leftFocus = focusIssues
 				a.updateFocusState()
 				return a, cmd, true
-			case focusProjects:
-				a.leftFocus = focusInfo
-			case focusDetailPane:
 			}
-			a.updateFocusState()
-			return a, nil, true
 		}
 		if a.side == sideRight {
 			a.side = sideLeft
@@ -323,12 +314,6 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 
 	case ActFocusDetail:
 		a.focusPane(focusDetailPane)
-		return a, nil, true
-
-	case ActFocusStatus:
-		a.focusPane(focusStatus)
-		a.splashInfo.Project = a.projectKey
-		a.detailView.SetSplash(a.splashInfo)
 		return a, nil, true
 
 	case ActFocusIssues:
@@ -344,6 +329,10 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 
 	case ActFocusProj:
 		a.focusPane(focusProjects)
+		return a, nil, true
+
+	case ActFocusIssueTabs:
+		a.focusPane(focusIssueTabs)
 		return a, nil, true
 	}
 	return nil, nil, false
@@ -662,12 +651,8 @@ func (a *App) openIssueDetail() (tea.Model, tea.Cmd) {
 }
 
 func (a *App) openProject() (tea.Model, tea.Cmd) {
-	if p := a.projectList.SelectedProject(); p != nil {
-		prefetch := a.selectProject(p)
-		a.leftFocus = focusIssues
-		a.updateFocusState()
-		return a, tea.Batch(a.fetchActiveTab(), prefetch)
-	}
+	a.focusPane(focusProjects)
+	a.openProjectPicker()
 	return a, nil
 }
 

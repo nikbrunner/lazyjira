@@ -57,6 +57,32 @@ func TestSaveCredentials_RoundTripsAndIsPrivate(t *testing.T) {
 	testkit.AssertEqual(t, "round-tripped credentials", *got, *want)
 }
 
+func TestSaveCredentials_ReplacesExistingFile(t *testing.T) {
+	t.Setenv("LAZYJIRA_CONFIG_DIR", t.TempDir())
+	if err := SaveCredentials(&Credentials{Host: "https://old.example", Token: "old"}); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.Stat(AuthPath())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := SaveCredentials(&Credentials{Host: "https://new.example", Token: "new"}); err != nil {
+		t.Fatal(err)
+	}
+	after, err := os.Stat(AuthPath())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if os.SameFile(before, after) {
+		t.Error("SaveCredentials modified the existing file in place")
+	}
+	creds, err := LoadCredentials()
+	if err != nil || creds == nil || creds.Host != "https://new.example" {
+		t.Fatalf("replacement credentials not readable: host=%v err=%v", creds != nil, err)
+	}
+}
+
 func TestLoadCredentials_InvalidJSONReturnsError(t *testing.T) {
 	t.Setenv("LAZYJIRA_CONFIG_DIR", t.TempDir())
 	if err := os.WriteFile(AuthPath(), []byte("{not valid"), 0o600); err != nil {

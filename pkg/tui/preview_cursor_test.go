@@ -170,20 +170,20 @@ func TestPreviewFollowsCursor_RapidCursor_OnlyLastFetch(t *testing.T) {
 	}
 }
 
-func TestPreviewFollowsCursor_Projects(t *testing.T) {
+func TestProjectPickerMovementDoesNotPreviewProject(t *testing.T) {
 	t.Parallel()
 	fake := &jiratest.FakeClient{T: t}
 	app := newAppWithFake(t, fake)
 	projects := []jira.Project{{Key: "P1", Name: "Project One"}, {Key: "P2", Name: "Project Two"}}
-
+	app.projectList.SetProjects(projects)
+	app.detailView.SetIssue(&jira.Issue{Key: "ISSUE-1"})
+	app.focusPane(focusProjects)
+	app.openProjectPicker()
+	_, _ = app.Update(runeKey('p'))
 	_, _ = app.Update(views.ProjectHoveredMsg{Project: &projects[1]})
 
-	if got := app.detailView.Mode(); got != views.ModeProject {
-		t.Errorf("detailView.Mode = %v, want ModeProject", got)
-	}
-	_, _ = app.Update(views.ProjectHoveredMsg{Project: nil})
-	if got := app.detailView.Mode(); got != views.ModeProject {
-		t.Errorf("nil hover changed mode away from ModeProject (got %v)", got)
+	if got := app.detailView.IssueKey(); got != "ISSUE-1" {
+		t.Errorf("picker movement changed detail issue to %q", got)
 	}
 }
 

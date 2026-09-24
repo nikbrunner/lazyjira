@@ -80,8 +80,8 @@ func TestUpdate_RoutesCoreMessages(t *testing.T) {
 			msg:  tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 5, Y: 0},
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
-				if app.leftFocus != focusStatus {
-					t.Errorf("leftFocus = %v, want focusStatus after status click", app.leftFocus)
+				if app.leftFocus != focusProjects || !app.projectPicker.IsVisible() {
+					t.Errorf("focus/picker = %v/%v, want selector with picker open", app.leftFocus, app.projectPicker.IsVisible())
 				}
 			},
 		},
@@ -713,12 +713,15 @@ func TestUpdate_RoutesLifecycleMessages(t *testing.T) {
 			msg: previewDebounceMsg{key: testKey, epoch: 1},
 		},
 		{
-			name: "project hovered updates detail view",
-			msg:  views.ProjectHoveredMsg{Project: &jira.Project{Key: testProject}},
+			name: "project hover cannot preview while selector is active",
+			setup: func(app *App, _ *jiratest.FakeClient) {
+				app.leftFocus = focusProjects
+			},
+			msg: views.ProjectHoveredMsg{Project: &jira.Project{Key: testProject}},
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
-				if app.detailView.Mode() != views.ModeProject {
-					t.Error("detail view should switch to project mode")
+				if app.detailView.Mode() == views.ModeProject {
+					t.Error("project picker movement must not preview project in details")
 				}
 			},
 		},

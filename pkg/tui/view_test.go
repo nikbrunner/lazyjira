@@ -222,7 +222,7 @@ func TestView_NoPanic_AllFocusStates(t *testing.T) {
 		},
 		{
 			name:  "left status",
-			setup: func(app *App) { app.side = sideLeft; app.leftFocus = focusStatus },
+			setup: func(app *App) { app.side = sideLeft; app.leftFocus = focusProjects },
 		},
 		{
 			name:  "right side",

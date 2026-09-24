@@ -70,8 +70,11 @@ func TestHandleMouse_LeftClickFocusesPanel(t *testing.T) {
 		Y:      0,
 	})
 
-	testkit.AssertEqual(t, "side after click on status", app.side, sideLeft)
-	testkit.AssertEqual(t, "leftFocus after status click", app.leftFocus, focusStatus)
+	testkit.AssertEqual(t, "side after click on selector", app.side, sideLeft)
+	testkit.AssertEqual(t, "leftFocus after click on selector", app.leftFocus, focusProjects)
+	if !app.projectPicker.IsVisible() {
+		t.Fatal("selector click should open project picker")
+	}
 }
 
 func TestHandleMouse_MotionIsNoop(t *testing.T) {
@@ -92,15 +95,14 @@ func TestHandleMouse_MotionIsNoop(t *testing.T) {
 	}
 }
 
-func TestMouseClick_StatusFocusesStatus(t *testing.T) {
+func TestMouseClick_StatusIsDisplayOnly(t *testing.T) {
 	t.Parallel()
 	app := mouseApp(t)
 	app.side = sideRight
 
 	_, _ = app.mouseClick(panelStatus, 0, 5)
 
-	testkit.AssertEqual(t, "side", app.side, sideLeft)
-	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusStatus)
+	testkit.AssertEqual(t, "side", app.side, sideRight)
 }
 
 func TestMouseClick_IssueTabsPaneActivatesTab(t *testing.T) {

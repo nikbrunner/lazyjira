@@ -13,12 +13,11 @@ func (a *App) handleSpatialFocus(key string) (tea.Model, tea.Cmd, bool) {
 		current = focusDetailPane
 	}
 	targets := map[focusPanel]map[string]focusPanel{
-		focusStatus:     {"J": focusIssueTabs},
-		focusIssueTabs:  {"J": focusInfo, "K": focusStatus, "L": focusIssues},
-		focusIssues:     {"H": focusIssueTabs, "J": focusDetailPane, "K": focusStatus},
-		focusDetailPane: {"H": focusIssueTabs, "K": focusIssues},
-		focusInfo:       {"J": focusProjects, "K": focusIssueTabs, "L": focusDetailPane},
-		focusProjects:   {"K": focusInfo, "L": focusDetailPane},
+		focusProjects:   {"J": focusIssueTabs},
+		focusIssueTabs:  {"J": focusInfo, "K": focusProjects, "L": focusIssues},
+		focusIssues:     {"H": focusIssueTabs, "J": focusDetailPane},
+		focusDetailPane: {"H": focusInfo, "K": focusIssues},
+		focusInfo:       {"K": focusIssueTabs, "L": focusDetailPane},
 	}
 	if target, ok := targets[current][key]; ok {
 		a.focusPane(target)
@@ -27,7 +26,6 @@ func (a *App) handleSpatialFocus(key string) (tea.Model, tea.Cmd, bool) {
 }
 
 func (a *App) updateFocusHints() {
-	a.statusPanel.SetFocusHint(a.keymap.Keys(ActFocusStatus))
 	a.issuesList.SetFocusHint(a.keymap.Keys(ActFocusIssues))
 	a.detailView.SetFocusHint(a.keymap.Keys(ActFocusDetail))
 	a.infoPanel.SetFocusHint(a.keymap.Keys(ActFocusInfo))

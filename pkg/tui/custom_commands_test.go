@@ -42,11 +42,6 @@ func TestActiveContexts(t *testing.T) {
 			[]config.Context{config.CtxProjects},
 		},
 		{
-			"left status",
-			func(app *App) { app.side = sideLeft; app.leftFocus = focusStatus },
-			nil,
-		},
-		{
 			"right detail details",
 			func(app *App) {
 				app.side = sideRight

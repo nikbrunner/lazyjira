@@ -15,6 +15,110 @@ import (
 	"github.com/textfuel/lazyjira/v2/pkg/tui/views"
 )
 
+func TestIssueTabsPane_CompactViewportKeepsTabsVisibleSelectable(t *testing.T) {
+	t.Parallel()
+	app := appWithPanelDims(t, 80)
+	app.height = 21
+	app.layoutPanels()
+	app.keymap = DefaultKeymap()
+	tabs := make([]config.IssueTabConfig, 5)
+	for i := range tabs {
+		tabs[i] = config.IssueTabConfig{Name: fmt.Sprintf("Collection %d", i)}
+	}
+	app.issuesList.SetTabs(tabs)
+	app.side, app.leftFocus = sideLeft, focusIssueTabs
+
+	if got := issueTabVisibleCount(len(tabs), app.geometry().tabs.height-2); got != 2 {
+		t.Fatalf("80x21 visible tab count=%d, want both content rows", got)
+	}
+	app.setIssueTabIndex(4)
+	view := ansi.Strip(app.renderIssueTabs(app.geometry().tabs.width, app.geometry().tabs.height))
+	if !strings.Contains(view, "› Collection 4") || !strings.Contains(view, "Collection 3") {
+		t.Fatalf("compact pane hid active/adjacent tabs:\n%s", view)
+	}
+	if index, overflow := app.issueTabAtRow(2); index != 4 || overflow != 0 {
+		t.Fatalf("compact second row maps to index=%d overflow=%d, want active tab 4", index, overflow)
+	}
+
+	app.setIssueTabIndex(0)
+	_, _ = app.handleKeyMsg(runeKey('j'))
+	if app.issuesList.GetTabIndex() != 1 {
+		t.Fatalf("j changed active tab to %d, want 1", app.issuesList.GetTabIndex())
+	}
+	app.setIssueTabIndex(4)
+	_, _ = app.mouseClick(panelTabs, 1, 5)
+	if app.issuesList.GetTabIndex() != 3 {
+		t.Fatalf("mouse click selected tab %d, want visible tab 3", app.issuesList.GetTabIndex())
+	}
+
+	app.setIssueTabIndex(4)
+	app = resizeViewApp(t, app, 80, 24)
+	view = ansi.Strip(app.renderIssueTabs(app.geometry().tabs.width, app.geometry().tabs.height))
+	if !strings.Contains(view, "› Collection 4") {
+		t.Fatalf("resize hid active tab:\n%s", view)
+	}
+}
+
+func TestIssueTabsPane_MinimumViewportZeroOneAndManyTabs(t *testing.T) {
+	t.Parallel()
+	for _, count := range []int{0, 1, 5} {
+		t.Run(fmt.Sprintf("%d tabs", count), func(t *testing.T) {
+			t.Parallel()
+			app := appWithPanelDims(t, 80)
+			app.height = 21
+			app.layoutPanels()
+			app.keymap = DefaultKeymap()
+			tabs := make([]config.IssueTabConfig, count)
+			for i := range tabs {
+				tabs[i] = config.IssueTabConfig{Name: fmt.Sprintf("Collection %d", i)}
+			}
+			app.issuesList.SetTabs(tabs)
+
+			layout := app.geometry()
+			view := app.renderIssueTabs(layout.tabs.width, layout.tabs.height)
+			lines := strings.Split(ansi.Strip(view), "\n")
+			if len(lines) != layout.tabs.height {
+				t.Fatalf("rendered %d lines, want %d: %q", len(lines), layout.tabs.height, view)
+			}
+			for i, line := range lines {
+				if width := lipgloss.Width(line); width != layout.tabs.width {
+					t.Errorf("line %d width=%d, want %d", i, width, layout.tabs.width)
+				}
+			}
+			wantIndex := -1
+			if count > 0 {
+				wantIndex = 0
+			}
+			if index, overflow := app.issueTabAtRow(1); index != wantIndex || overflow != 0 {
+				t.Fatalf("first content row maps to (%d,%d), want (%d,0)", index, overflow, wantIndex)
+			}
+			app.mouseClick(panelTabs, 1, 5)
+			if count > 0 && app.issuesList.GetTabIndex() != 0 {
+				t.Fatalf("first-row click selected tab %d, want 0", app.issuesList.GetTabIndex())
+			}
+		})
+	}
+}
+
+func TestIssueTabsPane_TitleShowsConfiguredFocusKey(t *testing.T) {
+	t.Parallel()
+	app := appWithPanelDims(t, 120)
+	app.keymap = DefaultKeymap()
+	app.issuesList.SetTabs([]config.IssueTabConfig{{Name: "All"}})
+	view := ansi.Strip(app.renderIssueTabs(app.geometry().tabs.width, app.geometry().tabs.height))
+	if !strings.Contains(view, "[1] Issue tabs") {
+		t.Fatalf("default title missing focus key: %q", view)
+	}
+
+	app.width, app.height = 80, 21
+	app.layoutPanels()
+	app.keymap[ActFocusIssueTabs] = []string{"F"}
+	view = ansi.Strip(app.renderIssueTabs(app.geometry().tabs.width, app.geometry().tabs.height))
+	if !strings.Contains(view, "[F] Issue tabs") {
+		t.Fatalf("compact title missing remapped focus key: %q", view)
+	}
+}
+
 func TestIssueTabsPane_OverflowIndicatorsAndClicks(t *testing.T) {
 	t.Parallel()
 	app := appWithPanelDims(t, 120)
@@ -144,21 +248,18 @@ func TestFocusMap_DirectsUppercaseHJKLWithoutWrapping(t *testing.T) {
 		wantSide  focusSide
 		want      focusPanel
 	}{
-		{"status down", sideLeft, focusStatus, "J", sideLeft, focusIssueTabs},
+		{"selector down", sideLeft, focusProjects, "J", sideLeft, focusIssueTabs},
 		{"tabs down", sideLeft, focusIssueTabs, "J", sideLeft, focusInfo},
-		{"tabs up", sideLeft, focusIssueTabs, "K", sideLeft, focusStatus},
+		{"tabs up", sideLeft, focusIssueTabs, "K", sideLeft, focusProjects},
 		{"tabs right", sideLeft, focusIssueTabs, "L", sideLeft, focusIssues},
 		{"issues left", sideLeft, focusIssues, "H", sideLeft, focusIssueTabs},
 		{"issues down", sideLeft, focusIssues, "J", sideRight, focusIssues},
-		{"issues up", sideLeft, focusIssues, "K", sideLeft, focusStatus},
-		{"details left", sideRight, focusIssues, "H", sideLeft, focusIssueTabs},
+		{"issues up is no-op", sideLeft, focusIssues, "K", sideLeft, focusIssues},
+		{"details left", sideRight, focusIssues, "H", sideLeft, focusInfo},
 		{"details up", sideRight, focusIssues, "K", sideLeft, focusIssues},
-		{"info down", sideLeft, focusInfo, "J", sideLeft, focusProjects},
 		{"info up", sideLeft, focusInfo, "K", sideLeft, focusIssueTabs},
 		{"info right", sideLeft, focusInfo, "L", sideRight, focusInfo},
-		{"projects up", sideLeft, focusProjects, "K", sideLeft, focusInfo},
-		{"projects right", sideLeft, focusProjects, "L", sideRight, focusProjects},
-		{"no wrapping", sideLeft, focusStatus, "H", sideLeft, focusStatus},
+		{"selector left is no-op", sideLeft, focusProjects, "H", sideLeft, focusProjects},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -180,7 +281,6 @@ func TestIssueCollectionsSwitchFromAnyPaneWithoutMovingFocus(t *testing.T) {
 		side focusSide
 		pane focusPanel
 	}{
-		{"status", sideLeft, focusStatus},
 		{"issue tabs", sideLeft, focusIssueTabs},
 		{"issues", sideLeft, focusIssues},
 		{"info", sideLeft, focusInfo},
@@ -222,7 +322,7 @@ func TestFocusActionRestoresSplitWhenTargetIsHidden(t *testing.T) {
 	app.side = sideLeft
 	app.leftFocus = focusIssues
 
-	_, _ = app.handleKeyMsg(runeKey('2'))
+	_, _ = app.handleKeyMsg(runeKey('4'))
 
 	if app.maximized || app.side != sideRight {
 		t.Fatalf("target detail focus left maximized=%v side=%v", app.maximized, app.side)

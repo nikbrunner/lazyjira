@@ -50,7 +50,19 @@ func SaveCredentials(creds *Credentials) error {
 		return err
 	}
 
-	return os.WriteFile(AuthPath(), data, 0o600)
+	tmp, err := os.CreateTemp(dir, ".auth-*.json")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(tmp.Name()) }()
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), AuthPath())
 }
 
 // ClearCredentials removes auth.json

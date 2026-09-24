@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
 )
@@ -23,14 +24,14 @@ func TestStatusPanel_NewStatusPanel_SetsDefaults(t *testing.T) {
 	testkit.AssertEqual(t, "error empty", panel.ErrorMessage(), "")
 }
 
-func TestStatusPanel_SetProject_UpdatesProject(t *testing.T) {
+func TestStatusPanel_SetProject_DoesNotReplaceAccountStatus(t *testing.T) {
 	t.Parallel()
 	panel := makeStatusPanel()
 	panel.SetProject("NEWPROJ")
 	panel.SetSize(80, 10)
 	output := stripANSI(panel.View())
-	if !strings.Contains(output, "NEWPROJ") {
-		t.Errorf("View() = %q, want to contain NEWPROJ", output)
+	if strings.Contains(output, "NEWPROJ") {
+		t.Errorf("View() = %q, should not display project as account status", output)
 	}
 }
 
@@ -118,13 +119,47 @@ func TestStatusPanel_View_ShowsEmail(t *testing.T) {
 	}
 }
 
-func TestStatusPanel_View_ShowsProject(t *testing.T) {
+func TestStatusPanel_View_ShowsConnectionDetails(t *testing.T) {
 	t.Parallel()
 	panel := makeStatusPanel()
+	panel.SetAuthMethod("Environment variables")
+	panel.SetVersion("v1.2.3")
 	panel.SetSize(80, 10)
 	output := stripANSI(panel.View())
-	if !strings.Contains(output, testProject) {
-		t.Errorf("View() = %q, want to contain project %s", output, testProject)
+	for _, want := range []string{testEmail, testHost, "Environment variables", "v1.2.3", "Connected"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("View() = %q, want to contain %q", output, want)
+		}
+	}
+}
+
+func TestStatusPanel_View_UsesHostWhenEmailMissing(t *testing.T) {
+	t.Parallel()
+	panel := NewStatusPanel("", "", testHost)
+	panel.SetSize(80, 10)
+	output := stripANSI(panel.View())
+	if !strings.Contains(output, "Account: "+testHost) {
+		t.Errorf("View() = %q, want host account fallback", output)
+	}
+}
+
+func TestStatusPanel_View_NarrowPrioritizesConnectionAndErrorAndFitsWidth(t *testing.T) {
+	t.Parallel()
+	panel := NewStatusPanel("", strings.Repeat("用", 20), testHost)
+	panel.SetOnline(false)
+	panel.SetError(strings.Repeat("界", 20))
+	panel.SetSize(18, 10)
+	output := stripANSI(panel.View())
+	if !strings.Contains(output, "Disconnected") || !strings.Contains(output, "Error:") {
+		t.Fatalf("View() = %q, want connection state and error", output)
+	}
+	if !strings.Contains(output, "✗ Disconnected") {
+		t.Fatalf("View() = %q, want complete connection state", output)
+	}
+	for _, line := range strings.Split(output, "\n") {
+		if got := lipgloss.Width(line); got > 18 {
+			t.Errorf("line width = %d, exceeds panel width 18: %q", got, line)
+		}
 	}
 }
 
@@ -137,7 +172,7 @@ func TestStatusPanel_View_LongEmailTruncated(t *testing.T) {
 	if strings.Contains(output, longEmail) {
 		t.Errorf("expected long email to be truncated in View()")
 	}
-	if !strings.Contains(output, "...") {
+	if !strings.Contains(output, "…") {
 		t.Errorf("expected ellipsis in truncated email, got %q", output)
 	}
 }

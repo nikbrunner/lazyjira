@@ -43,14 +43,14 @@ func (a *App) ContextBindings() []Binding {
 	km := a.keymap
 	global := []Binding{
 		{km.Keys(ActQuit), "quit"},
-		{km.Keys(ActFocusStatus), "focus Status"},
+		{km.Keys(ActFocusProj), "focus Project selector"},
+		{km.Keys(ActFocusIssueTabs), "focus Issue tabs"},
 		{km.Keys(ActFocusIssues), "focus Issues"},
-		{km.Keys(ActFocusDetail), "focus Details"},
+		{km.Keys(ActFocusInfo), "focus Issue info"},
+		{km.Keys(ActFocusDetail), "focus Issue details"},
 		{km.Keys(ActToggleMaximize), "maximize focused pane"},
 		{"tab/shift-tab", "switch issue collection"},
 		{"H/J/K/L", "move focus"},
-		{km.Keys(ActFocusInfo), "focus info panel"},
-		{km.Keys(ActFocusProj), "focus projects panel"},
 		{km.Keys(ActSearch), "search / filter current list"},
 		{km.Keys(ActRefresh), "refresh data from Jira"},
 		a.bind(ActJQLSearch, "JQL search"),
@@ -107,16 +107,9 @@ func (a *App) ContextBindings() []Binding {
 
 	case a.side == sideLeft && a.leftFocus == focusProjects:
 		bindings := slices.Concat(global, a.navBindings())
-		bindings = append(bindings,
-			a.bind(ActSelect, "select project and load issues"),
-			a.bind(ActFocusRight, "next panel"),
-			a.bind(ActFocusLeft, "previous panel"),
-		)
+		bindings = append(bindings, a.bind(ActOpen, "choose project"))
 		bindings = append(bindings, a.customCommandBindings(config.CtxProjects)...)
 		return bindings
-
-	case a.side == sideLeft && a.leftFocus == focusStatus:
-		return append(global, Binding{"J", "Issue tabs"})
 
 	case a.side == sideRight:
 		bindings := slices.Concat(global, a.navBindings())
@@ -265,18 +258,8 @@ func (a *App) helpBarItems() []components.HelpItem {
 		items = append(items, components.HelpItem{Key: km.Keys(ActHelp), Description: "help"})
 		return items
 	case a.side == sideLeft && a.leftFocus == focusProjects:
-		items := make([]components.HelpItem, 0, 4)
-		items = append(items,
-			components.HelpItem{Key: km.Keys(ActSelect), Description: "select"},
-			components.HelpItem{Key: km.Keys(ActOpen), Description: "preview"},
-		)
-		items = append(items, a.customCommandHelpItems(config.CtxProjects)...)
-		items = append(items, components.HelpItem{Key: km.Keys(ActHelp), Description: "help"})
-		return items
-	case a.side == sideLeft && a.leftFocus == focusStatus:
 		return []components.HelpItem{
-			{Key: "J", Description: "issue tabs"},
-			{Key: km.Keys(ActFocusDetail), Description: "details"},
+			{Key: km.Keys(ActOpen), Description: "choose project"},
 			{Key: km.Keys(ActHelp), Description: "help"},
 		}
 	case a.side == sideRight:

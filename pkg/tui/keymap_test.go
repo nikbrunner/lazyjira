@@ -60,6 +60,42 @@ func TestKeymapFromConfig_ExplicitBindingsDisplaceDefaults(t *testing.T) {
 	}
 }
 
+func TestKeymapFromConfig_FocusPaneDefaultsAndOverrides(t *testing.T) {
+	t.Parallel()
+	defaults := DefaultKeymap()
+	for _, tc := range []struct {
+		key    string
+		action Action
+	}{
+		{"0", ActFocusProj},
+		{"1", ActFocusIssueTabs},
+		{"2", ActFocusIssues},
+		{"3", ActFocusInfo},
+		{"4", ActFocusDetail},
+	} {
+		if got := defaults.Match(tc.key); got != tc.action {
+			t.Errorf("default key %q = %q, want %q", tc.key, got, tc.action)
+		}
+	}
+	config := config.KeybindingConfig{}
+	config.Universal.FocusProj = "p"
+	config.Universal.FocusIssueTabs = "t"
+	config.Universal.FocusIssues = "i"
+	config.Universal.FocusInfo = "f"
+	config.Universal.FocusDetail = "d"
+	km := KeymapFromConfig(config)
+	for _, tc := range []struct {
+		key    string
+		action Action
+	}{
+		{"p", ActFocusProj}, {"t", ActFocusIssueTabs}, {"i", ActFocusIssues}, {"f", ActFocusInfo}, {"d", ActFocusDetail},
+	} {
+		if got := km.Match(tc.key); got != tc.action {
+			t.Errorf("configured key %q = %q, want %q", tc.key, got, tc.action)
+		}
+	}
+}
+
 func TestKeymap_MatchUnknownReturnsEmpty(t *testing.T) {
 	t.Parallel()
 

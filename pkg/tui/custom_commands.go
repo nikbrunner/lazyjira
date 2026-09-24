@@ -72,8 +72,6 @@ func (a *App) activeContexts() []config.Context {
 			out = append(out, config.CtxInfo)
 		case focusProjects:
 			out = append(out, config.CtxProjects)
-		case focusStatus:
-			// none
 		}
 	}
 	return out

@@ -23,10 +23,10 @@ const (
 	ActPrevTab          Action = "prevTab"
 	ActNextTab          Action = "nextTab"
 	ActFocusDetail      Action = "focusDetail"
-	ActFocusStatus      Action = "focusStatus"
 	ActFocusIssues      Action = "focusIssues"
 	ActFocusInfo        Action = "focusInfo"
 	ActFocusProj        Action = "focusProjects"
+	ActFocusIssueTabs   Action = "focusIssueTabs"
 	ActToggleMaximize   Action = "toggleMaximize"
 	ActCopyURL          Action = "copyURL"
 	ActBrowser          Action = "browser"
@@ -80,11 +80,11 @@ func DefaultKeymap() Keymap {
 		ActOpen:             {"enter"},
 		ActPrevTab:          {"["},
 		ActNextTab:          {"]"},
-		ActFocusDetail:      {"2"},
-		ActFocusStatus:      {"0"},
-		ActFocusIssues:      {"1"},
+		ActFocusProj:        {"0"},
+		ActFocusIssueTabs:   {"1"},
+		ActFocusIssues:      {"2"},
 		ActFocusInfo:        {"3"},
-		ActFocusProj:        {"4"},
+		ActFocusDetail:      {"4"},
 		ActToggleMaximize:   {"+"},
 		ActCopyURL:          {"y"},
 		ActBrowser:          {"o"},
@@ -145,10 +145,10 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActPrevTab, kcfg.Universal.PrevTab)
 	set(ActNextTab, kcfg.Universal.NextTab)
 	set(ActFocusDetail, kcfg.Universal.FocusDetail)
-	set(ActFocusStatus, kcfg.Universal.FocusStatus)
 	set(ActFocusIssues, kcfg.Universal.FocusIssues)
 	set(ActFocusInfo, kcfg.Universal.FocusInfo)
 	set(ActFocusProj, kcfg.Universal.FocusProj)
+	set(ActFocusIssueTabs, kcfg.Universal.FocusIssueTabs)
 	set(ActToggleMaximize, kcfg.Universal.ToggleMaximize)
 	set(ActJQLSearch, kcfg.Universal.JQLSearch)
 	// Issues (Select, Open, FocusRight are shared with Projects panel)

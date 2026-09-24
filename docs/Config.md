@@ -80,11 +80,11 @@ keybinding:
         refreshAll: R
         prevTab: '['
         nextTab: ']'
-        focusDetail: "2"
-        focusStatus: "0"
-        focusIssues: "1"
+        focusProjects: "0"
+        focusIssueTabs: "1"
+        focusIssues: "2"
         focusInfo: "3"
-        focusProjects: "4"
+        focusDetail: "4"
         toggleMaximize: "+"
         jqlSearch: s
     navigation:
@@ -191,7 +191,7 @@ gui:
 
 `sidePanelWidth` controls the left column width in terminal cells. It defaults to 22 and caps at 35% of the terminal on narrow screens. If the terminal cannot fit the configured issue columns, lazyjira shows the minimum required size.
 
-The layout keeps Status at the top, the Issue tabs, Info, and Projects in the left column, Issues above Details in the right column, and the command log and help bar along the bottom. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
+The Project selector and App status panel share the top row. Issue tabs and Issues share the upper workspace row; Issue info and Issue details share the lower row. The command log and help bar stay along the bottom. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
 
 `theme` selects the color palette. Supported values: `default` (terminal ANSI colors), `auto`, [Catppuccin](https://github.com/catppuccin/catppuccin) presets (`catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`). Omitting the `theme` key or setting it to `""` selects the `default` palette. Use `theme: auto` to opt into runtime detection: lazyjira inspects your terminal background and picks `catppuccin-mocha` (dark) or `catppuccin-latte` (light). An unknown theme name is an error. Hex-based themes require a terminal with truecolor support.
 
@@ -409,7 +409,7 @@ keybinding:
 
 Only include keys you want to change. Missing keys keep their defaults unless an explicitly configured key displaces them. Rebind a displaced action to another key if needed.
 
-The default direct-focus keys are `0` Status, `1` Issues, `2` Details, `3` Info, and `4` Projects. Uppercase `H`/`J`/`K`/`L` moves focus between panes. Tab and Shift-Tab switch issue collections without changing focus. The Issue tabs pane uses `j`/`k` to switch collections and Enter to focus Issues.
+The default direct-focus keys are `0` Project selector, `1` Issue tabs, `2` Issues, `3` Issue info, and `4` Issue details. App status is display-only. Uppercase `H`/`J`/`K`/`L` moves focus between adjacent panes. Tab and Shift-Tab switch issue collections without changing focus. The Issue tabs pane uses `j`/`k` to switch collections and Enter to focus Issues; Enter in the Project selector opens the project picker.
 
 `+` toggles maximize for the focused Issues or Details pane. The `detail` section defaults to `ctrl+d`/`ctrl+u` for one-line detail scrolling and `ctrl+f`/`ctrl+b` for half-page scrolling from Issues or Info.
 
@@ -586,7 +586,7 @@ Each command has:
 | `contexts` | Optional list of UI contexts the command fires in. Defaults to `[issues, info, detail]`. |
 | `suspend` | Optional. `true` (default) hands the terminal to the child process; set `false` for background commands like clipboard copies or notifications. |
 
-For background commands, the last non-empty output line appears in a toast for three seconds. Write a short success message to stdout if you want confirmation; command failures appear in Status.
+For background commands, the last non-empty output line appears in a toast for three seconds. Write a short success message to stdout if you want confirmation; command failures appear in App status.
 
 ### Contexts
 
@@ -596,7 +596,7 @@ A command fires when one of its declared contexts matches the current UI state.
 |---------|-------------|
 | `issues` | Issues list panel is focused. |
 | `info` | Info panel is focused (any sub-tab). |
-| `projects` | Projects list panel is focused. |
+| `projects` | Project selector is focused. |
 | `detail` | Right detail panel is showing an issue, on any tab. |
 | `detail.comments` | Right detail panel is on the Comments tab with a comment selected. |
 

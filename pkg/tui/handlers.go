@@ -121,17 +121,8 @@ func (a *App) routeToPanel(msg tea.Msg) tea.Cmd {
 				cmds = append(cmds, cmd)
 			}
 		case focusProjects:
-			updated, cmd := a.projectList.Update(msg)
-			a.projectList = updated
-			if cmd != nil {
-				cmds = append(cmds, cmd)
-			}
-		case focusStatus:
-			updated, cmd := a.statusPanel.Update(msg)
-			a.statusPanel = updated
-			if cmd != nil {
-				cmds = append(cmds, cmd)
-			}
+			// Project selection is handled exclusively by the picker overlay.
+
 		}
 	} else {
 		updated, cmd := a.detailView.Update(msg)

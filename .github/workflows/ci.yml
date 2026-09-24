@@ -14,9 +14,11 @@ jobs:
     name: check (make check)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-go@v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
         with:
           go-version-file: go.mod
 
@@ -30,15 +32,23 @@ jobs:
         run: make build
 
       - name: test with coverage
-        run: go test -race ./... -coverprofile=cover.out -covermode=atomic -coverpkg=./...
+        run: >-
+          go test -race ./... -coverprofile=cover.out
+          -covermode=atomic -coverpkg=./...
 
       - name: coverage summary
         run: |
-          pct=$(go tool cover -func=cover.out | awk '/^total:/{gsub(/%/,"",$3); print $3}')
+          pct=$(go tool cover -func=cover.out |
+            awk '/^total:/{gsub(/%/,"",$3); print $3}')
           {
             echo "## Coverage: ${pct}%"
-            echo "![coverage](https://img.shields.io/badge/coverage-${pct}%25-blue)"
+            printf '%s%s\n' \
+              '![coverage](https://img.shields.io/badge/' \
+              "coverage-${pct}%25-blue)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: real Jira startup smoke
+        run: python3 e2e/startup_smoke.py
 
       - name: make check-demo
         run: make check-demo

@@ -91,19 +91,7 @@ func (a *App) mouseScroll(panel panelID, delta int) (tea.Model, tea.Cmd) {
 			a.infoPanel.ScrollBy(-1)
 		}
 	case panelProjects:
-		if a.side != sideLeft || a.leftFocus != focusProjects {
-			a.side = sideLeft
-			a.leftFocus = focusProjects
-			a.updateFocusState()
-		}
-		if delta > 0 {
-			a.projectList.ScrollBy(1)
-		} else {
-			a.projectList.ScrollBy(-1)
-		}
-		if p := a.projectList.SelectedProject(); p != nil {
-			a.detailView.SetProject(p)
-		}
+		// The selector opens a picker on click; wheel input has no selection preview.
 	case panelDetail:
 		if a.side != sideRight {
 			a.side = sideRight
@@ -121,11 +109,7 @@ func (a *App) mouseScroll(panel panelID, delta int) (tea.Model, tea.Cmd) {
 func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 	switch panel { //nolint:exhaustive
 	case panelStatus:
-		a.side = sideLeft
-		a.leftFocus = focusStatus
-		a.splashInfo.Project = a.projectKey
-		a.detailView.SetSplash(a.splashInfo)
-		a.updateFocusState()
+		// App status is display-only.
 
 	case panelTabs:
 		a.side = sideLeft
@@ -163,20 +147,8 @@ func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 		a.infoPanel.ClickAt(relY)
 
 	case panelProjects:
-		a.side = sideLeft
-		a.leftFocus = focusProjects
-		a.updateFocusState()
-		if dbl := a.projectList.ClickAt(relY); dbl {
-			// Double-click → select project (same as Enter).
-			if p := a.projectList.SelectedProject(); p != nil {
-				prefetch := a.selectProject(p)
-				a.leftFocus = focusIssues
-				a.updateFocusState()
-				return a, tea.Batch(a.fetchActiveTab(), prefetch)
-			}
-		} else if p := a.projectList.SelectedProject(); p != nil {
-			a.detailView.SetProject(p)
-		}
+		a.focusPane(focusProjects)
+		a.openProjectPicker()
 
 	case panelDetail:
 		a.side = sideRight

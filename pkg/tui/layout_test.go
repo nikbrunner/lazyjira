@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -73,7 +74,7 @@ func TestApp_GeometryUsesStableSplit(t *testing.T) {
 	if layout.tooSmall {
 		t.Fatalf("80×24 marked too small, requires %d×%d", layout.requiredWidth, layout.requiredHeight)
 	}
-	if layout.status != (rect{0, 0, 80, 3}) || layout.tabs != (rect{0, 3, 22, 5}) || layout.issues != (rect{22, 3, 58, 5}) || layout.detail != (rect{22, 8, 58, 10}) || layout.log != (rect{0, 18, 80, 5}) || layout.help != (rect{0, 23, 80, 1}) {
+	if layout.projects != (rect{0, 0, 22, 3}) || layout.status != (rect{22, 0, 58, 3}) || layout.tabs != (rect{0, 3, 22, 5}) || layout.issues != (rect{22, 3, 58, 5}) || layout.info != (rect{0, 8, 22, 10}) || layout.detail != (rect{22, 8, 58, 10}) || layout.log != (rect{0, 18, 80, 5}) || layout.help != (rect{0, 23, 80, 1}) {
 		t.Fatalf("unexpected 80×24 layout: %+v", layout)
 	}
 
@@ -81,6 +82,47 @@ func TestApp_GeometryUsesStableSplit(t *testing.T) {
 	app.leftFocus = focusInfo
 	if got := app.geometry(); got != layout {
 		t.Errorf("focus changed layout: got %+v, want %+v", got, layout)
+	}
+}
+
+func TestApp_GeometryAlignedRowsCoverScreen(t *testing.T) {
+	t.Parallel()
+	for _, size := range []struct{ width, height int }{{80, 21}, {180, 50}} {
+		t.Run(fmt.Sprintf("%dx%d", size.width, size.height), func(t *testing.T) {
+			t.Parallel()
+			app := &App{width: size.width, height: size.height, cfg: &config.Config{}, issuesList: views.NewIssuesList()}
+			layout := app.geometry()
+			if layout.tooSmall {
+				t.Fatalf("layout marked too small: %+v", layout)
+			}
+			if layout.projects.y != layout.status.y || layout.projects.height != layout.status.height || layout.projects.x != 0 || layout.projects.x+layout.projects.width != layout.status.x || layout.status.x+layout.status.width != size.width {
+				t.Fatalf("header is not a complete aligned row: projects=%+v status=%+v", layout.projects, layout.status)
+			}
+			if layout.tabs.y != layout.issues.y || layout.tabs.height != layout.issues.height || layout.info.y != layout.detail.y || layout.info.height != layout.detail.height {
+				t.Fatalf("workspace row boundaries do not align: %+v", layout)
+			}
+			bodyHeight := layout.log.y - statusHeight
+			if layout.issues.height != bodyHeight/3 || layout.detail.height != bodyHeight-bodyHeight/3 {
+				t.Fatalf("Issues/Details split is not one-third/two-thirds: %+v", layout)
+			}
+			panes := []rect{layout.projects, layout.status, layout.tabs, layout.issues, layout.info, layout.detail, layout.log, layout.help}
+			coverage := make([]int, size.width*size.height)
+			for _, pane := range panes {
+				if pane.x < 0 || pane.y < 0 || pane.width <= 0 || pane.height <= 0 || pane.x+pane.width > size.width || pane.y+pane.height > size.height {
+					t.Fatalf("pane outside terminal: %+v", pane)
+				}
+				for y := pane.y; y < pane.y+pane.height; y++ {
+					for x := pane.x; x < pane.x+pane.width; x++ {
+						coverage[y*size.width+x]++
+					}
+				}
+			}
+			for cell, count := range coverage {
+				if count != 1 {
+					t.Fatalf("terminal cell (%d,%d) covered %d times; want exactly once", cell%size.width, cell/size.width, count)
+				}
+			}
+		})
 	}
 }
 
