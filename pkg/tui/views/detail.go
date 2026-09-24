@@ -183,7 +183,6 @@ func (d *DetailView) SetSplash(info SplashInfo) {
 func (d *DetailView) SetSize(w, h int) { d.width = w; d.height = h }
 func (d *DetailView) SetFocused(focused bool) {
 	if d.focused && !focused {
-		// Actually losing focus — reset list cursor.
 		d.listCursor = 0
 	}
 	d.focused = focused
@@ -1359,8 +1358,6 @@ func wrapText(text string, width int) []string {
 	return lines
 }
 
-// wikiToPlain converts Jira wiki markup to plain text with basic formatting
-// handles *bold*, [text|url], {code}...{code} blocks, and h1 through h6 headings
 var (
 	wikiLinkRe      = regexp.MustCompile(`\[([^|\]]+)\|([^\]]+)\]`)
 	wikiPlainLinkRe = regexp.MustCompile(`\[([^\]|]+)\]`)
@@ -1369,7 +1366,8 @@ var (
 	wikiHeadingRe   = regexp.MustCompile(`(?m)^h[1-6]\.\s*`)
 )
 
-// wikiToPlain converts Jira wiki markup to readable plain text.
+// wikiToPlain converts Jira wiki markup to readable plain text, including links,
+// bold and italic markup, block tags, and h1 through h6 headings.
 func wikiToPlain(s string) string {
 	if s == "" {
 		return s

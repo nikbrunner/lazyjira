@@ -15,7 +15,7 @@ Terminal UI for Jira. Like [lazygit](https://github.com/jesseduffield/lazygit) b
 
 Based on the [original project](https://github.com/textfuel/lazyjira), created by textfuel and its contributors. The original MIT license and copyright notice are preserved in [LICENSE](LICENSE).
 
-Jira's web UI is painfully slow. Changing a ticket status takes multiple clicks, pages take seconds to load, and you spend more time fighting the interface than actually working. lazyjira gives you a fast, keyboard-driven terminal UI so you can browse issues, update statuses, read descriptions and more with minimum latency.
+Changing a status in Jira's web UI takes multiple clicks, and pages can take seconds to load. lazyjira is a keyboard-driven terminal UI for browsing issues, updating statuses, and reading descriptions.
 
 <p>
   <img src="e2e/golden/00_preview.gif" width="67%" alt="preview">&nbsp;<img src="e2e/golden/00_preview_vertical.gif" width="31%" alt="preview vertical">
@@ -49,7 +49,23 @@ Install from the main branch:
 go install github.com/nikbrunner/lazyjira/v2/cmd/lazyjira@main
 ```
 
-Go installs to `$GOBIN`, or `$GOPATH/bin` when `GOBIN` is unset. That directory must be on your `PATH`.
+Go installs `lazyjira` in `GOBIN` if it is set, or in the `bin` folder under `GOPATH` otherwise. Your `PATH` tells the terminal where to find commands.
+
+On macOS or Linux using Zsh add these lines at the end:
+
+```sh
+go_bin="$(go env GOBIN)"
+if [ -z "$go_bin" ]; then
+  go_bin="$(go env GOPATH)/bin"
+fi
+export PATH="$PATH:$go_bin"
+```
+
+```sh
+lazyjira --version
+```
+
+On Windows, run `go env GOBIN` in PowerShell. If it prints nothing, run `go env GOPATH` and add `\bin` to the end of that path. Press `Win+R`, enter `sysdm.cpl`, then open Advanced → Environment Variables → your user `Path` → Edit → New. Add the directory, open a new PowerShell window, and run `lazyjira --version`.
 
 Or build from source:
 
@@ -109,34 +125,6 @@ Press `?` inside the app for all keybindings.
 - [Configuration](docs/Config.md) - config file, keybindings, issue tabs, custom fields, git integration
 - [Keybindings](docs/Keybindings.md) - full list of default keys
 - [Custom Fields](docs/Custom_Fields.md) - displaying Jira custom fields
-
-## Roadmap
-
-- [x] Robust JQL search
-- [x] Git integration, create branches from issues, open issue from current branch
-- [x] Jira Server and Data Center support
-- [x] Client certificate authentication (mTLS)
-- [x] Create issues
-- [x] Configurable navigation keys
-- [x] Searchable keybindings help popup
-- [x] Scroll detail panel without switching focus
-- [x] Create subtasks from TUI
-- [ ] Link issues (add/remove issue links)
-- [ ] CLI mode (non-interactive commands for scripting and automation)
-- [ ] Robust issue type changer (handle subtask/parent unlinking, field validation)
-- [ ] Clickable hyperlinks in terminal (OSC 8) for URLs in descriptions and comments
-- [x] Catppuccin Theming
-- [ ] Custom colors theming, date format, languages
-- [ ] Mouse support toggle
-- [ ] Show icons toggle
-- [ ] Cache with configurable TTL
-- [ ] Auto-refresh with configurable interval
-- [ ] Custom field type handling (select, multiselect, user)
-- [ ] Board ID per project
-- [ ] Rich text editing, colors, panels, media in ADF descriptions
-- [ ] Bulk operations, transition and assign multiple issues at once
-- [ ] Notifications, watch for issue updates
-- [ ] Offline mode, cached view when network is unavailable
 
 ## License
 

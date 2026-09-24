@@ -216,9 +216,9 @@ gui:
 
 Three optional maps let you override individual palette entries on top of any preset:
 
-- **`themeColors`** — applied to every preset.
-- **`themeDark`** — applied only when the active preset is a dark variant.
-- **`themeLight`** — applied only when the active preset is a light variant.
+- **`themeColors`**: applied to every preset.
+- **`themeDark`**: applied only when the active preset is a dark variant.
+- **`themeLight`**: applied only when the active preset is a light variant.
 
 The precedence is preset → `themeColors` → (`themeDark` or `themeLight`). Empty values and unknown keys are ignored, so configs stay forward-compatible.
 
@@ -295,7 +295,7 @@ gui:
   selectCreatedIssue: true
 ```
 
-`typeIcons` will have issue `type` names replaced by the emojis you set. Mappings are case-sensitive, and support not only emojis but also plaintext. Enable the field `type` under `issueListFields` to profit from this option.
+`typeIcons` replaces issue type names with the icons you set. Mappings are case-sensitive and accept emoji or plain text. Add `type` to `issueListFields` to show these icons.
 
 ```
 gui:
@@ -305,7 +305,7 @@ gui:
         Sub-task: "📎"
 ```
 
-`statusIcons` will have issue `status` indicators replaced by the emojis you set. Default indicators may be shared for similar states (e.g. To do / Future), so one may get more granularity from this option. Mappings are case-sensitive, and support not only emojis but also plaintext. Enable the field `status` under `issueListFields` to profit from this option.
+`statusIcons` replaces issue status indicators with the icons you set. Similar states may share a default indicator (for example, To do and Future), so custom icons can distinguish them. Mappings are case-sensitive and accept emoji or plain text. Add `status` to `issueListFields` to show these icons.
 
 ```
 gui:
@@ -315,7 +315,7 @@ gui:
         Future: "🔜"
 ```
 
-`priorityIcons` will have issue `priority` names replaced by the emojis you set. Mappings are case-sensitive, and support not only emojis but also plaintext. Unmapped priorities fall back to the plain priority name. Enable the field `priority` under `issueListFields` to profit from this option.
+`priorityIcons` replaces priority names with the icons you set. Mappings are case-sensitive and accept emoji or plain text. Unmapped priorities use their plain names. Add `priority` to `issueListFields` to show these icons.
 
 ```
 gui:
@@ -362,7 +362,7 @@ issueTabs:
 
 You can also create temporary JQL tabs at runtime with the `s` key.
 
-Per-tab page size can be set via `maxResults` on the tab entry — see [Page size](#page-size-maxresults) below.
+Set `maxResults` on a tab to choose its page size. See [Page size](#page-size-maxresults) below.
 
 ## Page size (`maxResults`)
 

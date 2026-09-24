@@ -107,9 +107,9 @@
 - "Issue list" can mean the entire bordered panel or only the rows on screen; use **Issues panel**, **Issue list**, and **Viewport** for those distinct scopes.
 - "Field" is Jira data, while **Column** is its presentation in the issue list; not every field is displayed as a column.
 - "Summary" means the issue title, not its longer description; use **Summary width** when discussing the column's layout.
-- "Longest displayed summary" is ambiguous about scrolling; calculate **Summary width** from the current **Issue list**, not just the **Viewport**.
-- "Current line highlight" suggested a cell-level effect; use **Selected issue** for the navigation target and **Selection highlight** for the full-row background.
-- "Different column" was used to request different colors; use **Column color** for foreground styling and "column separator" for a divider.
+- "Longest displayed summary" can mean the longest summary in the viewport; calculate **Summary width** from the current **Issue list**, including off-screen issues.
+- "Current line highlight" can suggest a cell-level effect; use **Selected issue** for the navigation target and **Selection highlight** for the full-row background.
+- "Different column" can mean either a different foreground color or a divider; use **Column color** for text styling and "column separator" for the divider.
 - "ASCII colors" means **ANSI palette** here; the background-derived **Selection highlight** is an RGB shade, approximated by the available palette on terminals without truecolor.
 - "Updated" is the UI label, while **Updated age** describes the relative value beneath it; it is not the time since issue creation.
 - UI labels such as `Key`, `Type`, and `Updated`, and configuration identifiers such as `issueListFields`, retain their existing spelling; use the qualified glossary terms in discussion.
