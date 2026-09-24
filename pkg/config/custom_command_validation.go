@@ -294,9 +294,13 @@ func isUnquotedCommandArgument(file *syntax.File, source, marker string) bool {
 		for _, ancestor := range slices.Backward(ancestors) {
 			switch ancestor := ancestor.(type) {
 			case *syntax.DblQuoted, *syntax.SglQuoted, *syntax.ParamExp,
-				*syntax.CmdSubst, *syntax.ArithmExp, *syntax.ArithmCmd,
-				*syntax.ProcSubst, *syntax.ExtGlob, *syntax.BraceExp:
+				*syntax.ArithmExp, *syntax.ArithmCmd, *syntax.ProcSubst,
+				*syntax.ExtGlob, *syntax.BraceExp:
 				unsafe = true
+			case *syntax.CmdSubst:
+				if ancestor.Backquotes || ancestor.TempFile || ancestor.ReplyVar {
+					unsafe = true
+				}
 			case *syntax.Word:
 				if word == nil {
 					word = ancestor

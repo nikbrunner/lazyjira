@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -24,9 +25,9 @@ func runShellOutput(t *testing.T, shell, command string) []byte {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	out, err := exec.CommandContext(ctx, shell, "-c", command).Output()
+	out, err := exec.CommandContext(ctx, shell, "-c", command).CombinedOutput()
 	if err != nil {
-		t.Fatalf("execute: %v; command: %s", err, command)
+		t.Fatalf("execute: %v; output: %s; command: %s", err, out, command)
 	}
 	return out
 }
@@ -44,7 +45,8 @@ func TestResolveCustomCommandsRejectsUnsupportedInterpolation(t *testing.T) {
 		{"escaped placeholder", `printf %s \{{.Value}}`},
 		{"static marker beside quoted placeholder", `printf %s __LAZYJIRA_VALUE_0__ '{{.Value}}'`},
 		{"command name", `{{.Value}} --flag`},
-		{"command substitution", `printf %s $(echo {{.Value}})`},
+		{"command substitution as command name", `printf %s $({{.Value}})`},
+		{"backtick substitution", "printf %s `echo {{.Value}}`"},
 		{"arithmetic", `printf %s $(({{.Value}}))`},
 		{"heredoc", "cat <<EOF\n{{.Value}}\nEOF"},
 		{"format function", `printf %s {{printf "%q" .Value}}`},
@@ -203,6 +205,77 @@ func TestResolvedCustomCommandShellrawIsExplicit(t *testing.T) {
 	out := runShellOutput(t, shell, rendered)
 	if string(out) != "raw" {
 		t.Fatalf("output = %q, want raw", out)
+	}
+}
+
+func TestResolvedCopyCommandBodiesRenderInCommandSubstitutions(t *testing.T) {
+	t.Parallel()
+	shell, err := exec.LookPath("sh")
+	if err != nil {
+		t.Skip("sh is not installed")
+	}
+	marker := filepath.Join(t.TempDir(), "executed")
+	key := "WEBSDK-42$(touch " + marker + ")"
+	summary := "Fix [login] $(touch " + marker + ") 'quoted'"
+	host := "jira.example$(touch " + marker + ")"
+	summaryText := strings.NewReplacer("[", "", "]", "").Replace(summary)
+	stubDir := t.TempDir()
+	for name, script := range map[string]string{
+		"pbcopy":  "#!/bin/sh\ncat\n",
+		"wl-copy": "#!/bin/sh\ncat\n",
+		"herdr":   "#!/bin/sh\nexit 0\n",
+	} {
+		path := filepath.Join(stubDir, name)
+		if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+			t.Fatalf("write %s stub: %v", name, err)
+		}
+	}
+	stubs := "PATH=" + shellescape(stubDir) + ":$PATH\n"
+	tests := []struct {
+		name, command, want string
+	}{
+		{
+			name: "markdown link",
+			command: `s=$(printf %s {{.Summary | shellescape}} | tr -d '[]')
+link=$(printf '[%s %s](%s/browse/%s)' {{.Key | shellescape}} "$s" {{.JiraHost | shellescape}} {{.Key | shellescape}})
+printf '%s' "$link" | (command -v pbcopy >/dev/null && pbcopy || wl-copy)
+command -v herdr >/dev/null && herdr notification show "Copied markdown link" --body "$link" --sound done`,
+			want: fmt.Sprintf("[%s %s](%s/browse/%s)", key, summaryText, host, key),
+		},
+		{
+			name: "key and summary",
+			command: `s=$(printf %s {{.Summary | shellescape}} | tr -d '[]')
+out=$(printf '%s %s' {{.Key | shellescape}} "$s")
+printf '%s' "$out" | (command -v pbcopy >/dev/null && pbcopy || wl-copy)
+command -v herdr >/dev/null && herdr notification show "Copied key + summary" --body "$out" --sound done`,
+			want: fmt.Sprintf("%s %s", key, summaryText),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cfg := &Config{CustomCommands: []CustomCommandConfig{{Key: "ctrl+y", Name: tc.name, Command: tc.command}}}
+			resolved, err := cfg.ResolveCustomCommandsForShell(shell)
+			if err != nil {
+				t.Fatalf("resolve: %v", err)
+			}
+			rendered, err := resolved[0].Render(map[string]string{
+				"Key": key, "Summary": summary, "JiraHost": host,
+			})
+			if err != nil {
+				t.Fatalf("render: %v", err)
+			}
+			if got := string(runShellOutput(t, shell, stubs+rendered)); got != tc.want {
+				t.Fatalf("output = %q, want %q", got, tc.want)
+			}
+			info, statErr := os.Stat(marker)
+			if statErr == nil {
+				t.Fatalf("injected command ran (%s)", info.Mode())
+			}
+			if !os.IsNotExist(statErr) {
+				t.Fatalf("stat marker: %v", statErr)
+			}
+		})
 	}
 }
 

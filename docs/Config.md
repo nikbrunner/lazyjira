@@ -647,7 +647,7 @@ Available in every scope:
 
 ### Template helpers
 
-Direct field values are shell-escaped as one argument; `slugify` produces a shell-safe ASCII word. Each placeholder must occupy an entire, unquoted command argument; concatenated placeholders and literal prefixes or suffixes are rejected. lazyjira rejects placeholders used as command names, inside quotes or shell expansions, in redirects or here-documents, and in Go template formatting expressions. Direct field access and these helper pipelines are supported:
+Direct field values are shell-escaped as one argument; `slugify` produces a shell-safe ASCII word. Each placeholder must occupy an entire, unquoted command argument; concatenated placeholders and literal prefixes or suffixes are rejected. Placeholders inside `$(...)` command substitutions are supported when they are whole arguments to an inner command. Backtick substitutions, quoted positions, parameter or arithmetic expansions, redirects, here-documents, and Go template formatting expressions are rejected. Direct field access and these helper pipelines are supported:
 
 |Helper|Description|
 |------|-----------|
