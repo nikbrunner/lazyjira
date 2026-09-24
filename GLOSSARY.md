@@ -28,15 +28,16 @@
 
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
-| **Issues panel** | The bordered screen region containing the issue tabs, column header row, issue rows, and footer. | Issue list when referring to the whole panel |
-| **Issue tab** | A named issue collection within the Issues panel, usually defined by a JQL query. | Column, panel |
+| **Issues panel** | The bordered screen region containing the column header row, issue rows, and footer for the active issue tab. | Issue list when referring to the whole panel |
+| **Issue tab** | A named issue collection shown in the Issue tabs pane, usually defined by a JQL query. | Column, panel |
+| **Issue tabs pane** | The focusable vertical pane listing issue tabs beside the Issues panel. Focusing it leaves the active issue tab unchanged. | Issues panel, issue list |
 | **JQL query** | A Jira Query Language expression defining which issues Jira returns and their ordering. | Local filter |
 | **Local filter** | A text filter applied to issues already loaded for the active issue tab. | JQL query, search without qualification |
 | **Issue list** | The ordered collection of issues in the active issue tab after any local filter is applied. | Visible rows when referring to all matching issues |
 | **Issue row** | The table-like line representing one issue through its configured columns. | Current line, cell |
 | **Column** | An aligned vertical slot for one configured issue field, in `issueListFields` order. | Field when referring to layout |
 | **Cell** | The displayed value at the intersection of an issue row and a column. | Column, row |
-| **Column header row** | The fixed row of field labels between the issue tabs and issue rows. | Header without qualification, table-header-like row |
+| **Column header row** | The fixed row of field labels above the issue rows inside the Issues panel. | Header without qualification, table-header-like row |
 | **Viewport** | The portion of the issue list that fits in the panel's available row space. | Issue list when referring only to the on-screen subset |
 | **Display width** | The number of terminal character cells occupied by text, accounting for wide characters and excluding ANSI escape sequences. | Byte length, character count |
 | **Summary width** | The shared display width of the Summary column, fitted to the longest summary in the issue list, capped by available space, and at least as wide as its header. | Remaining width, per-row width |
@@ -55,7 +56,7 @@
 
 ## Relationships
 
-- An **Issues panel** contains multiple **Issue tabs**, with one active at a time when tabs exist.
+- The **Issue tabs pane** lists the **Issue tabs**; its active tab determines the **Issue list** shown in the **Issues panel**.
 - An **Issue tab** contains zero or more **Issues**; an **Issue** can appear in more than one tab.
 - A **Local filter** narrows the active tab's loaded issues into the current **Issue list**.
 - Each **Issue row** represents one **Issue** and contains one **Cell** per configured **Column**.
@@ -81,7 +82,7 @@
 
 ## Flagged ambiguities
 
-- "Header" can mean the tab-bearing panel title, the issue-detail heading, or the table labels; use **Column header row** for the labels above issue rows.
+- "Header" can mean a panel title, the issue-detail heading, or the table labels; use **Column header row** for the labels above issue rows.
 - "Issue list" can mean the entire bordered panel or only the rows on screen; use **Issues panel**, **Issue list**, and **Viewport** for those distinct scopes.
 - "Field" is Jira data, while **Column** is its presentation in the issue list; not every field is displayed as a column.
 - "Summary" means the issue title, not its longer description; use **Summary width** when discussing the column's layout.
