@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
 type StatusPanel struct {

@@ -3,7 +3,7 @@ package git
 import (
 	"testing"
 
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 )
 
 func TestSearchBranches(t *testing.T) {

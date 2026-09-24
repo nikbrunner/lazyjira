@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/textfuel/lazyjira/v2/pkg/tui/theme"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
 )
 
 // ProjectChoice is a project available in the project picker.

@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 )
 
 func TestHelpBar_ViewRendersItems(t *testing.T) {

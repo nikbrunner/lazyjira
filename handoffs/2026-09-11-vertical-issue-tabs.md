@@ -17,10 +17,10 @@ Continue the bounded design and implementation of opt-in vertical issue tabs in 
 ### Active branches and pull requests
 
 - `fix/selected-issue-tabs` at `8bb38d8`
-  - Upstream PR: https://github.com/textfuel/lazyjira/pull/130
+  - Upstream PR #130
   - Adds an active-tab marker and makes horizontal title rendering and mouse hit regions share one layout.
 - `feat/detail-summary-header` at `ee78a51`
-  - Kept for local use only because upstream PR #108 already implements the same feature: https://github.com/textfuel/lazyjira/pull/108
+  - Kept for local use only because upstream PR #108 already implements the same feature
 - `integration` merges both topic branches and is local only.
 
 The vertical-tab work naturally builds on `fix/selected-issue-tabs`. Decide whether to use a stacked local branch now and rebase it onto upstream after PR #130 merges, or implement independently from `upstream/main`. Do not open a vertical-tabs PR with #130 commits included.

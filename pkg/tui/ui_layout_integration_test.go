@@ -7,10 +7,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/textfuel/lazyjira/v2/pkg/jira"
-	"github.com/textfuel/lazyjira/v2/pkg/jira/jiratest"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/views"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/views"
 )
 
 const jiraProjectKey = "JIRA"

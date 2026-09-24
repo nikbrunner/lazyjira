@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 )
 
 func TestClient_AllMethods_PropagateHTTPErrors(t *testing.T) {

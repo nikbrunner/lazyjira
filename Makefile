@@ -59,8 +59,7 @@ fix: tidy lint-fix nix-deps
 release:
 	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=2.7.0" && exit 1)
 	keepachangelog release $(VERSION)
-	perl -pi -e 's/^pkgver=.*/pkgver=$(VERSION)/' aur/lazyjira-git/PKGBUILD
-	git add CHANGELOG.md aur/lazyjira-git/PKGBUILD
+	git add CHANGELOG.md
 	git commit -m "release v$(VERSION)"
 	git tag v$(VERSION)
 	@echo "Tagged v$(VERSION). Push with: git push && git push --tags"

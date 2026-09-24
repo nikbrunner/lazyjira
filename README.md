@@ -1,10 +1,10 @@
 # lazyjira
 
 <p align="center">
-  <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/textfuel/lazyjira" alt="Go"></a>
-  <a href="https://github.com/textfuel/lazyjira/releases"><img src="https://img.shields.io/github/v/release/textfuel/lazyjira" alt="Release"></a>
+  <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/nikbrunner/lazyjira" alt="Go"></a>
+  <a href="https://github.com/nikbrunner/lazyjira/releases"><img src="https://img.shields.io/github/v/release/nikbrunner/lazyjira" alt="Release"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://github.com/textfuel/lazyjira/releases"><img src="https://img.shields.io/github/downloads/textfuel/lazyjira/total?label=downloads" alt="Downloads"></a>
+  <a href="https://github.com/nikbrunner/lazyjira/releases"><img src="https://img.shields.io/github/downloads/nikbrunner/lazyjira/total?label=downloads" alt="Downloads"></a>
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 
 Terminal UI for Jira. Like [lazygit](https://github.com/jesseduffield/lazygit) but for Jira.
 
-Based on [textfuel/lazyjira](https://github.com/textfuel/lazyjira), created by textfuel and its contributors. The original MIT license and copyright notice are preserved in [LICENSE](LICENSE).
+Based on the [original project](https://github.com/textfuel/lazyjira), created by textfuel and its contributors. The original MIT license and copyright notice are preserved in [LICENSE](LICENSE).
 
 Jira's web UI is painfully slow. Changing a ticket status takes multiple clicks, pages take seconds to load, and you spend more time fighting the interface than actually working. lazyjira gives you a fast, keyboard-driven terminal UI so you can browse issues, update statuses, read descriptions and more with minimum latency.
 
@@ -41,108 +41,24 @@ make build-demo
 
 ## Installation
 
-<details>
-<summary><b>macOS</b></summary>
+Requires Go 1.25.8 or later.
 
-#### Homebrew
+Install from the main branch:
 
-```
-brew install textfuel/tap/lazyjira
-```
-
-</details>
-
-<details>
-<summary><b>Linux</b></summary>
-
-#### Arch Linux (AUR)
-
-```
-yay -S lazyjira-bin     # prebuilt binary
-yay -S lazyjira-git     # build from source
+```sh
+go install github.com/nikbrunner/lazyjira/v2/cmd/lazyjira@main
 ```
 
-#### Nix / NixOS
+Go installs to `$GOBIN`, or `$GOPATH/bin` when `GOBIN` is unset. That directory must be on your `PATH`.
 
-```
-nix run github:textfuel/lazyjira
-```
+Or build from source:
 
-Or add to your flake inputs:
-
-```nix
-inputs.lazyjira.url = "github:textfuel/lazyjira";
-```
-
-Or import the package
-
-```nix
-let
-  version = "...";
-  src =
-    fetchFromGitHub {
-      owner = "textfuel";
-      repo = "lazyjira";
-      tag = "v${version}";
-      hash = "...";
-    };
-
-  buildGoApplication = import "${src}/nix/build-go-application.nix" system;
-in
-callPackage "${src}/nix/package.nix" { inherit buildGoApplication version; }
-```
-
-#### deb (Debian, Ubuntu)
-
-Download `.deb` from [Releases](https://github.com/textfuel/lazyjira/releases):
-
-```
-sudo dpkg -i lazyjira_*.deb
-```
-
-#### rpm (Fedora, RHEL)
-
-Download `.rpm` from [Releases](https://github.com/textfuel/lazyjira/releases):
-
-```
-sudo rpm -i lazyjira_*.rpm
-```
-
-#### apk (Alpine)
-
-Download `.apk` from [Releases](https://github.com/textfuel/lazyjira/releases):
-
-```
-sudo apk add --allow-untrusted lazyjira_*.apk
-```
-
-</details>
-
-<details>
-<summary><b>Windows</b></summary>
-
-Download `.zip` from [Releases](https://github.com/textfuel/lazyjira/releases), extract `lazyjira.exe`, and add it to your `PATH`.
-
-Use [Windows Terminal](https://aka.ms/terminal) for best rendering.
-
-</details>
-
-<details>
-<summary><b>Go / From source</b></summary>
-
-```
-go install github.com/textfuel/lazyjira/v2/cmd/lazyjira@latest
-```
-
-Or build manually:
-
-```
-git clone https://github.com/textfuel/lazyjira.git
+```sh
+git clone https://github.com/nikbrunner/lazyjira.git
 cd lazyjira
 make build
+./lazyjira
 ```
-
-</details>
 
 ## Setup
 

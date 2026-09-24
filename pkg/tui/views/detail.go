@@ -11,9 +11,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/textfuel/lazyjira/v2/pkg/jira"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/theme"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
 )
 
 type DetailTab int
@@ -1056,7 +1056,7 @@ func (d *DetailView) renderSplash(contentWidth, innerH int) string {
 	}
 	lines = append(lines, "")
 	lines = append(lines, gray.Render("  lazyjira "+d.splash.Version))
-	lines = append(lines, gray.Render("  (c) 2026 textfuel"))
+	lines = append(lines, gray.Render("  lazyjira contributors"))
 
 	// Connection info.
 	s := d.splash

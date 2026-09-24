@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/textfuel/lazyjira/v2/pkg/jira"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
 const currentUserMarker = "__currentUser__"

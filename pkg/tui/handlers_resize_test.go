@@ -5,8 +5,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
-	"github.com/textfuel/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
 )
 
 func TestHandleResize_SetsWidthAndHeight(t *testing.T) {

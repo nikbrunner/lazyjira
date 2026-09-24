@@ -22,7 +22,7 @@ buildGoApplication {
   subPackages = [ "cmd/lazyjira" ];
   meta = with lib; {
     description = "Terminal UI for Jira";
-    homepage = "https://github.com/textfuel/lazyjira";
+    homepage = "https://github.com/nikbrunner/lazyjira";
     license = licenses.mit;
     mainProgram = "lazyjira";
   };

@@ -3,7 +3,7 @@ package components
 import (
 	"testing"
 
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 )
 
 func TestAdjustOffset(t *testing.T) {

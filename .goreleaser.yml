@@ -24,19 +24,10 @@ archives:
         formats:
           - zip
 
-brews:
-  - name: lazyjira
-    description: "Terminal UI for Jira"
-    homepage: "https://github.com/textfuel/lazyjira"
-    repository:
-      owner: textfuel
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-
 nfpms:
   - package_name: lazyjira
-    maintainer: "textfuel <https://github.com/textfuel>"
-    homepage: "https://github.com/textfuel/lazyjira"
+    maintainer: "nikbrunner <https://github.com/nikbrunner>"
+    homepage: "https://github.com/nikbrunner/lazyjira"
     description: "Terminal UI for Jira"
     license: MIT
     formats:
@@ -44,29 +35,11 @@ nfpms:
       - rpm
       - apk
 
-aurs:
-  - name: lazyjira-bin
-    homepage: "https://github.com/textfuel/lazyjira"
-    description: "Terminal UI for Jira (prebuilt binary)"
-    license: "MIT"
-    private_key: "{{ .Env.AUR_SSH_PRIVATE_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/lazyjira-bin.git"
-    provides:
-      - lazyjira
-    conflicts:
-      - lazyjira
-      - lazyjira-git
-    package: |-
-      install -Dm755 "./lazyjira" "${pkgdir}/usr/bin/lazyjira"
-      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/lazyjira/LICENSE"
-    commit_author:
-      name: goreleaserbot
-      email: bot@goreleaser.com
-
 changelog:
   sort: asc
 
 release:
   footer: |
     ---
-    **Full changelog:** [CHANGELOG.md](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md)
+    **Full changelog:**
+    https://github.com/nikbrunner/lazyjira/blob/main/CHANGELOG.md

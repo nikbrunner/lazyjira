@@ -5,15 +5,15 @@ All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
 
-## [2.19.2] - 2026-07-08
+## 2.19.2 - 2026-07-08
 
 ### Fixed
 
 - Nix: importing the package outside a flake now works, and cross compilation is possible. `nix/package.nix` used to import `nixpkgs` without a `system`, which broke every manual import. It now takes `lib` and `buildGoApplication` as inputs instead of importing `nixpkgs` itself, and a new `nix/build-go-application.nix` resolves `buildGoApplication` from the pinned `flake.lock` for non flake users (#103)
 
-## [2.19.1] - 2026-07-02
+## 2.19.1 - 2026-07-02
 
 ### Added
 
@@ -23,20 +23,20 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Confirming a search in the issue list now moves the preview and the current issue to the ticket the cursor lands on, routing the selection through the same path as normal navigation. Actions taken right after a search target the searched ticket instead of the one that was selected before the search (#104)
 
-## [2.19.0] - 2026-06-22
+## 2.19.0 - 2026-06-22
 
 ### Added
 
 - `@Name` in a comment or description now resolves to a real Jira mention on submit when exactly one user of the issue's project matches that name. Other names stay as literal text, code spans and fenced blocks are left untouched, and existing mentions are not rewritten. This is Cloud only, Data Center writes are unchanged. When the project's user cache is still cold the write is deferred one tick to fetch users, falling back to literal text on error (#95)
 
-## [2.18.0] - 2026-06-19
+## 2.18.0 - 2026-06-19
 
 ### Added
 
 - Color themes with optional auto-detection. `gui.theme` selects a bundled palette: the original `default` ANSI 16 look, or the Catppuccin presets `catppuccin-latte` (light), `catppuccin-frappe`, `catppuccin-macchiato` and `catppuccin-mocha` (dark). `theme: auto` inspects the terminal background at startup and picks `catppuccin-mocha` or `catppuccin-latte` to match. Omitting the key or leaving it empty keeps the legacy ANSI 16 palette, so existing configs are unchanged. An unknown name is an error, and hex-based presets need a truecolor terminal (#88)
 - Per-color palette overrides on top of any preset, through three optional maps. `themeColors` applies to every preset, while `themeDark` and `themeLight` apply only on dark or light variants, so a single `auto` config can carry both. Precedence is preset, then `themeColors`, then `themeDark` or `themeLight`. Ten keys are overridable (`green`, `blue`, `red`, `yellow`, `cyan`, `magenta`, `orange`, `white`, `gray`, `highlight`) and accept hex, ANSI 16 or ANSI 256 values. Unknown keys and empty values are ignored, and an unrecognized color falls back to the terminal default with a warning shown under `--debug` (#88)
 
-## [2.17.0] - 2026-06-15
+## 2.17.0 - 2026-06-15
 
 ### Added
 
@@ -48,7 +48,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Reporter is now pre-filled with the current user when creating an issue or subtask, matching Jira's own create defaults. It can still be changed or cleared (#94)
 - Create errors now split into pre-form and submit stages. A failed fetch of the parent's issue types aborts with a readable message instead of opening an empty form, while submit errors stay inline. Messages carry Jira's own error text instead of an internal request wrapper (#94)
 
-## [2.16.1] - 2026-06-11
+## 2.16.1 - 2026-06-11
 
 ### Changed
 
@@ -59,7 +59,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Data race in the author color cache. The shared color map was written without a lock, so rendering many colored author names at once (comments and history) could hit a concurrent map write and crash. Lookups are now guarded by a read-write mutex with double-checked locking (#92)
 
-## [2.16.0] - 2026-06-09
+## 2.16.0 - 2026-06-09
 
 ### Added
 
@@ -70,7 +70,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Editors configured with arguments in `$EDITOR` or `$VISUAL` now launch correctly. The value is split shell-style into a binary and its arguments, so `EDITOR="code --wait"` or `EDITOR="nvim --cmd 'set ft=md'"` work instead of trying to exec a binary named after the whole string (#82)
 
-## [2.15.0] - 2026-05-21
+## 2.15.0 - 2026-05-21
 
 ### Added
 
@@ -80,7 +80,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - CI now runs Dependabot updates, `govulncheck` vulnerability scanning, GitHub dependency review and a `make check-demo` build check. The `golangci-lint` version is pinned via go tool directives (#76)
 
-## [2.14.0] - 2026-05-15
+## 2.14.0 - 2026-05-15
 
 ### Added
 
@@ -91,7 +91,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Branch generation with `git.asciiOnly: true` now transliterates German umlauts (ä→ae, ß→ss) and strips other accents (é→e) instead of dropping non-ASCII characters. Issue types like "Lösung" now produce "loesung" instead of "Lsung" (#72)
 
-## [2.13.0] - 2026-05-05
+## 2.13.0 - 2026-05-05
 
 ### Added
 
@@ -102,7 +102,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Mouse click and wheel scroll on the issues list now update the active issue. Browser open, copy URL, transition and other actions used to target the previously selected issue because the mouse path skipped the canonical selection update
 - Demo build (`make check-demo`) failed to compile after the parent-link children feature landed. The demo client now implements `GetChildren` and returns subtasks of the requested parent
 
-## [2.12.0] - 2026-05-03
+## 2.12.0 - 2026-05-03
 
 ### Added
 
@@ -112,13 +112,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Sprint field shows None on Jira instances where the `sprint` alias does not resolve to the real custom field id. The id is now discovered at startup via `/field` and used in both reads and writes. Affects older Server/DC and other instances that map sprint to non-default ids like `customfield_10010` (#48)
 
-## [2.11.1] - 2026-04-30
+## 2.11.1 - 2026-04-30
 
 ### Fixed
 
 - Branch modal: names that do not match an existing remote ref now create a local branch. Previously any `/` in the input forced remote tracking, breaking prefixed conventions like `feature/PROJ-1-foo` (#62)
 
-## [2.11.0] - 2026-04-30
+## 2.11.0 - 2026-04-30
 
 ### Added
 
@@ -129,19 +129,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - CI step names mirror the `make` targets they run. Failed jobs now point at the exact command to run locally
 - CONTRIBUTING documents how to refresh `gomod2nix.toml` after a Go dependency change. Both `nix develop -c make nix-deps` and `go install gomod2nix` paths are listed. Skipping the refresh fails the nix CI job with a checksum error (#60)
 
-## [2.10.2] - 2026-04-26
+## 2.10.2 - 2026-04-26
 
 ### Changed
 
-- Go module path updated to `github.com/textfuel/lazyjira/v2` to follow Go modules v2+ convention
+- Go module path updated to follow Go modules v2+ convention
 
-## [2.10.1] - 2026-04-18
+## 2.10.1 - 2026-04-18
 
 ### Fixed
 
 - String shorthand in `projects` list (e.g. `- ORCH` instead of `- key: ORCH`) no longer panics on startup. Both forms can now be mixed in the same list (#53)
 
-## [2.10.0] - 2026-04-18
+## 2.10.0 - 2026-04-18
 
 ### Added
 
@@ -149,23 +149,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - `maxResults` option to control how many issues are fetched per query. Can be set globally or per tab in `issueTabs`. Default remains 50 (#45)
 - Context-sensitive preview for Sub/Lnk tabs. Moving the cursor in subtasks or links previews that issue in the detail pane. Actions target the previewed issue. Preview resets when leaving the tab (#55)
 
-## [2.9.0] - 2026-04-14
+## 2.9.0 - 2026-04-14
 
 ### Added
 
 - Custom icons for issue types in the list view. Configure via `gui.typeIcons` map in config.yml (#38)
 - `gui.collapsedPanelHeight` option to set the height of non-focused side panels. Default is 5 lines which was often too small to read the info panel without switching focus (#46)
 
-## [2.8.2] - 2026-04-13
+## 2.8.2 - 2026-04-13
 
 ### Fixed
 
 - Issue rows no longer wrap to two lines when the panel is narrow. Extra content is cut off instead
 - Updated column now lines up vertically. Summary column was not padded so dates floated left on short summaries
 
-## [2.8.1] - 2026-04-10
+## 2.8.1 - 2026-04-10
 
-## [2.8.0] - 2026-04-10
+## 2.8.0 - 2026-04-10
 
 ### Added
 
@@ -173,7 +173,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Scroll detail panel without switching focus. `J`/`K` scrolls one line, `ctrl+f`/`ctrl+b` scrolls half page from any left panel (#20)
 - Navigation keys (`j`/`k`/`g`/`G`/`ctrl+d`/`ctrl+u`) are now configurable via `keybinding.navigation` in config.yml
 
-## [2.7.4] - 2026-04-10
+## 2.7.4 - 2026-04-10
 
 ### Added
 
@@ -187,7 +187,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Overlay stack now renders all visible layers so stacked modals display correctly
 - `PatchIssue` syncs all fields including sprint, labels, components and custom fields
 
-## [2.7.3] - 2026-04-10
+## 2.7.3 - 2026-04-10
 
 ### Added
 
@@ -198,7 +198,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Assignee list was capped at 100 users. Now fetches all pages so large orgs see everyone (#35)
 
-## [2.7.2] - 2026-04-03
+## 2.7.2 - 2026-04-03
 
 ### Added
 
@@ -224,7 +224,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Issue select feature with star marker and pin-to-top
 
-## [2.7.1] - 2026-04-02
+## 2.7.1 - 2026-04-02
 
 ### Changed
 
@@ -238,7 +238,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Detail panel shows first issue after selecting a project instead of staying on project preview
 - Projects list limited to 100 items on Jira Cloud. Now fetches all projects with pagination
 
-## [2.7.0] - 2026-04-01
+## 2.7.0 - 2026-04-01
 
 ### Added
 
@@ -257,13 +257,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - ADF code blocks now wrap long lines instead of breaking the panel border
 - ADF headings wrap to fit panel width
 
-## [2.6.8] - 2026-04-01
+## 2.6.8 - 2026-04-01
 
 ### Fixed
 
 - AUR PKGBUILD: pkgver() now uses git describe for tag-based versioning per Arch Wiki guidelines
 
-## [2.6.7] - 2026-04-01
+## 2.6.7 - 2026-04-01
 
 ### Fixed
 
@@ -272,7 +272,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - ADF list markers use correct display width for indentation
 - Stripped carriage returns from wiki markup and ADF text to prevent terminal corruption with Jira Server line endings
 
-## [2.6.6] - 2026-03-30
+## 2.6.6 - 2026-03-30
 
 ### Fixed
 
@@ -285,32 +285,32 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Assignable users are cached per project and prefetched in background after project switch
 
-## [2.6.5] - 2026-03-30
+## 2.6.5 - 2026-03-30
 
 ### Fixed
 
 - Search backspace now correctly deletes multi-byte Unicode characters instead of producing broken glyphs
 - Issues list selection no longer jumps to top after confirming search
 
-## [2.6.4] - 2026-03-30
+## 2.6.4 - 2026-03-30
 
 ### Fixed
 
 - Homebrew: switched back from Cask to Formula — Cask quarantines unsigned CLI binaries, causing macOS Gatekeeper to block execution
 
-## [2.6.3] - 2026-03-30
+## 2.6.3 - 2026-03-30
 
 ### Fixed
 
 - Homebrew tap: removed stale Formula that shadowed the Cask, causing `brew upgrade` to stay on v2.4.0
 
-## [2.6.2] - 2026-03-30
+## 2.6.2 - 2026-03-30
 
 ### Fixed
 
 - Homebrew formula not updating since v2.4.0: switched goreleaser from `homebrew_casks` back to `brews`
 
-## [2.6.1] - 2026-03-29
+## 2.6.1 - 2026-03-29
 
 ### Changed
 
@@ -318,7 +318,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - CI: added nix build check to catch outdated dependency hashes
 - CONTRIBUTING: added Nix dev environment section
 
-## [2.6.0] - 2026-03-29
+## 2.6.0 - 2026-03-29
 
 ### Added
 
@@ -344,7 +344,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Changelog tab: works on Server/DC (uses `?expand=changelog` instead of separate endpoint)
 - Status panel: shows host when email is empty (Server/DC)
 
-## [2.5.1] - 2026-03-28
+## 2.5.1 - 2026-03-28
 
 ### Fixed
 
@@ -360,7 +360,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Config: annotated unimplemented options with TODO markers (theme, language, mouse toggle, cache, auto-refresh, etc.)
 
-## [2.5.0] - 2026-03-28
+## 2.5.0 - 2026-03-28
 
 ### Added
 
@@ -381,19 +381,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Agile API client refactored: doAgile/doAgileMethod avoid mutating baseURL
 - e2e tests consolidated into a single preview tape
 
-## [2.4.3] - 2026-03-27
+## 2.4.3 - 2026-03-27
 
 ### Fixed
 
 - Cursor warp on panel switch
 
-## [2.4.2] - 2026-03-25
+## 2.4.2 - 2026-03-25
 
 ### Changed
 
 - Release notes now include link to CHANGELOG.md
 
-## [2.4.1] - 2026-03-25
+## 2.4.1 - 2026-03-25
 
 ### Added
 
@@ -411,7 +411,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - DRY helpers for modal, inputmodal, jqlmodal, diffview components
 - Unit tests for modal, overlaystack, text utilities
 
-## [2.4.0] - 2026-03-25
+## 2.4.0 - 2026-03-25
 
 ### Added
 
@@ -421,7 +421,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Auto-detect current issue from branch name
 - CHANGELOG.md
 
-## [2.3.0] - 2026-03-24
+## 2.3.0 - 2026-03-24
 
 ### Added
 
@@ -433,7 +433,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Custom readline-style text input with cursor, Home/End, Ctrl+A/E/W/K/U
 - `make check` target (lint + vet + build)
 
-## [2.2.0] - 2026-03-21
+## 2.2.0 - 2026-03-21
 
 ### Added
 
@@ -443,7 +443,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Diff view component for description change history
 - ADF-to-Markdown renderer for rich text display in edit/comment workflows
 
-## [2.1.0] - 2026-03-20
+## 2.1.0 - 2026-03-20
 
 ### Added
 
@@ -451,7 +451,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Support for mentions, emoji, lists, links, code blocks, inline cards
 - Windows installation guide in README
 
-## [1.0.0] - 2026-03-18
+## 1.0.0 - 2026-03-18
 
 ### Added
 
@@ -474,49 +474,3 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Responsive side panel width
 - Cross-platform: macOS, Linux, Windows
 - Homebrew install via tap
-
-[Unreleased]: https://github.com/textfuel/lazyjira/compare/v2.19.2...HEAD
-[2.19.2]: https://github.com/textfuel/lazyjira/compare/v2.19.1...v2.19.2
-[2.19.1]: https://github.com/textfuel/lazyjira/compare/v2.19.0...v2.19.1
-[2.19.0]: https://github.com/textfuel/lazyjira/compare/v2.18.0...v2.19.0
-[2.18.0]: https://github.com/textfuel/lazyjira/compare/v2.17.0...v2.18.0
-[2.17.0]: https://github.com/textfuel/lazyjira/compare/v2.16.1...v2.17.0
-[2.16.1]: https://github.com/textfuel/lazyjira/compare/v2.16.0...v2.16.1
-[2.16.0]: https://github.com/textfuel/lazyjira/compare/v2.15.0...v2.16.0
-[2.15.0]: https://github.com/textfuel/lazyjira/compare/v2.14.0...v2.15.0
-[2.14.0]: https://github.com/textfuel/lazyjira/compare/v2.13.0...v2.14.0
-[2.13.0]: https://github.com/textfuel/lazyjira/compare/v2.12.0...v2.13.0
-[2.12.0]: https://github.com/textfuel/lazyjira/compare/v2.11.1...v2.12.0
-[2.11.1]: https://github.com/textfuel/lazyjira/compare/v2.11.0...v2.11.1
-[2.11.0]: https://github.com/textfuel/lazyjira/compare/v2.10.2...v2.11.0
-[2.10.2]: https://github.com/textfuel/lazyjira/compare/v2.10.1...v2.10.2
-[2.10.1]: https://github.com/textfuel/lazyjira/compare/v2.10.0...v2.10.1
-[2.10.0]: https://github.com/textfuel/lazyjira/compare/v2.9.0...v2.10.0
-[2.9.0]: https://github.com/textfuel/lazyjira/compare/v2.8.2...v2.9.0
-[2.8.2]: https://github.com/textfuel/lazyjira/compare/v2.8.1...v2.8.2
-[2.8.1]: https://github.com/textfuel/lazyjira/compare/v2.8.0...v2.8.1
-[2.8.0]: https://github.com/textfuel/lazyjira/compare/v2.7.4...v2.8.0
-[2.7.4]: https://github.com/textfuel/lazyjira/compare/v2.7.3...v2.7.4
-[2.7.3]: https://github.com/textfuel/lazyjira/compare/v2.7.2...v2.7.3
-[2.7.2]: https://github.com/textfuel/lazyjira/compare/v2.7.1...v2.7.2
-[2.7.1]: https://github.com/textfuel/lazyjira/compare/v2.7.0...v2.7.1
-[2.7.0]: https://github.com/textfuel/lazyjira/compare/v2.6.8...v2.7.0
-[2.6.8]: https://github.com/textfuel/lazyjira/compare/v2.6.7...v2.6.8
-[2.6.7]: https://github.com/textfuel/lazyjira/compare/v2.6.6...v2.6.7
-[2.6.6]: https://github.com/textfuel/lazyjira/compare/v2.6.5...v2.6.6
-[2.6.5]: https://github.com/textfuel/lazyjira/compare/v2.6.4...v2.6.5
-[2.6.4]: https://github.com/textfuel/lazyjira/compare/v2.6.3...v2.6.4
-[2.6.3]: https://github.com/textfuel/lazyjira/compare/v2.6.2...v2.6.3
-[2.6.2]: https://github.com/textfuel/lazyjira/compare/v2.6.1...v2.6.2
-[2.6.1]: https://github.com/textfuel/lazyjira/compare/v2.6.0...v2.6.1
-[2.6.0]: https://github.com/textfuel/lazyjira/compare/v2.5.1...v2.6.0
-[2.5.1]: https://github.com/textfuel/lazyjira/compare/v2.5.0...v2.5.1
-[2.5.0]: https://github.com/textfuel/lazyjira/compare/v2.4.3...v2.5.0
-[2.4.3]: https://github.com/textfuel/lazyjira/compare/v2.4.2...v2.4.3
-[2.4.2]: https://github.com/textfuel/lazyjira/compare/v2.4.1...v2.4.2
-[2.4.1]: https://github.com/textfuel/lazyjira/compare/v2.4.0...v2.4.1
-[2.4.0]: https://github.com/textfuel/lazyjira/compare/v2.3.0...v2.4.0
-[2.3.0]: https://github.com/textfuel/lazyjira/compare/v2.2.0...v2.3.0
-[2.2.0]: https://github.com/textfuel/lazyjira/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/textfuel/lazyjira/compare/v2.0.3...v2.1.0
-[1.0.0]: https://github.com/textfuel/lazyjira/releases/tag/v1.1.0

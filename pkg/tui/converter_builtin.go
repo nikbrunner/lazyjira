@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/textfuel/lazyjira/v2/pkg/tui/views"
+import "github.com/nikbrunner/lazyjira/v2/pkg/tui/views"
 
 // BuiltinConverter wraps lazyjira's built-in ADF<->Markdown conversion.
 // It is stateless — state is always nil.

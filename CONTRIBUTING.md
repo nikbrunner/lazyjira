@@ -5,7 +5,7 @@ Thanks for your interest in contributing!
 ## Getting started
 
 ```bash
-git clone https://github.com/textfuel/lazyjira.git
+git clone https://github.com/nikbrunner/lazyjira.git
 cd lazyjira
 make build
 ```

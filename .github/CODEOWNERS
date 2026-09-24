@@ -1,7 +1,7 @@
-* @textfuel
+* @nikbrunner
 
-/pkg/config/                       @textfuel @seflue
-/pkg/git/                          @textfuel @seflue
-/docs/Config.md                    @textfuel @seflue
-/pkg/tui/custom_commands*.go       @textfuel @seflue
-/pkg/tui/views/infopanel*.go       @textfuel @seflue
+/pkg/config/                       @nikbrunner @seflue
+/pkg/git/                          @nikbrunner @seflue
+/docs/Config.md                    @nikbrunner @seflue
+/pkg/tui/custom_commands*.go       @nikbrunner @seflue
+/pkg/tui/views/infopanel*.go       @nikbrunner @seflue

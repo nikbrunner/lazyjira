@@ -4,9 +4,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/textfuel/lazyjira/v2/pkg/config"
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/config"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
 func TestKeymapFromConfig_OverridesAndMatches(t *testing.T) {

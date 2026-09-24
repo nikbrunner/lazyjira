@@ -3,7 +3,7 @@ package jira
 import (
 	"testing"
 
-	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 )
 
 func adfTextNode(text string) map[string]any {

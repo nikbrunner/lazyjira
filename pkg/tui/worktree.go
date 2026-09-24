@@ -5,8 +5,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/textfuel/lazyjira/v2/pkg/git"
-	"github.com/textfuel/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/v2/pkg/git"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
 )
 
 type gitWorktreeCreatedMsg struct {

@@ -3,7 +3,7 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/textfuel/lazyjira/v2/pkg/tui/views"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/views"
 )
 
 type panelID int

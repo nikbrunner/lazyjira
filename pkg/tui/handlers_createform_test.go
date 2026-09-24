@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/textfuel/lazyjira/v2/pkg/jira/jiratest"
-	"github.com/textfuel/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
 func TestHandleCreateFormEditExternal_NilFieldIsNoop(t *testing.T) {
