@@ -1,8 +1,8 @@
 package tui
 
 import (
-	"bytes"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"slices"
@@ -27,50 +27,17 @@ type customCommandFinishedMsg struct {
 	refresh bool
 }
 
-// issueScopeData holds template variables for issue-scoped commands.
-type issueScopeData struct {
-	Key         string
-	ProjectKey  string
-	ParentKey   string
-	Summary     string
-	Type        string
-	Status      string
-	Assignee    string
-	Priority    string
-	URL         string
-	GitBranch   string
-	GitRepoPath string
-	JiraHost    string
-}
-
-// projectScopeData holds template variables for project-scoped commands.
-type projectScopeData struct {
-	ProjectKey  string
-	ProjectName string
-	JiraHost    string
-	GitBranch   string
-	GitRepoPath string
-}
-
-// commentScopeData holds template variables for comment-scoped commands.
-type commentScopeData struct {
-	CommentID     string
-	CommentAuthor string
-	CommentBody   string
-}
-
-// detailCommentsScopeData is used for commands active in the detail.comments
-// context, exposing both Issue and Comment fields at the top level. Issue and
-// Comment field names do not collide, so struct embedding is unambiguous.
-type detailCommentsScopeData struct {
-	issueScopeData
-	commentScopeData
+func customCommandShell() string {
+	if shell := os.Getenv("SHELL"); shell != "" {
+		return shell
+	}
+	return "sh"
 }
 
 // initCustomCommands resolves the custom commands from config at startup.
 // Resolution errors are surfaced on the status panel; the slice is left empty.
 func (a *App) initCustomCommands() {
-	resolved, err := a.cfg.ResolveCustomCommands()
+	resolved, err := a.cfg.ResolveCustomCommandsForShell(customCommandShell())
 	if err != nil {
 		a.statusPanel.SetError(fmt.Sprintf("custom commands: %v", err))
 		a.customCmds = nil
@@ -98,8 +65,9 @@ func (a *App) activeContexts() []config.Context {
 		}
 	case sideLeft:
 		switch a.leftFocus {
-		case focusIssues:
+		case focusIssues, focusIssueTabs:
 			out = append(out, config.CtxIssues)
+		case focusDetailPane:
 		case focusInfo:
 			out = append(out, config.CtxInfo)
 		case focusProjects:
@@ -149,7 +117,7 @@ func scopeNoun(s config.ScopeMask) string {
 
 // buildCommandData returns the template data for a resolved command.
 // The second return is false when a required selection is missing.
-func (a *App) buildCommandData(rc config.ResolvedCustomCommand) (any, bool) {
+func (a *App) buildCommandData(rc config.ResolvedCustomCommand) (map[string]string, bool) {
 	switch rc.Scopes {
 	case config.ScopeIssue:
 		if a.currentIssue() == nil {
@@ -176,89 +144,93 @@ func (a *App) buildCommandData(rc config.ResolvedCustomCommand) (any, bool) {
 		if cmt == nil {
 			return nil, false
 		}
-		return detailCommentsScopeData{
-			issueScopeData:   a.buildIssueScopeData(),
-			commentScopeData: a.buildCommentScopeData(cmt),
-		}, true
+		data := a.buildIssueScopeData()
+		maps.Copy(data, a.buildCommentScopeData(cmt))
+		return data, true
 	}
 	return nil, false
 }
 
-func (a *App) buildIssueScopeData() issueScopeData {
+func (a *App) buildIssueScopeData() map[string]string {
 	sel := a.currentIssue()
-	data := issueScopeData{
-		GitBranch:   a.gitBranch,
-		GitRepoPath: a.gitRepoPath,
-		JiraHost:    a.cfg.Jira.Host,
+	data := map[string]string{
+		"Key":         "",
+		"ProjectKey":  "",
+		"ParentKey":   "",
+		"Summary":     "",
+		"Type":        "",
+		"Status":      "",
+		"Assignee":    "",
+		"Priority":    "",
+		"URL":         "",
+		"GitBranch":   a.gitBranch,
+		"GitRepoPath": a.gitRepoPath,
+		"JiraHost":    a.cfg.Jira.Host,
 	}
 	if sel == nil {
 		return data
 	}
 
-	data.Key = sel.Key
-	data.Summary = sel.Summary
+	data["Key"] = sel.Key
+	data["Summary"] = sel.Summary
 
 	if parts := strings.SplitN(sel.Key, "-", 2); len(parts) == 2 {
-		data.ProjectKey = parts[0]
+		data["ProjectKey"] = parts[0]
 	}
 
 	if sel.Parent != nil {
-		data.ParentKey = sel.Parent.Key
+		data["ParentKey"] = sel.Parent.Key
 	}
 	if sel.IssueType != nil {
-		data.Type = sel.IssueType.Name
+		data["Type"] = sel.IssueType.Name
 	}
 	if sel.Status != nil {
-		data.Status = sel.Status.Name
+		data["Status"] = sel.Status.Name
 	}
 	if sel.Assignee != nil {
-		data.Assignee = sel.Assignee.DisplayName
+		data["Assignee"] = sel.Assignee.DisplayName
 	}
 	if sel.Priority != nil {
-		data.Priority = sel.Priority.Name
+		data["Priority"] = sel.Priority.Name
 	}
 
 	if a.cfg.Jira.Host != "" {
-		data.URL = fmt.Sprintf("https://%s/browse/%s", a.cfg.Jira.Host, sel.Key)
+		data["URL"] = fmt.Sprintf("https://%s/browse/%s", a.cfg.Jira.Host, sel.Key)
 	}
 
 	return data
 }
 
-func (a *App) buildProjectScopeData(p *jira.Project) projectScopeData {
-	return projectScopeData{
-		ProjectKey:  p.Key,
-		ProjectName: p.Name,
-		JiraHost:    a.cfg.Jira.Host,
-		GitBranch:   a.gitBranch,
-		GitRepoPath: a.gitRepoPath,
+func (a *App) buildProjectScopeData(p *jira.Project) map[string]string {
+	return map[string]string{
+		"ProjectKey":  p.Key,
+		"ProjectName": p.Name,
+		"JiraHost":    a.cfg.Jira.Host,
+		"GitBranch":   a.gitBranch,
+		"GitRepoPath": a.gitRepoPath,
 	}
 }
 
-func (a *App) buildCommentScopeData(c *jira.Comment) commentScopeData {
-	data := commentScopeData{
-		CommentID:   c.ID,
-		CommentBody: c.Body,
+func (a *App) buildCommentScopeData(c *jira.Comment) map[string]string {
+	data := map[string]string{
+		"CommentID":     c.ID,
+		"CommentAuthor": "",
+		"CommentBody":   c.Body,
 	}
 	if c.Author != nil {
-		data.CommentAuthor = c.Author.DisplayName
+		data["CommentAuthor"] = c.Author.DisplayName
 	}
 	return data
 }
 
-func (a *App) executeCustomCommand(rc config.ResolvedCustomCommand, data any) tea.Cmd {
-	var buf bytes.Buffer
-	if err := rc.Template.Execute(&buf, data); err != nil {
+func (a *App) executeCustomCommand(rc config.ResolvedCustomCommand, data map[string]string) tea.Cmd {
+	cmdStr, err := rc.Render(data)
+	if err != nil {
 		return func() tea.Msg {
 			return customCommandFinishedMsg{err: fmt.Errorf("template error: %w", err)}
 		}
 	}
-	cmdStr := buf.String()
-
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "sh"
-	}
+	shell := rc.Shell()
 
 	refresh := rc.Refresh
 	repoPath := a.gitRepoPath

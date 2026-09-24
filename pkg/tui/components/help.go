@@ -57,36 +57,41 @@ func (h HelpBar) View() string {
 	blueStyle := lipgloss.NewStyle().Foreground(theme.ColorBlue)
 	sep := blueStyle.Render(" | ")
 
-	availW := h.width
-
 	// Status message (green) on the left.
-	prefix := ""
+	prefix := " "
 	if h.statusMsg != "" {
 		greenStyle := lipgloss.NewStyle().Foreground(theme.ColorGreen).Bold(true)
 		prefix = " " + greenStyle.Render(h.statusMsg) + " "
-		availW -= lipgloss.Width(prefix)
 	}
+	availW := h.width - lipgloss.Width(prefix)
 
 	var parts []string
 	totalWidth := 0
 	truncated := false
-	for _, item := range h.items {
+	ellipsis := blueStyle.Render(" ...")
+	ellipsisWidth := lipgloss.Width(ellipsis)
+	for i, item := range h.items {
 		part := blueStyle.Render(item.Description + ": " + item.Key)
-		partWidth := lipgloss.Width(part) + 3 // " | "
-		if availW > 0 && totalWidth+partWidth > availW {
+		separatorWidth := 0
+		if len(parts) > 0 {
+			separatorWidth = lipgloss.Width(sep)
+		}
+		nextWidth := totalWidth + separatorWidth + lipgloss.Width(part)
+		if availW > 0 && (nextWidth > availW || (i < len(h.items)-1 && nextWidth+ellipsisWidth > availW)) {
 			truncated = true
 			break
 		}
 		parts = append(parts, part)
-		totalWidth += partWidth
+		totalWidth = nextWidth
 	}
 
 	result := strings.Join(parts, sep)
 	if truncated {
-		result += blueStyle.Render(" ...")
+		if availW > 0 && ellipsisWidth > availW {
+			result += blueStyle.Render(TruncateEnd("...", availW))
+		} else {
+			result += ellipsis
+		}
 	}
-	if prefix != "" {
-		return prefix + result
-	}
-	return " " + result
+	return prefix + result
 }

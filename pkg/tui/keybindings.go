@@ -43,9 +43,12 @@ func (a *App) ContextBindings() []Binding {
 	km := a.keymap
 	global := []Binding{
 		{km.Keys(ActQuit), "quit"},
-		{km.Keys(ActSwitchPanel), "switch left/right panels"},
-		{km.Keys(ActFocusStatus), "focus status panel"},
-		{km.Keys(ActFocusIssues), "focus issues panel"},
+		{km.Keys(ActFocusStatus), "focus Status"},
+		{km.Keys(ActFocusIssues), "focus Issues"},
+		{km.Keys(ActFocusDetail), "focus Details"},
+		{km.Keys(ActToggleMaximize), "maximize focused pane"},
+		{"tab/shift-tab", "switch issue collection"},
+		{"H/J/K/L", "move focus"},
 		{km.Keys(ActFocusInfo), "focus info panel"},
 		{km.Keys(ActFocusProj), "focus projects panel"},
 		{km.Keys(ActSearch), "search / filter current list"},
@@ -55,6 +58,10 @@ func (a *App) ContextBindings() []Binding {
 	}
 
 	switch {
+	case a.side == sideLeft && a.leftFocus == focusIssueTabs:
+		bindings := slices.Concat(global, a.navBindings())
+		return append(bindings, Binding{"enter", "focus Issues"}, Binding{"j/k", "switch issue collection"})
+
 	case a.side == sideLeft && a.leftFocus == focusIssues:
 		bindings := slices.Concat(global, a.navBindings(), a.detailScrollBindings())
 		bindings = append(bindings,
@@ -109,9 +116,7 @@ func (a *App) ContextBindings() []Binding {
 		return bindings
 
 	case a.side == sideLeft && a.leftFocus == focusStatus:
-		return append(global,
-			a.bind(ActFocusRight, "switch to detail panel"),
-		)
+		return append(global, Binding{"J", "Issue tabs"})
 
 	case a.side == sideRight:
 		bindings := slices.Concat(global, a.navBindings())
@@ -208,6 +213,12 @@ func (a *App) helpBarItems() []components.HelpItem {
 
 	km := a.keymap
 	switch {
+	case a.side == sideLeft && a.leftFocus == focusIssueTabs:
+		return []components.HelpItem{
+			{Key: "j/k", Description: "issue collection"},
+			{Key: "enter", Description: "Issues"},
+			{Key: km.Keys(ActHelp), Description: "help"},
+		}
 	case a.side == sideLeft && a.leftFocus == focusIssues:
 		var items []components.HelpItem
 		if a.issuesList.IsJQLTab() {
@@ -264,7 +275,8 @@ func (a *App) helpBarItems() []components.HelpItem {
 		return items
 	case a.side == sideLeft && a.leftFocus == focusStatus:
 		return []components.HelpItem{
-			{Key: km.Keys(ActSwitchPanel) + "/" + km.Keys(ActFocusRight), Description: "detail"},
+			{Key: "J", Description: "issue tabs"},
+			{Key: km.Keys(ActFocusDetail), Description: "details"},
 			{Key: km.Keys(ActHelp), Description: "help"},
 		}
 	case a.side == sideRight:

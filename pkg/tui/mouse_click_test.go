@@ -30,8 +30,8 @@ func TestHandleMouse_WheelUpScrollsUp(t *testing.T) {
 	_, _ = app.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonWheelUp,
 		Action: tea.MouseActionPress,
-		X:      5,
-		Y:      3,
+		X:      30,
+		Y:      4,
 	})
 
 	if app.issuesList.Cursor != 0 {
@@ -49,8 +49,8 @@ func TestHandleMouse_WheelDownScrollsDown(t *testing.T) {
 	_, _ = app.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonWheelDown,
 		Action: tea.MouseActionPress,
-		X:      5,
-		Y:      3,
+		X:      30,
+		Y:      4,
 	})
 
 	if app.issuesList.Cursor != 1 {
@@ -83,8 +83,8 @@ func TestHandleMouse_MotionIsNoop(t *testing.T) {
 	_, cmd := app.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonNone,
 		Action: tea.MouseActionMotion,
-		X:      5,
-		Y:      3,
+		X:      30,
+		Y:      4,
 	})
 
 	if cmd != nil {
@@ -103,7 +103,7 @@ func TestMouseClick_StatusFocusesStatus(t *testing.T) {
 	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusStatus)
 }
 
-func TestMouseClick_IssuesTitleBarTabClick(t *testing.T) {
+func TestMouseClick_IssueTabsPaneActivatesTab(t *testing.T) {
 	t.Parallel()
 	fake := &jiratest.FakeClient{T: t}
 	app := appWithPanelDims(t, 120)
@@ -115,10 +115,10 @@ func TestMouseClick_IssuesTitleBarTabClick(t *testing.T) {
 		{Name: "Mine", JQL: "assignee = currentUser()"},
 	})
 
-	_, _ = app.mouseClick(panelIssues, 0, 15)
+	_, _ = app.mouseClick(panelTabs, 2, 5)
 
 	testkit.AssertEqual(t, "side", app.side, sideLeft)
-	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusIssues)
+	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusIssueTabs)
 	testkit.AssertEqual(t, "active tab index", app.issuesList.GetTabIndex(), 1)
 }
 
@@ -138,7 +138,7 @@ func TestMouseClick_InfoTitleBarClicksTab(t *testing.T) {
 	app := mouseApp(t)
 	app.infoPanel.SetIssue(&jira.Issue{Key: testKey})
 
-	_, _ = app.mouseClick(panelInfo, 0, 12)
+	_, _ = app.mouseClick(panelInfo, 0, 13)
 
 	testkit.AssertEqual(t, "side", app.side, sideLeft)
 	testkit.AssertEqual(t, "leftFocus", app.leftFocus, focusInfo)
@@ -174,8 +174,8 @@ func TestMouseClick_DetailTitleBarClicksTab(t *testing.T) {
 	app.layoutPanels()
 
 	separatorWidth := 3
-	tabsStart := len("[0] "+testKey) + separatorWidth
-	commentsTabX := app.panelSideW + tabsStart + len("Body") + separatorWidth
+	tabsStart := len("[2] "+testKey) + separatorWidth
+	commentsTabX := app.geometry().detail.x + tabsStart + len("Body") + separatorWidth
 
 	_, _ = app.mouseClick(panelDetail, 0, commentsTabX)
 

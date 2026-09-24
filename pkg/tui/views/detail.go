@@ -74,6 +74,8 @@ type DetailView struct {
 	width      int
 	height     int
 	focused    bool
+	focusHint  string
+	maximized  bool
 	theme      *theme.Theme
 	renderer   ADFRenderer
 	ResolveNav components.NavResolver
@@ -85,6 +87,51 @@ func NewDetailView(renderer ADFRenderer) *DetailView {
 }
 
 func (d *DetailView) Mode() MainMode { return d.mode }
+
+func (d *DetailView) SetFocusHint(hint string)    { d.focusHint = hint }
+func (d *DetailView) SetMaximized(maximized bool) { d.maximized = maximized }
+
+func (d *DetailView) titlePrefix() string {
+	if d.focusHint == "" {
+		return ""
+	}
+	return "[" + d.focusHint + "] "
+}
+
+func (d *DetailView) maximizeLabel() string {
+	if d.maximized {
+		return " [−]"
+	}
+	return " [+]"
+}
+
+func (d *DetailView) titleWithMaximize(title string, maxWidth int) string {
+	button := d.maximizeLabel()
+	return components.TruncateEnd(title, max(maxWidth-lipgloss.Width(button), 1)) + button
+}
+
+func (d *DetailView) panelTitle(maxWidth int) string {
+	switch d.mode {
+	case ModeSplash:
+		return d.titleWithMaximize(d.titlePrefix()+"lazyjira", maxWidth)
+	case ModeIssue:
+		if d.issue != nil {
+			return d.buildTitle(maxWidth)
+		}
+	case ModeProject:
+		if d.project != nil {
+			return d.titleWithMaximize(d.titlePrefix()+"Project: "+d.project.Name, maxWidth-1)
+		}
+	}
+	return d.titleWithMaximize(d.titlePrefix()+"Detail", maxWidth)
+}
+
+func (d *DetailView) ClickMaximizeAt(x int) bool {
+	contentWidth, _ := components.PanelDimensions(d.width, d.height)
+	title := d.panelTitle(contentWidth - 1)
+	start := 2 + lipgloss.Width(title) - lipgloss.Width(d.maximizeLabel())
+	return x >= start && x < start+lipgloss.Width(d.maximizeLabel())
+}
 
 // IssueKey returns the key of the currently displayed issue, or ""
 func (d *DetailView) IssueKey() string {
@@ -213,10 +260,9 @@ func (d *DetailView) ClickTab(x int) {
 		return
 	}
 
-	// Tabs start after "[0] KEY" + " - " (the border char "╭" is col 0).
-	prefix := "[0] " + d.issue.Key
-	sepW := 3 // " - "
-	tabsStart := len(prefix) + sepW
+	prefix := d.titlePrefix() + d.issue.Key
+	sepW := 3
+	tabsStart := lipgloss.Width(prefix) + sepW
 
 	if x < tabsStart {
 		return
@@ -471,12 +517,12 @@ func (d *DetailView) View() string {
 	visible := d.VisibleRows()
 
 	if d.issue == nil {
-		title := "[0] Detail"
+		title := d.panelTitle(contentWidth - 1)
 		placeholder := lipgloss.NewStyle().Foreground(theme.ColorGray).Render("Select an issue to view details")
 		return components.RenderPanel(title, placeholder, d.width, innerH, d.focused)
 	}
 
-	title := d.buildTitle(contentWidth)
+	title := d.buildTitle(contentWidth - 1)
 
 	header := d.renderSummaryHeader(contentWidth)
 	visible = max(visible-len(header), 1)
@@ -624,7 +670,7 @@ func (d *DetailView) buildTitle(maxWidth int) string {
 	inactiveStyle := lipgloss.NewStyle().Foreground(theme.ColorWhite)
 	sepStyle := lipgloss.NewStyle().Foreground(theme.ColorGray)
 
-	prefix := "[0] " + d.issue.Key
+	prefix := d.titlePrefix() + d.issue.Key
 
 	var tabParts []string
 	for _, t := range tabs {
@@ -636,7 +682,7 @@ func (d *DetailView) buildTitle(maxWidth int) string {
 	}
 
 	sep := sepStyle.Render(" - ")
-	return prefix + sep + strings.Join(tabParts, sep)
+	return prefix + sep + strings.Join(tabParts, sep) + d.maximizeLabel()
 }
 
 // renderSummaryHeader returns the pinned summary lines shown above the tab
@@ -1025,7 +1071,7 @@ func (d *DetailView) renderSplash(contentWidth, innerH int) string {
 	}
 
 	content := strings.Join(lines, "\n")
-	return components.RenderPanel("[0] lazyjira", content, d.width, innerH, d.focused)
+	return components.RenderPanel(d.panelTitle(contentWidth-1), content, d.width, innerH, d.focused)
 }
 
 func (d *DetailView) renderProjectView(contentWidth, innerH int) string {
@@ -1044,8 +1090,7 @@ func (d *DetailView) renderProjectView(contentWidth, innerH int) string {
 	}
 
 	content := strings.Join(lines, "\n")
-	title := "[0] Project: " + p.Name
-	title = components.TruncateEnd(title, contentWidth-2)
+	title := d.panelTitle(contentWidth - 1)
 	return components.RenderPanel(title, content, d.width, innerH, d.focused)
 }
 

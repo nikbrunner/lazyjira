@@ -27,22 +27,23 @@ func TestHandleResize_PanelsLaidOut(t *testing.T) {
 
 	_, _ = app.handleResize(tea.WindowSizeMsg{Width: 120, Height: 40})
 
-	if app.panelSideW == 0 {
-		t.Error("panelSideW should be set after resize")
+	layout := app.geometry()
+	if layout.tabs.width == 0 {
+		t.Error("Issue tabs pane should be laid out after resize")
 	}
-	if app.panelDetailH == 0 {
-		t.Error("panelDetailH should be set after resize")
+	if layout.detail.height == 0 {
+		t.Error("Details pane should be laid out after resize")
 	}
 }
 
-func TestHandleResize_VerticalLayoutOnNarrowTerminal(t *testing.T) {
+func TestHandleResize_NarrowTerminalShowsTooSmallLayout(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.keymap = DefaultKeymap()
 
 	_, _ = app.handleResize(tea.WindowSizeMsg{Width: 60, Height: 40})
 
-	if !app.isVerticalLayout() {
-		t.Error("terminal narrower than 80 cols should use vertical layout")
+	if !app.geometry().tooSmall {
+		t.Error("60-column terminal should require the too-small message")
 	}
 }

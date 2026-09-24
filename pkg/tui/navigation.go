@@ -52,6 +52,7 @@ func (a *App) previewSelectedIssue() tea.Cmd {
 	if sel == nil {
 		return nil
 	}
+	a.previewEpoch++
 	a.previewKey = sel.Key
 	if cached, ok := a.issueCache[sel.Key]; ok {
 		a.detailView.SetIssue(cached)
@@ -114,7 +115,7 @@ func (a *App) navigateToIssue(key string) {
 	}
 	// Switch to first tab (typically "All") and try again.
 	if a.issuesList.GetTabIndex() != 0 {
-		a.issuesList.SetTabIndex(0)
+		a.setIssueTabIndex(0)
 		if a.issuesList.SelectByKey(key) {
 			a.side = sideLeft
 			a.leftFocus = focusIssues

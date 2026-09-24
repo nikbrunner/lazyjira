@@ -10,15 +10,16 @@ import (
 )
 
 type StatusPanel struct {
-	project string
-	user    string
-	host    string
-	online  bool
-	errText string
-	width   int
-	height  int
-	focused bool
-	theme   *theme.Theme
+	project   string
+	user      string
+	host      string
+	online    bool
+	errText   string
+	width     int
+	height    int
+	focused   bool
+	focusHint string
+	theme     *theme.Theme
 }
 
 func NewStatusPanel(project, user, host string) *StatusPanel {
@@ -37,13 +38,21 @@ func (s *StatusPanel) SetError(err string)       { s.errText = err }
 func (s *StatusPanel) ErrorMessage() string      { return s.errText }
 func (s *StatusPanel) SetSize(w, h int)          { s.width = w; s.height = h }
 func (s *StatusPanel) SetFocused(focused bool)   { s.focused = focused }
+func (s *StatusPanel) SetFocusHint(hint string)  { s.focusHint = hint }
+
+func (s *StatusPanel) title(name string) string {
+	if s.focusHint == "" {
+		return name
+	}
+	return "[" + s.focusHint + "] " + name
+}
 
 func (s *StatusPanel) Init() tea.Cmd                              { return nil }
 func (s *StatusPanel) Update(msg tea.Msg) (*StatusPanel, tea.Cmd) { return s, nil }
 
 func (s *StatusPanel) View() string {
 	if s.height <= 1 {
-		return components.RenderCollapsedBar("[1] Status", s.project, s.width, s.focused)
+		return components.RenderCollapsedBar(s.title("Status"), s.project, s.width, s.focused)
 	}
 
 	_, innerHeight := components.PanelDimensions(s.width, s.height)
@@ -70,5 +79,5 @@ func (s *StatusPanel) View() string {
 		errLine := " " + errStyle(components.TruncateEnd(s.errText, contentW-1))
 		line += "\n" + errLine
 	}
-	return components.RenderPanel("[1] Status", line, s.width, innerHeight, s.focused)
+	return components.RenderPanel(s.title("Status"), line, s.width, innerHeight, s.focused)
 }

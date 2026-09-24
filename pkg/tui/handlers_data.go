@@ -28,8 +28,10 @@ func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, prefetchIssue(a.client, issue.Key))
 		}
 	}
-	if msg.tab == a.issuesList.GetTabIndex() && a.side == sideLeft && a.leftFocus == focusIssues {
-		if cmd := a.previewSelectedIssue(); cmd != nil {
+	if msg.tab == a.issuesList.GetTabIndex() {
+		if a.issuesList.SelectedIssue() == nil {
+			a.clearIssuePreview()
+		} else if cmd := a.previewSelectedIssue(); cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 	}
@@ -54,7 +56,7 @@ func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, fetchIssueDetail(a.client, detectedKey))
 			a.gitDetectedKey = ""
 		case a.issuesList.GetTabIndex() != 0:
-			a.issuesList.SetTabIndex(0)
+			a.setIssueTabIndex(0)
 			cmds = append(cmds, a.fetchActiveTab())
 		default:
 			a.gitDetectedKey = ""

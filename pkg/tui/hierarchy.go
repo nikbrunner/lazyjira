@@ -176,7 +176,7 @@ func (a *App) pushNav(title, parentKey string, src navstack.Source, issues []jir
 	}
 
 	stack.Push(frame)
-	a.issuesList.SetTabIndex(idx)
+	a.setIssueTabIndex(idx)
 	a.leftFocus = focusIssues
 	a.updateFocusState()
 }
@@ -202,7 +202,7 @@ func (a *App) goBack() (tea.Cmd, bool) {
 func (a *App) restoreFromFrame(popped navstack.NavFrame, stack *navstack.NavStack) {
 	if stack.Depth() == 0 {
 		a.issuesList.RemoveHierarchyTab()
-		a.issuesList.SetTabIndex(popped.OriginTabIdx)
+		a.setIssueTabIndex(popped.OriginTabIdx)
 	} else {
 		newTopTitle := titleForNavSource(stack.Peek().Source)
 		a.issuesList.ReplaceHierarchyTabContent(newTopTitle, popped.Issues)

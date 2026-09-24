@@ -27,6 +27,7 @@ const (
 	ActFocusIssues      Action = "focusIssues"
 	ActFocusInfo        Action = "focusInfo"
 	ActFocusProj        Action = "focusProjects"
+	ActToggleMaximize   Action = "toggleMaximize"
 	ActCopyURL          Action = "copyURL"
 	ActBrowser          Action = "browser"
 	ActURLPicker        Action = "urlPicker"
@@ -72,18 +73,19 @@ func DefaultKeymap() Keymap {
 		ActQuit:             {"q", "ctrl+c"},
 		ActHelp:             {"?"},
 		ActSearch:           {"/"},
-		ActSwitchPanel:      {"tab"},
-		ActFocusRight:       {"l", "right"},
-		ActFocusLeft:        {"h", "left", "esc"},
+		ActSwitchPanel:      {},
+		ActFocusRight:       {},
+		ActFocusLeft:        {"esc"},
 		ActSelect:           {" "},
 		ActOpen:             {"enter"},
 		ActPrevTab:          {"["},
 		ActNextTab:          {"]"},
-		ActFocusDetail:      {"0"},
-		ActFocusStatus:      {"1"},
-		ActFocusIssues:      {"2"},
+		ActFocusDetail:      {"2"},
+		ActFocusStatus:      {"0"},
+		ActFocusIssues:      {"1"},
 		ActFocusInfo:        {"3"},
 		ActFocusProj:        {"4"},
+		ActToggleMaximize:   {"+"},
 		ActCopyURL:          {"y"},
 		ActBrowser:          {"o"},
 		ActURLPicker:        {"u"},
@@ -113,8 +115,8 @@ func DefaultKeymap() Keymap {
 		ActNavHalfDown: {"ctrl+d"},
 		ActNavHalfUp:   {"ctrl+u"},
 
-		ActDetailScrollDown: {"J"},
-		ActDetailScrollUp:   {"K"},
+		ActDetailScrollDown: {"ctrl+d"},
+		ActDetailScrollUp:   {"ctrl+u"},
 		ActDetailHalfDown:   {"ctrl+f"},
 		ActDetailHalfUp:     {"ctrl+b"},
 	}
@@ -147,6 +149,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActFocusIssues, kcfg.Universal.FocusIssues)
 	set(ActFocusInfo, kcfg.Universal.FocusInfo)
 	set(ActFocusProj, kcfg.Universal.FocusProj)
+	set(ActToggleMaximize, kcfg.Universal.ToggleMaximize)
 	set(ActJQLSearch, kcfg.Universal.JQLSearch)
 	// Issues (Select, Open, FocusRight are shared with Projects panel)
 	set(ActSelect, kcfg.Issues.Select)

@@ -19,6 +19,15 @@ type issueColumn struct {
 	color lipgloss.Color
 }
 
+func (m *IssuesList) MinimumWidth() int {
+	columns := m.issueColumns(0)
+	width := len(columns) + 2
+	for _, column := range columns {
+		width += column.width
+	}
+	return width
+}
+
 func (m *IssuesList) issueColumns(width int) []issueColumn {
 	fields := m.fields
 	if len(fields) == 0 {

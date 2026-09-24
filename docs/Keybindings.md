@@ -2,25 +2,34 @@
 
 Press `?` inside lazyjira to see all available keys. Use `/` inside the help popup to filter keybindings.
 
-All keybindings can be remapped in `config.yml` under the `keybinding` section.
+Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspace `Tab`/`Shift+Tab` collection switching, uppercase `H`/`J`/`K`/`L` focus movement, and `j`/`k` collection switching in Issue tabs are fixed.
 
 ## Navigation
 
 | Key | Action |
 |-----|--------|
-| `j` / `k` | Move down / up |
+| `j` / `k` | Move down / up in focused lists; switch collections in the Issue tabs pane |
 | `g` / `G` | Jump to top / bottom |
-| `ctrl+d` / `ctrl+u` | Half page down / up |
-| `J` / `K` | Scroll detail panel (from issues or info panel) |
-| `ctrl+f` / `ctrl+b` | Half page detail panel (from issues or info panel) |
-| `tab` | Switch panel |
-| `h` / `left` | Focus left panel |
-| `l` / `right` | Focus right panel |
-| `0` `1` `2` `3` `4` | Focus Detail, Status, Issues, Info, Projects panel |
+| `ctrl+d` / `ctrl+u` | Scroll Details by one line from Issues or Info; half-page movement in Projects, Details, and help |
+| `ctrl+f` / `ctrl+b` | Half-page detail scroll from Issues or Info |
+| `tab` / `shift+tab` | Switch issue collection without changing focus |
+| `H` / `J` / `K` / `L` | Move focus according to the pane map below |
+| `0` `1` `2` `3` `4` | Focus Status, Issues, Details, Info, Projects |
+| `+` | Maximize or restore focused Issues or Details pane |
+| `enter` in Issue tabs | Focus Issues without changing collection |
 
-Navigation keys (`j`/`k`/`g`/`G`/`ctrl+d`/`ctrl+u`) can be remapped via `keybinding.navigation` in config.yml.
+Lowercase `h`/`l` and Left/Right do not move focus by default. The Issue tabs pane does not have a direct-focus number.
 
-Detail scroll keys (`J`/`K`/`ctrl+f`/`ctrl+b`) can be remapped via `keybinding.detail` in config.yml.
+| Focused pane | `H` | `J` | `K` | `L` |
+| --- | --- | --- | --- | --- |
+| Status | — | Issue tabs | — | — |
+| Issue tabs | — | Info | Status | Issues |
+| Issues | Issue tabs | Details | Status | — |
+| Details | Issue tabs | — | Issues | — |
+| Info | — | Projects | Issue tabs | Details |
+| Projects | — | — | Info | Details |
+
+`[` / `]` switch issue collections from Issues or the Issue tabs pane, Details tabs from Details, and Info tabs from Info. Detail scroll keys can be remapped via `keybinding.detail`; list navigation keys can be remapped via `keybinding.navigation`.
 
 ## Issues
 
@@ -63,5 +72,5 @@ Detail scroll keys (`J`/`K`/`ctrl+f`/`ctrl+b`) can be remapped via `keybinding.d
 | `/` | Search |
 | `r` | Refresh current view |
 | `R` | Refresh all data |
-| `[` / `]` | Previous / next tab |
+| `[` / `]` | Switch tabs for the focused pane |
 | `q` / `ctrl+c` | Quit |

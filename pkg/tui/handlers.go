@@ -16,6 +16,7 @@ func (a *App) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	a.height = msg.Height
 	a.overlays.SetSize(msg.Width, msg.Height)
 	a.layoutPanels()
+	a.ensureActiveIssueTabVisible()
 	a.helpBar.SetWidth(msg.Width)
 	a.searchBar.SetWidth(msg.Width)
 	return a, nil
@@ -112,6 +113,7 @@ func (a *App) routeToPanel(msg tea.Msg) tea.Cmd {
 			if cmd != nil {
 				cmds = append(cmds, cmd)
 			}
+		case focusIssueTabs, focusDetailPane:
 		case focusInfo:
 			updated, cmd := a.infoPanel.Update(msg)
 			a.infoPanel = updated

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"strings"
@@ -49,7 +50,8 @@ type ResolvedCustomCommand struct {
 	Refresh  bool
 	Contexts []Context
 	Scopes   ScopeMask
-	Template *template.Template
+	template *template.Template
+	shell    string
 }
 
 // ShouldSuspend mirrors CustomCommandConfig.ShouldSuspend.
@@ -60,6 +62,33 @@ func (r ResolvedCustomCommand) ShouldSuspend() bool {
 // HasContext reports whether the command is bound to the given context.
 func (r ResolvedCustomCommand) HasContext(c Context) bool {
 	return slices.Contains(r.Contexts, c)
+}
+
+// Shell returns the executable path used to validate and render this command.
+func (r ResolvedCustomCommand) Shell() string { return r.shell }
+
+func (r ResolvedCustomCommand) Render(values map[string]string) (string, error) {
+	if r.template == nil {
+		return "", fmt.Errorf("custom command %q has no validated template", r.Name)
+	}
+	state, err := newShellRenderState()
+	if err != nil {
+		return "", err
+	}
+	tmpl, err := r.template.Clone()
+	if err != nil {
+		return "", err
+	}
+	tmpl.Funcs(template.FuncMap{
+		"__shellarg": func(value any) any {
+			return shellTemplateValue{value: templateString(value), state: state}
+		},
+	})
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, values); err != nil {
+		return "", err
+	}
+	return renderAndValidateShell(rendered.String(), state, r.shell)
 }
 
 func shellescape(s string) string {
@@ -91,14 +120,34 @@ func slugify(s string) string {
 	return strings.TrimRight(b.String(), "-")
 }
 
+func templateString(value any) string {
+	switch value := value.(type) {
+	case string:
+		return value
+	default:
+		return fmt.Sprint(value)
+	}
+}
+
+func shellescapeTemplateValue(value any) string { return templateString(value) }
+func shellraw(value any) string                 { return templateString(value) }
+func slugifyTemplateValue(value any) string     { return slugify(templateString(value)) }
+
 var commandFuncMap = template.FuncMap{
-	"shellescape": shellescape,
-	"slugify":     slugify,
+	"__shellarg":  func(value any) any { return value },
+	"shellescape": shellescapeTemplateValue,
+	"shellraw":    shellraw,
+	"slugify":     slugifyTemplateValue,
 }
 
 // ResolveCustomCommands validates the flat CustomCommands list and returns
 // pre-computed entries with typed contexts, scope mask and parsed template.
 func (c *Config) ResolveCustomCommands() ([]ResolvedCustomCommand, error) {
+	return c.ResolveCustomCommandsForShell("sh")
+}
+
+// ResolveCustomCommandsForShell validates custom command templates for the shell that executes them.
+func (c *Config) ResolveCustomCommandsForShell(shell string) ([]ResolvedCustomCommand, error) {
 	out := make([]ResolvedCustomCommand, 0, len(c.CustomCommands))
 	type keyCtx struct {
 		key string
@@ -141,6 +190,9 @@ func (c *Config) ResolveCustomCommands() ([]ResolvedCustomCommand, error) {
 		if err != nil {
 			return nil, fmt.Errorf("customCommands[%d] (%q): template parse error: %w", i, entry.Key, err)
 		}
+		if err := validateCustomCommandTemplate(tmpl, shell); err != nil {
+			return nil, fmt.Errorf("customCommands[%d] (%q): template validation error: %w", i, entry.Key, err)
+		}
 
 		out = append(out, ResolvedCustomCommand{
 			Key:      entry.Key,
@@ -150,7 +202,8 @@ func (c *Config) ResolveCustomCommands() ([]ResolvedCustomCommand, error) {
 			Refresh:  entry.Refresh,
 			Contexts: ctxs,
 			Scopes:   scopes,
-			Template: tmpl,
+			template: tmpl,
+			shell:    shell,
 		})
 	}
 	return out, nil

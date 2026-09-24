@@ -49,6 +49,8 @@ type IssuesList struct {
 	hierarchyTabIdx  int
 	hierarchyTitle   string
 	hierarchyStack   *navstack.NavStack
+	focusHint        string
+	maximized        bool
 }
 
 func NewIssuesList() *IssuesList {
@@ -66,7 +68,9 @@ func (m *IssuesList) SetSize(w, h int) {
 	m.AdjustOffset()
 }
 
-func (m *IssuesList) SetFields(fields []string) { m.fields = fields }
+func (m *IssuesList) SetFields(fields []string)   { m.fields = fields }
+func (m *IssuesList) SetFocusHint(hint string)    { m.focusHint = hint }
+func (m *IssuesList) SetMaximized(maximized bool) { m.maximized = maximized }
 func (m *IssuesList) SetTypeIcons(icons map[string]string) {
 	m.typeIcons = icons
 	max := 0
@@ -98,6 +102,7 @@ func (m *IssuesList) SetPriorityIcons(icons map[string]string) {
 	m.priorityIconCols = max
 }
 func (m *IssuesList) SetTabs(tabs []config.IssueTabConfig) { m.tabs = tabs }
+func (m *IssuesList) Tabs() []config.IssueTabConfig        { return m.tabs }
 func (m *IssuesList) SetUserEmail(email string)            { m.userEmail = email }
 func (m *IssuesList) ActiveTab() config.IssueTabConfig {
 	if m.tab >= 0 && m.tab < len(m.tabs) {
@@ -516,46 +521,18 @@ func (m *IssuesList) View() string {
 	return components.RenderPanelFull(title, footer, content, m.Width, visible+m.HeaderRows, m.Focused, scroll)
 }
 
-const issueTabPrefix = "[2] "
-
-type issueTabLayout struct {
+type issueTitleLayout struct {
 	prefix string
-	sep    string
-	tabs   []issueTabLayoutEntry
+	button string
+	label  string
 }
 
-type issueTabLayoutEntry struct {
-	index int
-	label string
-	width int
-	start int
-	end   int
-}
+func (l issueTitleLayout) title() string { return l.prefix + l.label + l.button }
 
-func (l issueTabLayout) title() string {
-	parts := make([]string, len(l.tabs))
-	for i, tab := range l.tabs {
-		parts[i] = tab.label
-	}
-	return l.prefix + strings.Join(parts, l.sep)
-}
-
-// ClickTabAt handles clicks on the visible title-bar tabs and returns true if
-// the tab changed. Separators belong to the tab immediately before them.
-func (m *IssuesList) ClickTabAt(x int) bool {
-	layout := m.issueTabLayout(m.titleMaxWidth())
-	for _, tab := range layout.tabs {
-		if x < tab.start || x >= tab.end {
-			continue
-		}
-		if m.tab != tab.index {
-			m.tab = tab.index
-			m.loadFromCache()
-			return true
-		}
-		return false
-	}
-	return false
+func (m *IssuesList) ClickMaximizeAt(x int) bool {
+	layout := m.issueTitleLayout(m.titleMaxWidth())
+	buttonStart := 2 + lipgloss.Width(layout.prefix+layout.label)
+	return layout.button != "" && x >= buttonStart && x < buttonStart+lipgloss.Width(layout.button)
 }
 
 func (m *IssuesList) titleMaxWidth() int {
@@ -563,99 +540,26 @@ func (m *IssuesList) titleMaxWidth() int {
 	return contentWidth - 1
 }
 
-// issueTabLayout is the single source of truth for issue-tab labels, their
-// visible sliding window, and click regions. The active label uses an ASCII
-// marker so selection remains clear even when terminal colors are unavailable.
-func (m *IssuesList) issueTabLayout(maxTitleW int) issueTabLayout {
-	if len(m.tabs) == 0 {
-		return issueTabLayout{prefix: "[2] Issues"}
+func (m *IssuesList) issueTitleLayout(maxTitleW int) issueTitleLayout {
+	prefix := ""
+	if m.focusHint != "" {
+		prefix = "[" + m.focusHint + "] "
 	}
-
-	activeStyle := lipgloss.NewStyle().Foreground(theme.ColorGreen).Bold(true)
-	inactiveStyle := lipgloss.NewStyle().Foreground(theme.ColorWhite)
-	sep := lipgloss.NewStyle().Foreground(theme.ColorGray).Render(" - ")
-	sepW := lipgloss.Width(sep)
-	prefixW := lipgloss.Width(issueTabPrefix)
-
-	labels := make([]string, len(m.tabs))
-	widths := make([]int, len(m.tabs))
-	for i, tab := range m.tabs {
-		if i == m.tab {
-			labels[i] = activeStyle.Render("[" + tab.Name + "]")
-		} else {
-			labels[i] = inactiveStyle.Render(tab.Name)
-		}
-		widths[i] = lipgloss.Width(labels[i])
+	label := "Issues"
+	if tab := m.ActiveTab(); tab.Name != "" {
+		label = tab.Name
 	}
-
-	fullWidth := prefixW + (len(labels)-1)*sepW
-	for _, width := range widths {
-		fullWidth += width
+	button := " [+]"
+	if m.maximized {
+		button = " [−]"
 	}
-	if maxTitleW <= 0 || fullWidth <= maxTitleW {
-		return issueTabWindow(issueTabPrefix, sep, labels, widths, 0, len(labels)-1)
-	}
-
-	// Overflow: find a contiguous sliding window that always contains the
-	// active tab. Expand left first (preserving context), then fill right.
-	budget := maxTitleW - prefixW
-	const activeMarkerWidth = 2 // "[" + "]"
-	if budget >= activeMarkerWidth && widths[m.tab] > budget {
-		nameBudget := budget - activeMarkerWidth
-		name := ""
-		if nameBudget > 0 {
-			name = components.TruncateEnd(m.tabs[m.tab].Name, nameBudget)
-		}
-		labels[m.tab] = activeStyle.Render("[" + name + "]")
-		widths[m.tab] = lipgloss.Width(labels[m.tab])
-	}
-
-	start, end := m.tab, m.tab
-	used := widths[m.tab]
-	for start > 0 {
-		cost := widths[start-1] + sepW
-		if used+cost > budget {
-			break
-		}
-		start--
-		used += cost
-	}
-	for end < len(m.tabs)-1 {
-		cost := widths[end+1] + sepW
-		if used+cost > budget {
-			break
-		}
-		end++
-		used += cost
-	}
-
-	return issueTabWindow(issueTabPrefix, sep, labels, widths, start, end)
+	available := max(maxTitleW-lipgloss.Width(prefix)-lipgloss.Width(button), 1)
+	label = "[" + components.TruncateEnd(label, available-2) + "]"
+	return issueTitleLayout{prefix: prefix, label: label, button: button}
 }
 
-func issueTabWindow(prefix, sep string, labels []string, widths []int, start, end int) issueTabLayout {
-	layout := issueTabLayout{prefix: prefix, sep: sep}
-	pos := lipgloss.Width(prefix)
-	sepW := lipgloss.Width(sep)
-	for i := start; i <= end; i++ {
-		entry := issueTabLayoutEntry{
-			index: i,
-			label: labels[i],
-			width: widths[i],
-			start: pos,
-			end:   pos + widths[i],
-		}
-		if i < end {
-			entry.end += sepW
-		}
-		layout.tabs = append(layout.tabs, entry)
-		pos = entry.end
-	}
-	return layout
-}
-
-// buildTitle builds the tab bar title for the issues panel.
 func (m *IssuesList) buildTitle(maxTitleW int) string {
-	return m.issueTabLayout(maxTitleW).title()
+	return m.issueTitleLayout(maxTitleW).title()
 }
 
 func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, width int, selected bool) string {

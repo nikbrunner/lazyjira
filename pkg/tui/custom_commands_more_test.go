@@ -3,6 +3,9 @@ package tui
 import (
 	"context"
 	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -99,22 +102,9 @@ func TestLastNonEmptyLine_ReturnsLastLine(t *testing.T) {
 func TestCustomCommandBindings_ReturnsMatchingContext(t *testing.T) {
 	t.Parallel()
 	app := newTestApp()
-	tmpl := parseTmpl(t, "echo hello")
 	app.customCmds = []config.ResolvedCustomCommand{
-		{
-			Key:      "y",
-			Name:     "my-cmd",
-			Scopes:   config.ScopeIssue,
-			Contexts: []config.Context{config.CtxIssues},
-			Template: tmpl,
-		},
-		{
-			Key:      "z",
-			Name:     "other-cmd",
-			Scopes:   config.ScopeProject,
-			Contexts: []config.Context{config.CtxProjects},
-			Template: tmpl,
-		},
+		resolvedCommand(t, "y", "my-cmd", "echo hello", config.CtxIssues),
+		resolvedCommand(t, "z", "other-cmd", "echo hello", config.CtxProjects),
 	}
 
 	bindings := app.customCommandBindings(config.CtxIssues)
@@ -174,6 +164,68 @@ func TestHandleCustomCommandFinished_RefreshFetchesIssue(t *testing.T) {
 	}
 }
 
+func TestHandleCustomCommandRejectsRawContextInjection(t *testing.T) {
+	t.Parallel()
+	app := newTestApp()
+	marker := filepath.Join(t.TempDir(), "executed")
+	suspendFalse := false
+	app.cfg.CustomCommands = []config.CustomCommandConfig{{
+		Key: "x", Name: "mixed", Command: `printf '%s\\n' {{.Summary | shellraw}} {{.Key}}`,
+		Suspend: &suspendFalse, Contexts: []string{"issues"},
+	}}
+	app.initCustomCommands()
+	app.issuesList.SetIssues([]jira.Issue{{
+		Key: "ABC-1", Summary: "$(touch " + marker + ") #",
+	}})
+
+	_, cmd, handled := app.handleCustomCommand("x")
+	if !handled || cmd == nil {
+		t.Fatalf("handled, cmd = %v, %v; want true and a command", handled, cmd)
+	}
+	rawMsg := cmd()
+	msg, ok := rawMsg.(customCommandFinishedMsg)
+	if !ok {
+		t.Fatalf("message = %T, want customCommandFinishedMsg", rawMsg)
+	}
+	if msg.err == nil {
+		t.Fatal("expected rendered command to be rejected")
+	}
+	if _, err := os.Stat(marker); !os.IsNotExist(err) {
+		t.Fatalf("marker exists after render rejection: %v", err)
+	}
+}
+
+func TestExecuteCustomCommandUsesResolvedShell(t *testing.T) {
+	shell, err := exec.LookPath("sh")
+	if err != nil {
+		t.Skip("sh is not installed")
+	}
+	t.Setenv("SHELL", shell)
+	app := newTestApp()
+	app.ctx = t.Context()
+	suspendFalse := false
+	app.cfg.CustomCommands = []config.CustomCommandConfig{{
+		Key: "x", Name: "uses resolved shell", Command: `printf '%s' {{.Key}}`,
+		Suspend: &suspendFalse, Contexts: []string{"issues"},
+	}}
+	app.initCustomCommands()
+	if len(app.customCmds) != 1 {
+		t.Fatal("expected one resolved custom command")
+	}
+
+	t.Setenv("SHELL", filepath.Join(t.TempDir(), "missing-shell"))
+	msg, ok := app.executeCustomCommand(app.customCmds[0], map[string]string{"Key": "shell-check"})().(customCommandFinishedMsg)
+	if !ok {
+		t.Fatalf("message = %T, want customCommandFinishedMsg", msg)
+	}
+	if msg.err != nil {
+		t.Fatalf("command failed: %v", msg.err)
+	}
+	if msg.output != "shell-check" {
+		t.Fatalf("output = %q, want shell-check", msg.output)
+	}
+}
+
 func TestExecuteCustomCommand_BackgroundCapture(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
@@ -181,18 +233,11 @@ func TestExecuteCustomCommand_BackgroundCapture(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	app.ctx = ctx
-	tmpl := parseTmpl(t, "echo test-output")
 	suspendFalse := false
-	rc := config.ResolvedCustomCommand{
-		Key:      "x",
-		Name:     "bg-cmd",
-		Scopes:   config.ScopeIssue,
-		Contexts: []config.Context{config.CtxIssues},
-		Template: tmpl,
-		Suspend:  &suspendFalse,
-	}
+	rc := resolvedCommand(t, "x", "bg-cmd", "echo test-output", config.CtxIssues)
+	rc.Suspend = &suspendFalse
 
-	cmd := app.executeCustomCommand(rc, issueScopeData{Key: testKey})
+	cmd := app.executeCustomCommand(rc, map[string]string{"Key": testKey})
 	if cmd == nil {
 		t.Fatal("expected non-nil cmd")
 	}

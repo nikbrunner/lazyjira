@@ -3,7 +3,6 @@ package tui
 import (
 	"context"
 	"testing"
-	"text/template"
 
 	"github.com/textfuel/lazyjira/v2/pkg/config"
 	"github.com/textfuel/lazyjira/v2/pkg/jira"
@@ -45,27 +44,14 @@ func TestCustomCommand_TargetsPreviewedIssue(t *testing.T) {
 	app.previewKey = subKey1
 	app.issueCache[subKey1] = &jira.Issue{Key: subKey1, Summary: "sub"}
 
-	tmpl, err := template.New("t").Option("missingkey=error").Parse("{{.Key}}")
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	rc := config.ResolvedCustomCommand{
-		Key:      "x",
-		Scopes:   config.ScopeIssue,
-		Contexts: []config.Context{config.CtxIssues},
-		Template: tmpl,
-	}
+	rc := resolvedCommand(t, "x", "test", "echo {{.Key}}", config.CtxIssues)
 
 	data, ok := app.buildCommandData(rc)
 	if !ok {
 		t.Fatal("buildCommandData returned ok=false")
 	}
-	scope, ok := data.(issueScopeData)
-	if !ok {
-		t.Fatalf("buildCommandData returned %T, want issueScopeData", data)
-	}
-	if scope.Key != subKey1 {
-		t.Errorf("scope.Key = %q, want %q", scope.Key, subKey1)
+	if data["Key"] != subKey1 {
+		t.Errorf("data[Key] = %q, want %q", data["Key"], subKey1)
 	}
 }
 

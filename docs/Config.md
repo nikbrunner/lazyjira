@@ -45,7 +45,7 @@ gui:
     themeDark: {}     # applied on dark presets only
     themeLight: {}    # applied on light presets only
     language: en
-    sidePanelWidth: 40
+    sidePanelWidth: 22
     collapsedPanelHeight: 5
     showIcons: true
     dateFormat: "2006-01-02"
@@ -76,16 +76,16 @@ keybinding:
         quit: q
         help: '?'
         search: /
-        switchPanel: tab
         refresh: r
         refreshAll: R
         prevTab: '['
         nextTab: ']'
-        focusDetail: "0"
-        focusStatus: "1"
-        focusIssues: "2"
+        focusDetail: "2"
+        focusStatus: "0"
+        focusIssues: "1"
         focusInfo: "3"
         focusProjects: "4"
+        toggleMaximize: "+"
         jqlSearch: s
     navigation:
         down: j
@@ -97,7 +97,6 @@ keybinding:
     issues:
         select: ' '
         open: enter
-        focusRight: l
         transition: t
         browser: o
         urlPicker: u
@@ -110,12 +109,10 @@ keybinding:
     projects:
         select: ' '
         open: enter
-        focusRight: l
     detail:
-        focusLeft: h
         infoTab: i
-        scrollDown: J
-        scrollUp: K
+        scrollDown: ctrl+d
+        scrollUp: ctrl+u
         halfPageDown: ctrl+f
         halfPageUp: ctrl+b
 issueTabs:
@@ -185,16 +182,16 @@ openssl pkcs12 -in cert.p12 -out client.key -nocerts -nodes
 
 ```yaml
 gui:
-  sidePanelWidth: 40
+  sidePanelWidth: 22
   issueListFields:
     - "key"
     - "status"
     - "summary"
 ```
 
-`sidePanelWidth` controls the left panel width in columns. It automatically shrinks on narrow terminals.
+`sidePanelWidth` controls the left column width in terminal cells. It defaults to 22 and caps at 35% of the terminal on narrow screens. If the terminal cannot fit the configured issue columns, lazyjira shows the minimum required size.
 
-`collapsedPanelHeight` sets the height of non-focused left panels in lines (default 5, minimum 3).
+The layout keeps Status at the top, the Issue tabs, Info, and Projects in the left column, Issues above Details in the right column, and the command log and help bar along the bottom. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
 
 `theme` selects the color palette. Supported values: `default` (terminal ANSI colors), `auto`, [Catppuccin](https://github.com/catppuccin/catppuccin) presets (`catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`). Omitting the `theme` key or setting it to `""` selects the `default` palette. Use `theme: auto` to opt into runtime detection: lazyjira inspects your terminal background and picks `catppuccin-mocha` (dark) or `catppuccin-latte` (light). An unknown theme name is an error. Hex-based themes require a terminal with truecolor support.
 
@@ -386,7 +383,7 @@ Resolution order: per-tab `maxResults` → global `maxResults` → built-in defa
 
 ## Keybindings
 
-All keybindings are remappable. See [Keybindings](Keybindings.md) for the full list of defaults.
+Actions exposed under `keybinding` are remappable. Main-workspace `Tab`/`Shift+Tab` collection switching, uppercase `H`/`J`/`K`/`L` focus movement, and `j`/`k` collection switching in Issue tabs are fixed. See [Keybindings](Keybindings.md) for the full list of defaults.
 
 ```yaml
 keybinding:
@@ -412,9 +409,9 @@ keybinding:
 
 Only include keys you want to change. Missing keys keep their defaults unless an explicitly configured key displaces them. Rebind a displaced action to another key if needed.
 
-The `navigation` section controls list navigation keys used across all panels. These default to vim-style keys (`j`/`k`/`g`/`G`/`ctrl+d`/`ctrl+u`).
+The default direct-focus keys are `0` Status, `1` Issues, `2` Details, `3` Info, and `4` Projects. Uppercase `H`/`J`/`K`/`L` moves focus between panes. Tab and Shift-Tab switch issue collections without changing focus. The Issue tabs pane uses `j`/`k` to switch collections and Enter to focus Issues.
 
-The `detail` section includes keys for scrolling the detail panel from any left panel without switching focus. Defaults: `J`/`K` for line scroll, `ctrl+f`/`ctrl+b` for half-page.
+`+` toggles maximize for the focused Issues or Details pane. The `detail` section defaults to `ctrl+d`/`ctrl+u` for one-line detail scrolling and `ctrl+f`/`ctrl+b` for half-page scrolling from Issues or Info.
 
 Setting a navigation key replaces all defaults for that action. For example, `down: "n"` means only `n` navigates down, `j`, arrow down and `ctrl+j` will no longer work.
 
@@ -650,9 +647,15 @@ Available in every scope:
 
 ### Template helpers
 
-| Helper | Description |
-|--------|-------------|
-| `{{.X \| shellescape}}` | Wraps the value in single quotes with inner quotes escaped. Use for any template value that could contain shell metacharacters. |
+Direct field values are shell-escaped as one argument; `slugify` produces a shell-safe ASCII word. Each placeholder must occupy an entire, unquoted command argument; concatenated placeholders and literal prefixes or suffixes are rejected. lazyjira rejects placeholders used as command names, inside quotes or shell expansions, in redirects or here-documents, and in Go template formatting expressions. Direct field access and these helper pipelines are supported:
+
+|Helper|Description|
+|------|-----------|
+|`{{.X \| shellescape}}`|Explicitly wraps the value in single quotes with inner quotes escaped.|
+|`{{.X \| shellraw}}`|Inserts the value without shell escaping. Use only for trusted shell syntax. Other template values are checked against the rendered command after raw values are inserted.|
+|`{{.Summary \| slugify}}`|Converts text to a lowercase ASCII slug containing letters, digits, and hyphens.|
+
+Validation follows the configured `$SHELL` for POSIX `sh`, `bash`, `zsh`, or `mksh`. Zsh parsing is experimental, so uncommon valid syntax may be rejected. Quoting keeps Jira text in an argument; it is not a sandbox. A trusted command can still reinterpret arguments with `eval`, `sh -c`, or another interpreter.
 
 ## Files
 

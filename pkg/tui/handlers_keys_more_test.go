@@ -77,13 +77,9 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 			name: "custom command takes precedence and reports missing selection",
 			key:  runeKey('z'),
 			setup: func(app *App, fake *jiratest.FakeClient) {
-				app.customCmds = []config.ResolvedCustomCommand{{
-					Key:      "z",
-					Name:     "zap",
-					Scopes:   config.ScopeIssue,
-					Contexts: []config.Context{config.CtxIssues},
-					Template: parseTmpl(t, "echo {{.Key}}"),
-				}}
+				app.customCmds = []config.ResolvedCustomCommand{
+					resolvedCommand(t, "z", "zap", "echo {{.Key}}", config.CtxIssues),
+				}
 			},
 			wantHandled: true,
 		},
@@ -147,13 +143,16 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 			},
 		},
 		{
-			name:        "focus action switches panels",
-			key:         tea.KeyMsg{Type: tea.KeyTab},
+			name: "tab switches issue collection without moving focus",
+			key:  tea.KeyMsg{Type: tea.KeyTab},
+			setup: func(app *App, fake *jiratest.FakeClient) {
+				app.issuesList.SetTabs([]config.IssueTabConfig{{Name: "All"}, {Name: "Mine"}})
+			},
 			wantHandled: true,
 			assert: func(t *testing.T, app *App, cmd tea.Cmd) {
 				t.Helper()
-				if app.side != sideRight {
-					t.Error("tab should switch side")
+				if app.side != sideLeft || app.issuesList.GetTabIndex() != 1 {
+					t.Errorf("focus/tab = (%v,%d), want (left,1)", app.side, app.issuesList.GetTabIndex())
 				}
 			},
 		},

@@ -20,14 +20,30 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if a.showHelp {
 		return a.handleHelpKeys(msg)
 	}
-
 	// Custom commands take precedence over built-in keybindings so users
 	// can override any action they want.
 	if m, cmd, ok := a.handleCustomCommand(msg.String()); ok {
 		return m, cmd
 	}
+	if m, cmd, ok := a.handleSpatialFocus(msg.String()); ok {
+		return m, cmd
+	}
+	if msg.String() == "tab" {
+		return a, a.switchIssueCollection(1)
+	}
+	if msg.String() == "shift+tab" {
+		return a, a.switchIssueCollection(-1)
+	}
 
 	action := a.keymap.Match(msg.String())
+	if a.side == sideLeft && a.leftFocus == focusIssueTabs {
+		switch msg.String() {
+		case "j":
+			return a, a.switchIssueCollection(1)
+		case "k":
+			return a, a.switchIssueCollection(-1)
+		}
+	}
 
 	// In the hierarchy tab, ActFocusLeft pops a NavFrame instead of
 	// shifting focus.
@@ -52,6 +68,10 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ActSelect:
 		return a.handleActionSelect()
 	case ActOpen:
+		if a.side == sideLeft && a.leftFocus == focusIssueTabs {
+			a.focusPane(focusIssues)
+			return a, nil
+		}
 		return a.handleActionOpen()
 	case ActURLPicker:
 		return a.handleActionURLPicker()
@@ -66,6 +86,13 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ActShowParent:
 		if cmd, ok := a.showParent(); ok {
 			return a, cmd
+		}
+		return a, nil
+	case ActToggleMaximize:
+		if a.side == sideRight {
+			a.toggleMaximize(focusDetailPane)
+		} else if a.leftFocus == focusIssues {
+			a.toggleMaximize(focusIssues)
 		}
 		return a, nil
 	}
@@ -90,18 +117,25 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (a *App) handleDetailScroll(msg tea.KeyMsg) (tea.Model, tea.Cmd, bool) {
-	switch a.keymap.Match(msg.String()) { //nolint:exhaustive
-	case ActDetailScrollDown:
-		a.detailView.ScrollBy(1)
+	key := msg.String()
+	switch {
+	case key == a.keymap.Keys(ActDetailScrollDown):
+		if !a.maximized || a.maximizedPane != focusIssues {
+			a.detailView.ScrollBy(1)
+		}
 		return a, nil, true
-	case ActDetailScrollUp:
-		a.detailView.ScrollBy(-1)
+	case key == a.keymap.Keys(ActDetailScrollUp):
+		if !a.maximized || a.maximizedPane != focusIssues {
+			a.detailView.ScrollBy(-1)
+		}
 		return a, nil, true
-	case ActDetailHalfDown:
+	case key == a.keymap.Keys(ActDetailHalfDown):
 		a.detailView.ScrollBy(a.detailView.VisibleRows() / 2)
 		return a, nil, true
-	case ActDetailHalfUp:
+	case key == a.keymap.Keys(ActDetailHalfUp):
 		a.detailView.ScrollBy(-a.detailView.VisibleRows() / 2)
+		return a, nil, true
+	case key == "ctrl+d" || key == "ctrl+u":
 		return a, nil, true
 	}
 	return nil, nil, false
@@ -242,12 +276,15 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 			switch a.leftFocus {
 			case focusStatus:
 				a.leftFocus = focusIssues
+			case focusIssueTabs:
+				a.leftFocus = focusIssues
 			case focusIssues:
 				a.leftFocus = focusInfo
 			case focusInfo:
 				a.leftFocus = focusProjects
 			case focusProjects:
 				a.leftFocus = focusStatus
+			case focusDetailPane:
 			}
 			a.updateFocusState()
 			return a, nil, true
@@ -258,6 +295,8 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 			switch a.leftFocus {
 			case focusStatus:
 				a.leftFocus = focusProjects
+			case focusIssueTabs:
+				a.leftFocus = focusStatus
 			case focusIssues:
 				a.leftFocus = focusStatus
 			case focusInfo:
@@ -271,6 +310,7 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 				return a, cmd, true
 			case focusProjects:
 				a.leftFocus = focusInfo
+			case focusDetailPane:
 			}
 			a.updateFocusState()
 			return a, nil, true
@@ -282,37 +322,28 @@ func (a *App) handleFocusAction(action Action) (tea.Model, tea.Cmd, bool) {
 		}
 
 	case ActFocusDetail:
-		a.side = sideRight
-		a.updateFocusState()
+		a.focusPane(focusDetailPane)
 		return a, nil, true
 
 	case ActFocusStatus:
-		a.side = sideLeft
-		a.leftFocus = focusStatus
+		a.focusPane(focusStatus)
 		a.splashInfo.Project = a.projectKey
 		a.detailView.SetSplash(a.splashInfo)
-		a.updateFocusState()
 		return a, nil, true
 
 	case ActFocusIssues:
-		a.side = sideLeft
-		a.leftFocus = focusIssues
+		a.focusPane(focusIssues)
 		if sel := a.issuesList.SelectedIssue(); sel != nil {
 			a.showCachedIssue(sel.Key)
 		}
-		a.updateFocusState()
 		return a, nil, true
 
 	case ActFocusInfo, ActInfoTab:
-		a.side = sideLeft
-		a.leftFocus = focusInfo
-		a.updateFocusState()
+		a.focusPane(focusInfo)
 		return a, nil, true
 
 	case ActFocusProj:
-		a.side = sideLeft
-		a.leftFocus = focusProjects
-		a.updateFocusState()
+		a.focusPane(focusProjects)
 		return a, nil, true
 	}
 	return nil, nil, false
@@ -324,12 +355,8 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 		switch {
 		case a.side == sideRight:
 			a.detailView.PrevTab()
-		case a.side == sideLeft && a.leftFocus == focusIssues:
-			a.issuesList.PrevTab()
-			if !a.issuesList.HasCachedTab() {
-				return a, a.fetchActiveTab(), true
-			}
-			return a, a.previewSelectedIssue(), true
+		case a.side == sideLeft && (a.leftFocus == focusIssues || a.leftFocus == focusIssueTabs):
+			return a, a.switchIssueCollection(-1), true
 		case a.side == sideLeft && a.leftFocus == focusInfo:
 			a.infoPanel.PrevTab()
 			return a, tea.Batch(a.previewForInfoTab(), a.infoPanel.MaybeChildrenRequest()), true
@@ -340,12 +367,8 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 		switch {
 		case a.side == sideRight:
 			a.detailView.NextTab()
-		case a.side == sideLeft && a.leftFocus == focusIssues:
-			a.issuesList.NextTab()
-			if !a.issuesList.HasCachedTab() {
-				return a, a.fetchActiveTab(), true
-			}
-			return a, a.previewSelectedIssue(), true
+		case a.side == sideLeft && (a.leftFocus == focusIssues || a.leftFocus == focusIssueTabs):
+			return a, a.switchIssueCollection(1), true
 		case a.side == sideLeft && a.leftFocus == focusInfo:
 			a.infoPanel.NextTab()
 			return a, tea.Batch(a.previewForInfoTab(), a.infoPanel.MaybeChildrenRequest()), true
@@ -666,11 +689,11 @@ func (a *App) navigateToLinkedIssue() (tea.Model, tea.Cmd) {
 	}
 	if tab, found := a.issuesList.FindInAnyTab(key); found {
 		if tab != a.issuesList.GetTabIndex() {
-			a.issuesList.SetTabIndex(tab)
+			a.setIssueTabIndex(tab)
 		}
 	} else if cached, ok := a.issueCache[key]; ok {
 		a.issuesList.InjectIssue(*cached)
-		a.issuesList.SetTabIndex(0)
+		a.setIssueTabIndex(0)
 	}
 	a.issuesList.SelectByKey(key)
 	a.leftFocus = focusIssues

@@ -142,64 +142,6 @@ func TestIssuesList_Update_NonNavKeyNoCmd(t *testing.T) {
 	}
 }
 
-func TestIssuesList_ClickTabAt_SwitchesTab(t *testing.T) {
-	t.Parallel()
-	list := listWithTabs(
-		config.IssueTabConfig{Name: "All", JQL: "x"},
-		config.IssueTabConfig{Name: "Mine", JQL: "y"},
-	)
-	list.SetIssues([]jira.Issue{{Key: testKey}})
-	list.SetSize(80, 24)
-	// The active "All" label is rendered as "[All]" (five columns),
-	// followed by the three-column separator; Mine starts at column 12.
-	// Column 10 is still inside the marker-expanded All click region.
-	if list.ClickTabAt(10) {
-		t.Error("marker-expanded active tab region switched to Mine")
-	}
-	switched := list.ClickTabAt(12)
-	if !switched {
-		t.Error("ClickTabAt on second tab should switch")
-	}
-	testkit.AssertEqual(t, "tab index", list.GetTabIndex(), 1)
-}
-
-func TestIssuesList_ClickTabAt_IgnoresHiddenOverflowTabs(t *testing.T) {
-	t.Parallel()
-	list := listWithTabs(
-		config.IssueTabConfig{Name: "First", JQL: "first"},
-		config.IssueTabConfig{Name: "Second", JQL: "second"},
-		config.IssueTabConfig{Name: "Third", JQL: "third"},
-	)
-	list.SetSize(30, 24)
-
-	// At this width only [First] and Second are visible. Column 22 is where
-	// the old full-list hit testing would have started Third.
-	if list.ClickTabAt(22) {
-		t.Error("click on hidden tab region switched tabs")
-	}
-	testkit.AssertEqual(t, "active tab remains visible tab", list.GetTabIndex(), 0)
-}
-
-func TestIssuesList_ClickTabAt_SameTabNoSwitch(t *testing.T) {
-	t.Parallel()
-	list := listWithTabs(config.IssueTabConfig{Name: "All", JQL: "x"})
-	list.SetSize(80, 24)
-	switched := list.ClickTabAt(4)
-	if switched {
-		t.Error("ClickTabAt same tab should not switch")
-	}
-}
-
-func TestIssuesList_ClickTabAt_EmptyTabsNoSwitch(t *testing.T) {
-	t.Parallel()
-	list := NewIssuesList()
-	list.SetSize(80, 24)
-	switched := list.ClickTabAt(5)
-	if switched {
-		t.Error("ClickTabAt with no tabs should not switch")
-	}
-}
-
 func TestIssuesList_View_CollapsedBar_HeightOne(t *testing.T) {
 	t.Parallel()
 	list := listWithTabs(config.IssueTabConfig{Name: "All", JQL: "x"})

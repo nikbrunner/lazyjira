@@ -13,17 +13,11 @@ func appWithPanelDims(t *testing.T, width int) *App {
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.width = width
 	app.height = 40
-	app.panelSideW = 30
-	app.panelStatusH = 2
-	app.panelIssuesH = 5
-	app.panelInfoH = 4
-	app.panelProjectsH = 6
-	app.panelDetailH = 20
-	app.panelLogH = 5
+	app.layoutPanels()
 	return app
 }
 
-func TestHitTest_Horizontal(t *testing.T) {
+func TestHitTest_UsesSharedLayout(t *testing.T) {
 	t.Parallel()
 	app := appWithPanelDims(t, 120)
 
@@ -34,49 +28,31 @@ func TestHitTest_Horizontal(t *testing.T) {
 		wantRelY int
 	}{
 		{"status", 5, 0, panelStatus, 0},
-		{"issues", 5, 3, panelIssues, 1},
-		{"info", 5, 8, panelInfo, 1},
-		{"projects", 5, 15, panelProjects, 4},
-		{"detail", 40, 5, panelDetail, 5},
-		{"log", 40, 25, panelLog, 5},
+		{"issue tabs", 5, 4, panelTabs, 1},
+		{"issues", 30, 3, panelIssues, 0},
+		{"info", 5, 14, panelInfo, 1},
+		{"projects", 5, 25, panelProjects, 2},
+		{"detail", 30, 18, panelDetail, 5},
+		{"log", 30, 35, panelLog, 1},
+		{"help bar is not a pane", 5, 39, panelNone, 0},
+		{"outside terminal", 120, 10, panelNone, 0},
 	}
-
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			panel, relY := app.hitTest(testCase.x, testCase.y)
-			testkit.AssertEqual(t, "panel", panel, testCase.want)
-			testkit.AssertEqual(t, "relY", relY, testCase.wantRelY)
+			panel, relY := app.hitTest(tt.x, tt.y)
+			testkit.AssertEqual(t, "panel", panel, tt.want)
+			testkit.AssertEqual(t, "relative Y", relY, tt.wantRelY)
 		})
 	}
 }
 
-func TestHitTest_Vertical(t *testing.T) {
+func TestHitTest_TooSmallTerminalHasNoPaneTargets(t *testing.T) {
 	t.Parallel()
 	app := appWithPanelDims(t, 60)
-
-	tests := []struct {
-		name     string
-		y        int
-		want     panelID
-		wantRelY int
-	}{
-		{"status", 0, panelStatus, 0},
-		{"issues", 3, panelIssues, 1},
-		{"info", 8, panelInfo, 1},
-		{"projects", 13, panelProjects, 2},
-		{"detail", 20, panelDetail, 3},
-		{"log", 38, panelLog, 1},
-	}
-
-	for _, testCase := range tests {
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-			panel, relY := app.hitTest(2, testCase.y)
-			testkit.AssertEqual(t, "panel", panel, testCase.want)
-			testkit.AssertEqual(t, "relY", relY, testCase.wantRelY)
-		})
-	}
+	panel, relY := app.hitTest(2, 2)
+	testkit.AssertEqual(t, "panel", panel, panelNone)
+	testkit.AssertEqual(t, "relative Y", relY, 0)
 }
 
 func TestMouseScroll_FocusesPanel(t *testing.T) {

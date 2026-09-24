@@ -26,6 +26,7 @@ type ProjectList struct {
 	allProjects []jira.Project
 	filter      string
 	activeKey   string
+	focusHint   string
 	theme       *theme.Theme
 }
 
@@ -39,6 +40,14 @@ func (p *ProjectList) SetProjects(projects []jira.Project) {
 }
 
 func (p *ProjectList) AllProjects() []jira.Project { return p.allProjects }
+func (p *ProjectList) SetFocusHint(hint string)    { p.focusHint = hint }
+
+func (p *ProjectList) title() string {
+	if p.focusHint == "" {
+		return "Projects"
+	}
+	return "[" + p.focusHint + "] Projects"
+}
 
 func (p *ProjectList) SetFilter(query string) {
 	p.filter = query
@@ -121,7 +130,7 @@ func (p *ProjectList) View() string {
 		if n := len(p.projects); n > 0 {
 			footer = fmt.Sprintf("%d of %d", p.Cursor+1, n)
 		}
-		return components.RenderCollapsedBar("[4] Projects", footer, p.Width, p.Focused)
+		return components.RenderCollapsedBar(p.title(), footer, p.Width, p.Focused)
 	}
 
 	contentWidth, innerHeight := components.PanelDimensions(p.Width, p.Height)
@@ -168,5 +177,5 @@ func (p *ProjectList) View() string {
 		footer = fmt.Sprintf("%d of %d", p.Cursor+1, len(p.projects))
 	}
 	scroll := &components.ScrollInfo{Total: len(p.projects), Visible: innerHeight, Offset: p.Offset}
-	return components.RenderPanelFull("[4] Projects", footer, content, p.Width, innerHeight, p.Focused, scroll)
+	return components.RenderPanelFull(p.title(), footer, content, p.Width, innerHeight, p.Focused, scroll)
 }

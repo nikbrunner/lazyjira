@@ -263,16 +263,33 @@ func TestInfoPanel_ClickTabAt_SwitchesToLinks(t *testing.T) {
 	t.Parallel()
 	panel := NewInfoPanel()
 	panel.SetIssue(makeIssueWithStatus(testKey))
+	panel.SetSize(80, 12)
 	testkit.AssertEqual(t, "starts on fields", panel.ActiveTab(), InfoTabFields)
-	panel.ClickTabAt(11)
+	panel.ClickTabAt(13)
 	testkit.AssertEqual(t, "clicked to links", panel.ActiveTab(), InfoTabLinks)
+}
+
+func TestInfoPanel_NarrowTitleUsesPreviousNextTargets(t *testing.T) {
+	t.Parallel()
+	panel := NewInfoPanel()
+	panel.SetIssue(makeIssueWithStatus(testKey))
+	panel.SetFocusHint("3")
+	panel.SetSize(22, 10)
+	if title := stripANSI(panel.buildTitle(19)); !strings.Contains(title, "‹ Info ›") || strings.Contains(title, "Lnk") {
+		t.Fatalf("narrow title = %q", title)
+	}
+	panel.ClickTabAt(13)
+	testkit.AssertEqual(t, "right target advances", panel.ActiveTab(), InfoTabLinks)
+	panel.ClickTabAt(6)
+	testkit.AssertEqual(t, "left target returns", panel.ActiveTab(), InfoTabFields)
 }
 
 func TestInfoPanel_ClickTabAt_SameTabNoChange(t *testing.T) {
 	t.Parallel()
 	panel := NewInfoPanel()
 	panel.SetIssue(makeIssueWithStatus(testKey))
-	panel.ClickTabAt(4)
+	panel.SetSize(80, 12)
+	panel.ClickTabAt(6)
 	testkit.AssertEqual(t, "stays on fields", panel.ActiveTab(), InfoTabFields)
 }
 

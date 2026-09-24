@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 )
@@ -50,7 +49,7 @@ func TestResolveCustomCommands_DetailComments(t *testing.T) {
 	t.Parallel()
 	cfg := &Config{
 		CustomCommands: []CustomCommandConfig{
-			{Key: "c", Name: "Comment", Command: "echo {{.Key}}-{{.CommentID}}", Contexts: []string{"detail.comments"}},
+			{Key: "c", Name: "Comment", Command: "printf '%s-%s' {{.Key}} {{.CommentID}}", Contexts: []string{"detail.comments"}},
 		},
 	}
 	resolved, err := cfg.ResolveCustomCommands()
@@ -182,6 +181,50 @@ func TestResolveCustomCommands_InvalidTemplateError(t *testing.T) {
 	}
 }
 
+func TestResolveCustomCommands_DefaultInterpolationShellEscapes(t *testing.T) {
+	t.Parallel()
+	cfg := &Config{
+		CustomCommands: []CustomCommandConfig{
+			{Key: "s", Name: "Shell-safe", Command: "printf %s {{.Value}}"},
+		},
+	}
+	resolved, err := cfg.ResolveCustomCommands()
+	if err != nil {
+		t.Fatalf("ResolveCustomCommands: %v", err)
+	}
+
+	got, err := resolved[0].Render(map[string]string{"Value": "$(touch /tmp/pwned); 'quoted'"})
+	if err != nil {
+		t.Fatalf("template render error: %v", err)
+	}
+
+	want := `printf %s '$(touch /tmp/pwned); '\''quoted'\'''`
+	if got != want {
+		t.Errorf("output = %q, want %q", got, want)
+	}
+}
+
+func TestResolveCustomCommands_ShellrawFunc(t *testing.T) {
+	t.Parallel()
+	cfg := &Config{
+		CustomCommands: []CustomCommandConfig{
+			{Key: "r", Name: "Raw", Command: "echo {{.Value | shellraw}}"},
+		},
+	}
+	resolved, err := cfg.ResolveCustomCommands()
+	if err != nil {
+		t.Fatalf("ResolveCustomCommands: %v", err)
+	}
+
+	got, err := resolved[0].Render(map[string]string{"Value": "$(touch /tmp/pwned)"})
+	if err != nil {
+		t.Fatalf("template render error: %v", err)
+	}
+	if want := "echo $(touch /tmp/pwned)"; got != want {
+		t.Errorf("output = %q, want %q", got, want)
+	}
+}
+
 func TestResolveCustomCommands_ShellescapeFunc(t *testing.T) {
 	t.Parallel()
 	cfg := &Config{
@@ -194,14 +237,13 @@ func TestResolveCustomCommands_ShellescapeFunc(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var buf bytes.Buffer
-	data := struct{ Key string }{Key: "what's up"}
-	if err := resolved[0].Template.Execute(&buf, data); err != nil {
-		t.Fatalf("template execute error: %v", err)
+	got, err := resolved[0].Render(map[string]string{"Key": "what's up"})
+	if err != nil {
+		t.Fatalf("template render error: %v", err)
 	}
 
 	want := `echo 'what'\''s up'`
-	if got := buf.String(); got != want {
+	if got != want {
 		t.Errorf("output = %q, want %q", got, want)
 	}
 }
@@ -250,14 +292,13 @@ func TestResolveCustomCommands_SlugifyFunc(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	var buf bytes.Buffer
-	data := struct{ Summary string }{Summary: "Fix Login Bug #42!"}
-	if err := resolved[0].Template.Execute(&buf, data); err != nil {
-		t.Fatalf("template execute error: %v", err)
+	got, err := resolved[0].Render(map[string]string{"Summary": "Fix Login Bug #42!"})
+	if err != nil {
+		t.Fatalf("template render error: %v", err)
 	}
 
-	want := "git checkout -b fix-login-bug-42"
-	if got := buf.String(); got != want {
+	want := "git checkout -b 'fix-login-bug-42'"
+	if got != want {
 		t.Errorf("output = %q, want %q", got, want)
 	}
 }

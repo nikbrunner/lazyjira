@@ -144,20 +144,21 @@ type NavigationKeys struct {
 }
 
 type UniversalKeys struct {
-	Quit        string `yaml:"quit"`
-	Help        string `yaml:"help"`
-	Search      string `yaml:"search"`
-	SwitchPanel string `yaml:"switchPanel"`
-	Refresh     string `yaml:"refresh"`
-	RefreshAll  string `yaml:"refreshAll"`
-	PrevTab     string `yaml:"prevTab"`
-	NextTab     string `yaml:"nextTab"`
-	FocusDetail string `yaml:"focusDetail"`
-	FocusStatus string `yaml:"focusStatus"`
-	FocusIssues string `yaml:"focusIssues"`
-	FocusInfo   string `yaml:"focusInfo"`
-	FocusProj   string `yaml:"focusProjects"`
-	JQLSearch   string `yaml:"jqlSearch"`
+	Quit           string `yaml:"quit"`
+	Help           string `yaml:"help"`
+	Search         string `yaml:"search"`
+	SwitchPanel    string `yaml:"switchPanel"`
+	Refresh        string `yaml:"refresh"`
+	RefreshAll     string `yaml:"refreshAll"`
+	PrevTab        string `yaml:"prevTab"`
+	NextTab        string `yaml:"nextTab"`
+	FocusDetail    string `yaml:"focusDetail"`
+	FocusStatus    string `yaml:"focusStatus"`
+	FocusIssues    string `yaml:"focusIssues"`
+	FocusInfo      string `yaml:"focusInfo"`
+	FocusProj      string `yaml:"focusProjects"`
+	ToggleMaximize string `yaml:"toggleMaximize"`
+	JQLSearch      string `yaml:"jqlSearch"`
 }
 
 type IssueKeys struct {
@@ -290,7 +291,7 @@ func DefaultConfig() *Config {
 		GUI: GUIConfig{
 			Theme:                "default",
 			Language:             "en",
-			SidePanelWidth:       40,
+			SidePanelWidth:       22,
 			CollapsedPanelHeight: 5,
 			ShowIcons:            true,
 			DateFormat:           "2006-01-02",

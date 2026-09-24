@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/textfuel/lazyjira/v2/pkg/internal/testkit"
 )
@@ -76,6 +77,22 @@ func TestHelpBar_TruncatesWhenTooNarrow(t *testing.T) {
 	out := bar.View()
 	if !strings.Contains(stripANSI(out), "...") {
 		t.Errorf("expected truncation marker '...' in narrow bar, got %q", stripANSI(out))
+	}
+}
+
+func TestHelpBar_ViewFitsConfiguredWidth(t *testing.T) {
+	t.Parallel()
+	items := make([]HelpItem, 10)
+	for i := range items {
+		items[i] = HelpItem{Key: "ctrl+x", Description: "long action"}
+	}
+	for _, width := range []int{20, 80, 160} {
+		bar := NewHelpBar(items)
+		bar.SetWidth(width)
+		bar.SetStatusMsg("saved")
+		if got := lipgloss.Width(bar.View()); got > width {
+			t.Fatalf("help bar width = %d, want at most %d: %q", got, width, stripANSI(bar.View()))
+		}
 	}
 }
 

@@ -29,6 +29,7 @@ const (
 	focusIssues
 	focusInfo
 	focusProjects
+	focusIssueTabs
 )
 
 type focusSide int
@@ -175,6 +176,9 @@ type App struct {
 	boardID         int
 	boards          []jira.Board
 	showHelp        bool
+	maximized       bool
+	maximizedPane   focusPanel
+	tabOffset       int
 	helpCursor      int
 	helpSearching   bool
 	helpSearch      components.TextInput
@@ -213,14 +217,6 @@ type App struct {
 	gitDetectedKey string
 
 	customCmds []config.ResolvedCustomCommand
-
-	panelSideW     int
-	panelStatusH   int
-	panelIssuesH   int
-	panelInfoH     int
-	panelProjectsH int
-	panelDetailH   int
-	panelLogH      int
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -403,6 +399,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		}
 	}
 
+	app.updateFocusHints()
 	app.helpBar.SetItems(app.helpBarItems())
 	return app
 }
@@ -719,31 +716,34 @@ func (a *App) View() string {
 		return "Loading..."
 	}
 
-	var content string
+	layout := a.geometry()
+	if layout.tooSmall {
+		return lipgloss.Place(a.width, a.height, lipgloss.Center, lipgloss.Center,
+			fmt.Sprintf("terminal too small, need at least %d×%d", layout.requiredWidth, layout.requiredHeight))
+	}
 
-	if a.isVerticalLayout() {
-		content = lipgloss.JoinVertical(lipgloss.Left,
-			a.statusPanel.View(),
-			a.issuesList.View(),
-			a.infoPanel.View(),
-			a.projectList.View(),
-			a.detailView.View(),
-			a.logPanel.View(),
-		)
+	var content string
+	if a.maximized {
+		if a.maximizedPane == focusIssues {
+			content = a.issuesList.View()
+		} else {
+			content = a.detailView.View()
+		}
 	} else {
 		leftCol := lipgloss.JoinVertical(lipgloss.Left,
-			a.statusPanel.View(),
-			a.issuesList.View(),
+			a.renderIssueTabs(layout.tabs.width, layout.tabs.height),
 			a.infoPanel.View(),
 			a.projectList.View(),
 		)
-
 		rightCol := lipgloss.JoinVertical(lipgloss.Left,
+			a.issuesList.View(),
 			a.detailView.View(),
+		)
+		content = lipgloss.JoinVertical(lipgloss.Left,
+			a.statusPanel.View(),
+			lipgloss.JoinHorizontal(lipgloss.Top, leftCol, rightCol),
 			a.logPanel.View(),
 		)
-
-		content = lipgloss.JoinHorizontal(lipgloss.Top, leftCol, rightCol)
 	}
 
 	a.helpBar.SetItems(a.helpBarItems())
@@ -1178,6 +1178,15 @@ func (a *App) fetchActiveTab() tea.Cmd {
 }
 
 func (a *App) updateFocusState() {
+	if a.maximized {
+		current := a.leftFocus
+		if a.side == sideRight {
+			current = focusDetailPane
+		}
+		if current != a.maximizedPane {
+			a.maximized = false
+		}
+	}
 	a.statusPanel.SetFocused(false)
 	a.issuesList.SetFocused(false)
 	a.infoPanel.SetFocused(false)
@@ -1190,6 +1199,7 @@ func (a *App) updateFocusState() {
 			a.statusPanel.SetFocused(true)
 		case focusIssues:
 			a.issuesList.SetFocused(true)
+		case focusIssueTabs, focusDetailPane:
 		case focusInfo:
 			a.infoPanel.SetFocused(true)
 		case focusProjects:
@@ -1199,6 +1209,7 @@ func (a *App) updateFocusState() {
 		a.detailView.SetFocused(true)
 	}
 
+	a.updateFocusHints()
 	a.helpBar.SetItems(a.helpBarItems())
 	a.layoutPanels()
 }

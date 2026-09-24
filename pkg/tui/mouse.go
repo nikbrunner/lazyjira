@@ -9,7 +9,9 @@ import (
 type panelID int
 
 const (
-	panelStatus panelID = iota
+	panelNone panelID = iota
+	panelStatus
+	panelTabs
 	panelIssues
 	panelInfo
 	panelProjects
@@ -32,60 +34,37 @@ func (a *App) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
-// hitTest determines which panel the coordinates fall in and the relative Y.
+// hitTest uses the same rectangles as composition and sizing.
 func (a *App) hitTest(x, y int) (panelID, int) {
-	if a.isVerticalLayout() {
-		// Vertical: all stacked.
-		top := 0
-		if y < top+a.panelStatusH {
-			return panelStatus, y - top
-		}
-		top += a.panelStatusH
-		if y < top+a.panelIssuesH {
-			return panelIssues, y - top
-		}
-		top += a.panelIssuesH
-		if y < top+a.panelInfoH {
-			return panelInfo, y - top
-		}
-		top += a.panelInfoH
-		if y < top+a.panelProjectsH {
-			return panelProjects, y - top
-		}
-		top += a.panelProjectsH
-		if y < top+a.panelDetailH {
-			return panelDetail, y - top
-		}
-		return panelLog, y - top - a.panelDetailH
+	layout := a.geometry()
+	panels := []struct {
+		id   panelID
+		area rect
+	}{
+		{panelStatus, layout.status},
+		{panelTabs, layout.tabs},
+		{panelIssues, layout.issues},
+		{panelInfo, layout.info},
+		{panelProjects, layout.projects},
+		{panelDetail, layout.detail},
+		{panelLog, layout.log},
 	}
-
-	// Horizontal layout.
-	if x < a.panelSideW {
-		top := 0
-		if y < top+a.panelStatusH {
-			return panelStatus, y - top
+	for _, panel := range panels {
+		area := panel.area
+		if area.width > 0 && area.height > 0 && x >= area.x && x < area.x+area.width && y >= area.y && y < area.y+area.height {
+			return panel.id, y - area.y
 		}
-		top += a.panelStatusH
-		if y < top+a.panelIssuesH {
-			return panelIssues, y - top
-		}
-		top += a.panelIssuesH
-		if y < top+a.panelInfoH {
-			return panelInfo, y - top
-		}
-		top += a.panelInfoH
-		return panelProjects, y - top
 	}
-
-	// Right side.
-	if y < a.panelDetailH {
-		return panelDetail, y
-	}
-	return panelLog, y - a.panelDetailH
+	return panelNone, 0
 }
 
 func (a *App) mouseScroll(panel panelID, delta int) (tea.Model, tea.Cmd) {
 	switch panel { //nolint:exhaustive
+	case panelTabs:
+		a.side = sideLeft
+		a.leftFocus = focusIssueTabs
+		a.tabOffset = max(0, a.tabOffset+delta)
+		a.updateFocusState()
 	case panelIssues:
 		if a.side != sideLeft || a.leftFocus != focusIssues {
 			a.side = sideLeft
@@ -148,14 +127,24 @@ func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 		a.detailView.SetSplash(a.splashInfo)
 		a.updateFocusState()
 
+	case panelTabs:
+		a.side = sideLeft
+		a.leftFocus = focusIssueTabs
+		a.updateFocusState()
+		if index, overflow := a.issueTabAtRow(relY); overflow != 0 {
+			a.tabOffset = max(0, a.tabOffset+overflow)
+		} else if index >= 0 && index != a.issuesList.GetTabIndex() {
+			a.setIssueTabIndex(index)
+			return a, a.activateIssueCollection()
+		}
+
 	case panelIssues:
 		a.side = sideLeft
 		a.leftFocus = focusIssues
 		a.updateFocusState()
 		if relY == 0 {
-			// Title bar — tab click.
-			if a.issuesList.ClickTabAt(x) && !a.issuesList.HasCachedTab() {
-				return a, a.fetchActiveTab()
+			if a.issuesList.ClickMaximizeAt(x - a.geometry().issues.x) {
+				a.toggleMaximize(focusIssues)
 			}
 		} else if dbl := a.issuesList.ClickAt(relY); dbl {
 			return a.openIssueDetail()
@@ -169,7 +158,7 @@ func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 		a.updateFocusState()
 		if relY == 0 {
 			a.infoPanel.ClickTabAt(x)
-			return a, a.infoPanel.MaybeChildrenRequest()
+			return a, tea.Batch(a.previewForInfoTab(), a.infoPanel.MaybeChildrenRequest())
 		}
 		a.infoPanel.ClickAt(relY)
 
@@ -193,12 +182,12 @@ func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 		a.side = sideRight
 		a.updateFocusState()
 		if relY == 0 {
-			// Title bar → tab click.
-			relX := x
-			if !a.isVerticalLayout() {
-				relX = x - a.panelSideW
+			relX := x - a.geometry().detail.x
+			if a.detailView.ClickMaximizeAt(relX) {
+				a.toggleMaximize(focusDetailPane)
+			} else {
+				a.detailView.ClickTab(relX)
 			}
-			a.detailView.ClickTab(relX)
 		} else {
 			if cmd := a.detailView.ClickItem(relY); cmd != nil {
 				return a, cmd

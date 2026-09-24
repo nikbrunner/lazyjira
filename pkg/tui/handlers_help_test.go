@@ -30,7 +30,7 @@ func TestHandleDetailScroll_Down(t *testing.T) {
 	app.height = 40
 	app.layoutPanels()
 
-	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'J'}})
+	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyCtrlD})
 
 	if !ok {
 		t.Error("detail scroll down should be handled")
@@ -45,7 +45,7 @@ func TestHandleDetailScroll_Up(t *testing.T) {
 	app.height = 40
 	app.layoutPanels()
 
-	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'K'}})
+	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyCtrlU})
 
 	if !ok {
 		t.Error("detail scroll up should be handled")

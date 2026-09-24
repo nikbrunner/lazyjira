@@ -1,9 +1,7 @@
 package tui
 
 import (
-	"bytes"
 	"testing"
-	"text/template"
 
 	"github.com/textfuel/lazyjira/v2/pkg/config"
 	"github.com/textfuel/lazyjira/v2/pkg/jira"
@@ -93,34 +91,36 @@ func TestActiveContexts(t *testing.T) {
 	}
 }
 
-func parseTmpl(t *testing.T, s string) *template.Template {
+func resolvedCommand(t *testing.T, key, name, command string, contexts ...config.Context) config.ResolvedCustomCommand {
 	t.Helper()
-	tmpl, err := template.New("t").Option("missingkey=error").Parse(s)
-	if err != nil {
-		t.Fatalf("parse: %v", err)
+	rawContexts := make([]string, len(contexts))
+	for i, ctx := range contexts {
+		rawContexts[i] = string(ctx)
 	}
-	return tmpl
+	cfg := &config.Config{CustomCommands: []config.CustomCommandConfig{{
+		Key: key, Name: name, Command: command, Contexts: rawContexts,
+	}}}
+	commands, err := cfg.ResolveCustomCommands()
+	if err != nil {
+		t.Fatalf("resolve command: %v", err)
+	}
+	return commands[0]
 }
 
 func TestBuildCommandData_SingleScopeFlat(t *testing.T) {
 	t.Parallel()
 	app := newTestApp()
-	app.issuesList.SetIssues([]jira.Issue{{Key: "ABC-1", Summary: "hi"}})
-	rc := config.ResolvedCustomCommand{
-		Key:      "y",
-		Scopes:   config.ScopeIssue,
-		Contexts: []config.Context{config.CtxIssues},
-		Template: parseTmpl(t, "{{.Key}}|{{.Summary}}"),
-	}
+	app.issuesList.SetIssues([]jira.Issue{{Key: "ABC-1", Summary: "hi; $(touch /tmp/pwned)"}})
+	rc := resolvedCommand(t, "y", "test", "printf '%s|%s' {{.Key}} {{.Summary}}", config.CtxIssues)
 	data, ok := app.buildCommandData(rc)
 	if !ok {
 		t.Fatal("expected ok")
 	}
-	var buf bytes.Buffer
-	if err := rc.Template.Execute(&buf, data); err != nil {
-		t.Fatalf("execute: %v", err)
+	rendered, err := rc.Render(data)
+	if err != nil {
+		t.Fatalf("render: %v", err)
 	}
-	if got := buf.String(); got != "ABC-1|hi" {
+	if got := rendered; got != "printf '%s|%s' 'ABC-1' 'hi; $(touch /tmp/pwned)'" {
 		t.Errorf("got %q", got)
 	}
 }
@@ -133,21 +133,16 @@ func TestBuildCommandData_DetailCommentsFlat(t *testing.T) {
 	app.detailView.SetIssue(&issue)
 	app.detailView.SetActiveTab(views.TabComments)
 
-	rc := config.ResolvedCustomCommand{
-		Key:      "c",
-		Scopes:   config.ScopeIssue | config.ScopeComment,
-		Contexts: []config.Context{config.CtxDetailComments},
-		Template: parseTmpl(t, "{{.Key}}-{{.CommentID}}"),
-	}
+	rc := resolvedCommand(t, "c", "test", "printf '%s-%s' {{.Key}} {{.CommentID}}", config.CtxDetailComments)
 	data, ok := app.buildCommandData(rc)
 	if !ok {
 		t.Fatal("expected ok")
 	}
-	var buf bytes.Buffer
-	if err := rc.Template.Execute(&buf, data); err != nil {
-		t.Fatalf("execute: %v", err)
+	rendered, err := rc.Render(data)
+	if err != nil {
+		t.Fatalf("render: %v", err)
 	}
-	if got := buf.String(); got != "ABC-1-10" {
+	if got := rendered; got != "printf '%s-%s' 'ABC-1' '10'" {
 		t.Errorf("got %q", got)
 	}
 }
@@ -161,21 +156,16 @@ func TestBuildCommandData_SharedFieldsProjectScope(t *testing.T) {
 	app.side = sideLeft
 	app.leftFocus = focusProjects
 
-	rc := config.ResolvedCustomCommand{
-		Key:      "p",
-		Scopes:   config.ScopeProject,
-		Contexts: []config.Context{config.CtxProjects},
-		Template: parseTmpl(t, "{{.ProjectKey}}|{{.JiraHost}}|{{.GitBranch}}|{{.GitRepoPath}}"),
-	}
+	rc := resolvedCommand(t, "p", "test", "printf '%s|%s|%s|%s' {{.ProjectKey}} {{.JiraHost}} {{.GitBranch}} {{.GitRepoPath}}", config.CtxProjects)
 	data, ok := app.buildCommandData(rc)
 	if !ok {
 		t.Fatal("expected ok")
 	}
-	var buf bytes.Buffer
-	if err := rc.Template.Execute(&buf, data); err != nil {
-		t.Fatalf("execute: %v", err)
+	rendered, err := rc.Render(data)
+	if err != nil {
+		t.Fatalf("render: %v", err)
 	}
-	if got, want := buf.String(), "P|example.atlassian.net|feature/x|/tmp/repo"; got != want {
+	if got, want := rendered, "printf '%s|%s|%s|%s' 'P' 'example.atlassian.net' 'feature/x' '/tmp/repo'"; got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
@@ -190,21 +180,16 @@ func TestBuildCommandData_SharedFieldsDetailComments(t *testing.T) {
 	app.detailView.SetIssue(&issue)
 	app.detailView.SetActiveTab(views.TabComments)
 
-	rc := config.ResolvedCustomCommand{
-		Key:      "c",
-		Scopes:   config.ScopeIssue | config.ScopeComment,
-		Contexts: []config.Context{config.CtxDetailComments},
-		Template: parseTmpl(t, "{{.Key}}|{{.CommentID}}|{{.JiraHost}}|{{.GitBranch}}|{{.GitRepoPath}}"),
-	}
+	rc := resolvedCommand(t, "c", "test", "printf '%s|%s|%s|%s|%s' {{.Key}} {{.CommentID}} {{.JiraHost}} {{.GitBranch}} {{.GitRepoPath}}", config.CtxDetailComments)
 	data, ok := app.buildCommandData(rc)
 	if !ok {
 		t.Fatal("expected ok")
 	}
-	var buf bytes.Buffer
-	if err := rc.Template.Execute(&buf, data); err != nil {
-		t.Fatalf("execute: %v", err)
+	rendered, err := rc.Render(data)
+	if err != nil {
+		t.Fatalf("render: %v", err)
 	}
-	if got, want := buf.String(), "ABC-1|10|example.atlassian.net|feature/y|/tmp/repo2"; got != want {
+	if got, want := rendered, "printf '%s|%s|%s|%s|%s' 'ABC-1' '10' 'example.atlassian.net' 'feature/y' '/tmp/repo2'"; got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
@@ -214,12 +199,7 @@ func TestBuildCommandData_MissingSelectionSwallows(t *testing.T) {
 	app := newTestApp()
 	app.side = sideLeft
 	app.leftFocus = focusProjects
-	rc := config.ResolvedCustomCommand{
-		Key:      "n",
-		Scopes:   config.ScopeProject,
-		Contexts: []config.Context{config.CtxProjects},
-		Template: parseTmpl(t, "{{.ProjectKey}}"),
-	}
+	rc := resolvedCommand(t, "n", "test", "echo {{.ProjectKey}}", config.CtxProjects)
 	if _, ok := app.buildCommandData(rc); ok {
 		t.Error("expected ok=false with no selected project")
 	}
@@ -234,16 +214,8 @@ func TestHandleCustomCommand_SpecificityDispatch(t *testing.T) {
 	app.detailView.SetActiveTab(views.TabComments)
 	app.side = sideRight
 
-	detailCmd := config.ResolvedCustomCommand{
-		Key: "x", Name: "detail-one", Scopes: config.ScopeIssue,
-		Contexts: []config.Context{config.CtxDetail},
-		Template: parseTmpl(t, "echo detail"),
-	}
-	commentsCmd := config.ResolvedCustomCommand{
-		Key: "x", Name: "comments-one", Scopes: config.ScopeIssue | config.ScopeComment,
-		Contexts: []config.Context{config.CtxDetailComments},
-		Template: parseTmpl(t, "echo comments"),
-	}
+	detailCmd := resolvedCommand(t, "x", "detail-one", "echo detail", config.CtxDetail)
+	commentsCmd := resolvedCommand(t, "x", "comments-one", "echo comments", config.CtxDetailComments)
 	app.customCmds = []config.ResolvedCustomCommand{detailCmd, commentsCmd}
 
 	ctxs := app.activeContexts()

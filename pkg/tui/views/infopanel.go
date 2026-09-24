@@ -37,6 +37,7 @@ type InfoPanel struct {
 	issue           *jira.Issue
 	fields          []config.FieldConfig
 	filter          string
+	focusHint       string
 	activeTab       InfoPanelTab
 	theme           *theme.Theme
 	filteredIndices []int
@@ -58,6 +59,14 @@ type InfoPanel struct {
 }
 
 func (p *InfoPanel) SetTypeIcons(icons map[string]string) { p.typeIcons = icons }
+func (p *InfoPanel) SetFocusHint(hint string)             { p.focusHint = hint }
+
+func (p *InfoPanel) titlePrefix() string {
+	if p.focusHint == "" {
+		return ""
+	}
+	return "[" + p.focusHint + "] "
+}
 
 func NewInfoPanel() *InfoPanel {
 	return &InfoPanel{theme: theme.Default}
@@ -374,17 +383,17 @@ func (p *InfoPanel) View() string {
 		if count := p.tabItemCount(); count > 0 {
 			footer = fmt.Sprintf("%d of %d", p.Cursor+1, count)
 		}
-		return components.RenderCollapsedBar("[3] Info", footer, p.Width, p.Focused)
+		return components.RenderCollapsedBar(p.titlePrefix()+"Info", footer, p.Width, p.Focused)
 	}
 
 	contentWidth, innerHeight := components.PanelDimensions(p.Width, p.Height)
 
 	if p.issue == nil {
 		placeholder := lipgloss.NewStyle().Foreground(theme.ColorGray).Render("No issue selected")
-		return components.RenderPanel("[3] Info", placeholder, p.Width, innerHeight, p.Focused)
+		return components.RenderPanel(p.titlePrefix()+"Info", placeholder, p.Width, innerHeight, p.Focused)
 	}
 
-	title := p.buildTitle()
+	title := p.buildTitle(contentWidth - 1)
 
 	styled, plain := p.renderTabRows(contentWidth)
 
@@ -433,53 +442,70 @@ func (p *InfoPanel) View() string {
 	return components.RenderPanelFull(title, footer, content, p.Width, innerHeight, p.Focused, scroll)
 }
 
-func (p *InfoPanel) buildTitle() string {
+func (p *InfoPanel) buildTitle(maxWidth int) string {
 	tabs := p.visibleTabs()
 	if len(tabs) <= 1 {
-		return "[3] Info"
+		return p.titlePrefix() + "Info"
 	}
 
 	activeStyle := lipgloss.NewStyle().Foreground(theme.ColorGreen).Bold(true)
 	inactiveStyle := lipgloss.NewStyle().Foreground(theme.ColorWhite)
 	sepStyle := lipgloss.NewStyle().Foreground(theme.ColorGray)
 	sep := sepStyle.Render(" - ")
-
 	var parts []string
-	for _, t := range tabs {
-		label := infoPanelTabLabel(t)
-		if t == p.activeTab {
+	for _, tab := range tabs {
+		label := infoPanelTabLabel(tab)
+		if tab == p.activeTab {
 			parts = append(parts, activeStyle.Render(label))
 		} else {
 			parts = append(parts, inactiveStyle.Render(label))
 		}
 	}
-
-	return "[3] " + strings.Join(parts, sep)
+	fullTitle := p.titlePrefix() + strings.Join(parts, sep)
+	if lipgloss.Width(fullTitle) <= maxWidth {
+		return fullTitle
+	}
+	label := activeStyle.Render(infoPanelTabLabel(p.activeTab))
+	return p.titlePrefix() + "‹ " + label + " ›"
 }
 
-// ClickTabAt switches tab based on x position in the title bar
 func (p *InfoPanel) ClickTabAt(x int) {
 	tabs := p.visibleTabs()
 	if len(tabs) <= 1 {
 		return
 	}
-	prefix := len("[3] ")
-	sepW := 3
-
-	pos := prefix
-	for _, t := range tabs {
-		label := infoPanelTabLabel(t)
-		labelW := len(label)
-		if x >= pos && x < pos+labelW+sepW {
-			if t != p.activeTab {
-				p.activeTab = t
-				p.Cursor = 0
-				p.Offset = 0
-				p.syncItemCount()
-			}
+	contentWidth, _ := components.PanelDimensions(p.Width, p.Height)
+	maxWidth := contentWidth - 1
+	if lipgloss.Width(p.titlePrefix()+strings.Join([]string{"Info", "Lnk", "Sub"}, " - ")) > maxWidth {
+		left := 2 + lipgloss.Width(p.titlePrefix())
+		labelWidth := lipgloss.Width(infoPanelTabLabel(p.activeTab))
+		if x >= left && x < left+1 {
+			p.PrevTab()
 			return
 		}
-		pos += labelW + sepW
+		if x >= left+2+labelWidth+1 && x < left+2+labelWidth+2 {
+			p.NextTab()
+		}
+		return
+	}
+	pos := 2 + lipgloss.Width(p.titlePrefix())
+	for _, tab := range tabs {
+		label := infoPanelTabLabel(tab)
+		labelWidth := lipgloss.Width(label)
+		if x >= pos && x < pos+labelWidth+3 {
+			p.setActiveTab(tab)
+			return
+		}
+		pos += labelWidth + 3
+	}
+}
+
+func (p *InfoPanel) setActiveTab(tab InfoPanelTab) {
+	if tab != p.activeTab {
+		p.activeTab = tab
+		p.Cursor = 0
+		p.Offset = 0
+		p.syncItemCount()
 	}
 }
 
