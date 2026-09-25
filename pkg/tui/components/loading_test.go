@@ -15,7 +15,10 @@ func TestLoadingIndicatorAnimatesDotsBeforeLabel(t *testing.T) {
 		t.Fatal("starting the indicator should schedule a tick")
 	}
 	first := indicator.View()
-	if strings.Index(first, "⠋") < 0 || strings.Index(first, "⠋") >= strings.Index(first, "Loading sprint options") {
+	if !strings.Contains(first, "⠋") {
+		t.Fatalf("indicator view should contain the dot glyph: %q", first)
+	}
+	if strings.Index(first, "⠋") >= strings.Index(first, "Loading sprint options") {
 		t.Fatalf("indicator view should place the dots before the label: %q", first)
 	}
 
@@ -47,7 +50,9 @@ func TestLoadingIndicatorAnimatesDotsBeforeLabel(t *testing.T) {
 	}
 
 	other := NewLoadingIndicator("Other")
-	other.Start()
+	if other.Start() == nil {
+		t.Fatal("starting another indicator should schedule a tick")
+	}
 	otherTick := LoadingIndicatorTickMsg{indicator: other, generation: other.generation}
 	if indicator.Update(otherTick) != nil || indicator.View() != restarted {
 		t.Fatal("indicator accepted another instance's tick")

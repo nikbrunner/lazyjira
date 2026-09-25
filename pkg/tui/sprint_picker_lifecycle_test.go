@@ -12,6 +12,7 @@ import (
 )
 
 func TestOlderSprintRequestCannotReplaceCurrentLoadingModal(t *testing.T) {
+	t.Parallel()
 	for _, oldRequestFails := range []bool{false, true} {
 		name := "success"
 		if oldRequestFails {
@@ -116,6 +117,7 @@ func TestPartialSprintResponseIsNotCached(t *testing.T) {
 }
 
 func TestSprintRequestInvalidationClosesOnlyOwnedLoadingModal(t *testing.T) {
+	t.Parallel()
 	t.Run("project change closes owned modal", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})

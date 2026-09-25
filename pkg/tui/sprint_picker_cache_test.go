@@ -13,6 +13,8 @@ import (
 	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
+const sprintLoadingModalTitle = "Loading sprints"
+
 func sprintLoadedFromCmd(t *testing.T, cmd tea.Cmd) sprintsLoadedMsg {
 	t.Helper()
 	batch, ok := cmd().(tea.BatchMsg)
@@ -36,7 +38,7 @@ func TestSprintPickerLoadingIsReadOnlyAndCancellable(t *testing.T) {
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 
 	cmd := app.startSprintFetch(sprintPickerTarget{issueKey: testKey})
-	if !app.modal.IsVisible() || app.modal.Title() != "Loading sprints" {
+	if !app.modal.IsVisible() || app.modal.Title() != sprintLoadingModalTitle {
 		t.Fatal("picker should immediately show the loading modal")
 	}
 	if app.onSelect != nil {
@@ -72,7 +74,7 @@ func TestExpiredSprintOptionsShowLoadingInsteadOfStaleChoices(t *testing.T) {
 	start = start.Add(app.sprintsCache.ttl)
 
 	cmd := app.startSprintFetch(sprintPickerTarget{issueKey: testKey})
-	if cmd == nil || !app.modal.IsVisible() || app.modal.Title() != "Loading sprints" {
+	if cmd == nil || !app.modal.IsVisible() || app.modal.Title() != sprintLoadingModalTitle {
 		t.Fatal("expired options should show a loading state and fetch again")
 	}
 	if app.onSelect != nil {
@@ -88,13 +90,13 @@ func TestSprintPickerDoesNotReplaceSameTitleModal(t *testing.T) {
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 
 	cmd := app.startSprintFetch(sprintPickerTarget{issueKey: testKey})
-	app.modal.ShowReadOnly("Loading sprints", []components.ModalItem{{Label: "Replacement loading state"}})
+	app.modal.ShowReadOnly(sprintLoadingModalTitle, []components.ModalItem{{Label: "Replacement loading state"}})
 	replacementGeneration := app.modal.Generation()
 	app.onSelect = func(components.ModalItem) tea.Cmd { return nil }
 	loaded := sprintLoadedFromCmd(t, cmd)
 	_, _ = app.handleSprintsLoaded(loaded)
 
-	if !app.modal.IsVisible() || app.modal.Title() != "Loading sprints" || app.modal.Generation() != replacementGeneration {
+	if !app.modal.IsVisible() || app.modal.Title() != sprintLoadingModalTitle || app.modal.Generation() != replacementGeneration {
 		t.Fatal("late sprint result replaced a same-title modal")
 	}
 	if app.onSelect == nil {
@@ -118,7 +120,7 @@ func TestSprintCacheHitAndRefreshAllBypassesTTL(t *testing.T) {
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 
 	cmd := app.startSprintFetch(sprintPickerTarget{issueKey: testKey})
-	if !app.modal.IsVisible() || app.modal.Title() != "Loading sprints" {
+	if !app.modal.IsVisible() || app.modal.Title() != sprintLoadingModalTitle {
 		t.Fatal("cache miss should show loading immediately")
 	}
 	loaded := sprintLoadedFromCmd(t, cmd)
@@ -284,13 +286,13 @@ func TestSprintLoadingTickRoutesThroughAppUpdate(t *testing.T) {
 	updated, _ = app.Update(loaded)
 	app = updated.(*App)
 	completedGeneration := app.modal.Generation()
-	if completedGeneration == loadingGeneration || app.modal.Title() == "Loading sprints" {
+	if completedGeneration == loadingGeneration || app.modal.Title() == sprintLoadingModalTitle {
 		t.Fatal("fetch result did not replace the loading modal")
 	}
 
 	updated, _ = app.Update(nextTick())
 	app = updated.(*App)
-	if app.modal.Generation() != completedGeneration || app.modal.Title() == "Loading sprints" {
+	if app.modal.Generation() != completedGeneration || app.modal.Title() == sprintLoadingModalTitle {
 		t.Fatal("a pending tick restarted the completed loading modal")
 	}
 }

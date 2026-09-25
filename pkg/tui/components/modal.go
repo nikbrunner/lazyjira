@@ -510,7 +510,8 @@ func (m *Modal) viewLoading() string {
 		labelLines = labelLines[:maxLabelH]
 	}
 
-	lines := []string{""}
+	lines := make([]string, 1, len(labelLines)+2)
+	lines[0] = ""
 	for _, line := range labelLines {
 		lines = append(lines, "  "+line+"  ")
 	}
