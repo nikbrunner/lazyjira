@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 
 	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 )
@@ -140,6 +141,56 @@ func TestStatusPanel_View_UsesHostWhenEmailMissing(t *testing.T) {
 	output := stripANSI(panel.View())
 	if !strings.Contains(output, "Account: "+testHost) {
 		t.Errorf("View() = %q, want host account fallback", output)
+	}
+}
+
+//nolint:paralleltest // The terminal color profile is process-wide.
+func TestStatusPanel_ViewColorsStateAndLabels(t *testing.T) {
+	profile := lipgloss.ColorProfile()
+	lipgloss.SetColorProfile(termenv.ANSI)
+	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+
+	for _, tt := range []struct {
+		name         string
+		height       int
+		accountLabel string
+	}{
+		{"compact", 3, "Acct:"},
+		{"full", 10, "Account:"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			panel := makeStatusPanel()
+			panel.SetAuthMethod("Environment variables")
+			panel.SetVersion("v1.2.3")
+			panel.SetSize(120, tt.height)
+			output := panel.View()
+
+			if got := foregroundAt(t, output, "✓"); got != 32 {
+				t.Errorf("connected indicator foreground = %d, want ANSI green 32", got)
+			}
+			for _, text := range []string{tt.accountLabel, "Host:", "Auth:"} {
+				if got := foregroundAt(t, output, text); got != 36 {
+					t.Errorf("%q foreground = %d, want ANSI cyan 36", text, got)
+				}
+			}
+			if got := foregroundAt(t, output, "Connected"); got != 0 {
+				t.Errorf("connected label foreground = %d, want terminal default", got)
+			}
+			if got := foregroundAt(t, output, testEmail); got != 0 {
+				t.Errorf("account value foreground = %d, want terminal default", got)
+			}
+		})
+	}
+
+	panel := makeStatusPanel()
+	panel.SetOnline(false)
+	panel.SetSize(120, 10)
+	output := panel.View()
+	if got := foregroundAt(t, output, "✗"); got != 31 {
+		t.Errorf("disconnected indicator foreground = %d, want ANSI red 31", got)
+	}
+	if got := foregroundAt(t, output, "Disconnected"); got != 0 {
+		t.Errorf("disconnected label foreground = %d, want terminal default", got)
 	}
 }
 

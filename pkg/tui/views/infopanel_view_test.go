@@ -4,6 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
+
 	"github.com/nikbrunner/lazyjira/v2/pkg/config"
 	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
@@ -184,6 +187,28 @@ func TestInfoPanel_View_FieldsTab_ShowsStatus(t *testing.T) {
 	output := stripANSI(panel.View())
 	if !strings.Contains(output, "In Progress") {
 		t.Errorf("fields tab View() = %q, want to contain status 'In Progress'", output)
+	}
+}
+
+//nolint:paralleltest // The terminal color profile is process-wide.
+func TestInfoPanel_View_AuthorValuesUseTerminalForeground(t *testing.T) {
+	profile := lipgloss.ColorProfile()
+	lipgloss.SetColorProfile(termenv.ANSI)
+	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+
+	panel := NewInfoPanel()
+	panel.SetIssue(&jira.Issue{
+		Key:      testKey,
+		Status:   &jira.Status{Name: "Open", CategoryKey: "new"},
+		Priority: &jira.Priority{Name: "Major"},
+		Assignee: &jira.User{DisplayName: "Nik Brunner"},
+		Reporter: &jira.User{DisplayName: "Vasil Papantchev"},
+	})
+	panel.SetSize(80, 12)
+	for _, name := range []string{"Nik Brunner", "Vasil Papantchev"} {
+		if got := foregroundAt(t, panel.View(), name); got != 0 {
+			t.Errorf("%s foreground = %d, want terminal default", name, got)
+		}
 	}
 }
 

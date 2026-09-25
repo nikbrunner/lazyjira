@@ -4,9 +4,11 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
 )
 
 type StatusPanel struct {
@@ -54,10 +56,15 @@ func (s *StatusPanel) Update(msg tea.Msg) (*StatusPanel, tea.Cmd) { return s, ni
 
 func (s *StatusPanel) View() string {
 	statusTitle := s.title("App Status")
-	state := "✓ Connected"
+	indicator := "✓"
+	indicatorColor := theme.ColorGreen
+	state := " Connected"
 	if !s.online {
-		state = "✗ Disconnected"
+		indicator = "✗"
+		indicatorColor = theme.ColorRed
+		state = " Disconnected"
 	}
+	state = lipgloss.NewStyle().Foreground(indicatorColor).Render(indicator) + state
 	if s.height <= 1 {
 		return components.RenderCollapsedBar(statusTitle, state, s.width, s.focused)
 	}
@@ -71,16 +78,16 @@ func (s *StatusPanel) View() string {
 	if s.height <= 3 {
 		parts := []string{state}
 		if s.errText != "" {
-			parts = append(parts, "Error: "+s.errText)
+			parts = append(parts, statusField("Error", s.errText))
 		}
 		if account != "" {
-			parts = append(parts, "Acct: "+account)
+			parts = append(parts, statusField("Acct", account))
 		}
 		if s.host != "" {
-			parts = append(parts, "Host: "+s.host)
+			parts = append(parts, statusField("Host", s.host))
 		}
 		if s.auth != "" {
-			parts = append(parts, "Auth: "+s.auth)
+			parts = append(parts, statusField("Auth", s.auth))
 		}
 		if s.version != "" {
 			parts = append(parts, s.version)
@@ -89,17 +96,21 @@ func (s *StatusPanel) View() string {
 	}
 	lines := []string{state}
 	if s.errText != "" {
-		lines = append(lines, "Error: "+s.errText)
+		lines = append(lines, statusField("Error", s.errText))
 	}
 	lines = append(lines,
-		"Account: "+account,
-		"Host: "+s.host,
-		"Auth: "+s.auth,
-		"Version: "+s.version,
+		statusField("Account", account),
+		statusField("Host", s.host),
+		statusField("Auth", s.auth),
+		statusField("Version", s.version),
 	)
 	for i, line := range lines {
 		lines[i] = ansi.Truncate(line, contentWidth, "…")
 	}
 	content := strings.Join(lines[:min(innerHeight, len(lines))], "\n")
 	return components.RenderPanel(statusTitle, content, s.width, innerHeight, s.focused)
+}
+
+func statusField(label, value string) string {
+	return lipgloss.NewStyle().Foreground(theme.ColorCyan).Render(label+":") + " " + value
 }

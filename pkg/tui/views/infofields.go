@@ -339,14 +339,6 @@ func renderFieldRows(fields []InfoField, issue *jira.Issue, th *theme.Theme, max
 				if issue.Priority != nil {
 					val = theme.PriorityStyled(val)
 				}
-			case "assignee":
-				if issue.Assignee != nil {
-					val = theme.AuthorRender(val)
-				}
-			case "reporter":
-				if issue.Reporter != nil {
-					val = theme.AuthorRender(val)
-				}
 			default:
 				val = th.ValueStyle.Render(val)
 			}
