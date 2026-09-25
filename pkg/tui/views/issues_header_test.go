@@ -41,6 +41,20 @@ func TestIssuesList_HeaderFollowsFields(t *testing.T) {
 	}
 }
 
+func TestIssuesList_SummaryUsesTerminalForeground(t *testing.T) {
+	t.Parallel()
+	list := NewIssuesList()
+	for _, column := range list.issueColumns(80) {
+		if column.field == fieldSummary {
+			if column.color != lipgloss.Color("-1") {
+				t.Errorf("summary color = %q, want terminal default foreground", column.color)
+			}
+			return
+		}
+	}
+	t.Fatal("summary column not found")
+}
+
 func TestIssuesList_HeaderSeparator(t *testing.T) {
 	t.Parallel()
 	for _, width := range []int{24, 80} {
@@ -265,7 +279,7 @@ func TestIssuesList_ColumnColorsUseANSIForHeadersAndValues(t *testing.T) {
 			{"Status", "→", 32},
 			{"Type", "Task", 35},
 			{"Priority", "High", 33},
-			{"Summary", "Example", 37},
+			{"Summary", "Example", 0},
 			{"Assignee", "Alice", 96},
 			{"Updated", "2h", 94},
 		} {

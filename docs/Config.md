@@ -331,13 +331,13 @@ gui:
 
 `issueListFields` controls which columns appear and their order. A fixed header below the tabs labels each column. A horizontal separator below the header matches the panel border color. Panels shorter than five lines omit the separator; panels shorter than four lines show issues without the header.
 
-Headers and values use the terminal's ANSI palette. Each field keeps its color when columns are reordered; status indicators use the Status column color for every state. The selected row uses the highlight background across its full width, including spaces between columns.
+Headers and values use the terminal's ANSI palette, except issue summaries, which use the terminal's default foreground. Each field keeps its color when columns are reordered; status indicators use the Status column color for every state. The selected row uses the highlight background across its full width, including spaces between columns.
 
-| Field | Width | ANSI color | Description |
-|-------|-------|------------|-------------|
+| Field | Width | Color | Description |
+|-------|-------|-------|-------------|
 | `key` | auto, minimum 3 | cyan (6) | Issue key like PROJ-123 |
 | `status` | minimum 6 | green (2) | Status indicator |
-| `summary` | longest summary, capped by available space | white (7) | Issue title |
+| `summary` | longest summary, capped by available space | terminal default | Issue title |
 | `priority` | 8 chars, wider for icons | yellow (3) | Priority name or configured icon |
 | `assignee` | 12 chars | bright cyan (14) | Assignee display name |
 | `type` | 10 chars for names, minimum 4 for icons | magenta (5) | Issue type or configured icon |

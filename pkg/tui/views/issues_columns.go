@@ -63,7 +63,7 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 				}
 			}
 		case fieldSummary:
-			column.label, column.color = "Summary", "7"
+			column.label, column.color = "Summary", lipgloss.Color("-1")
 		case "assignee":
 			column.label, column.width, column.color = "Assignee", 12, "14"
 		case "updated":
