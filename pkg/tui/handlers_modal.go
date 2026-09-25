@@ -35,9 +35,9 @@ func (a *App) applyParentEdit(issueKey, text string) tea.Cmd {
 
 // handleModalSelected dispatches modal selection via the onSelect callback
 func (a *App) handleModalSelected(msg components.ModalSelectedMsg) (tea.Model, tea.Cmd) {
-	a.sprintFetchID++
-	a.createForm.Resume()
 	fn := a.onSelect
+	a.invalidateSprintFetch()
+	a.createForm.Resume()
 	a.onSelect = nil
 	if fn != nil {
 		return a, fn(msg.Item)
@@ -57,7 +57,7 @@ func (a *App) handleChecklistConfirmed(msg components.ChecklistConfirmedMsg) (te
 
 // handleModalCancelled clears modal callbacks
 func (a *App) handleModalCancelled() (tea.Model, tea.Cmd) {
-	a.sprintFetchID++
+	a.invalidateSprintFetch()
 	a.createForm.Resume()
 	if !a.createForm.IsVisible() {
 		a.createCtx = createCtx{}
@@ -90,7 +90,7 @@ func (a *App) handleEditorFinished(msg editorFinishedMsg) (tea.Model, tea.Cmd) {
 				users, ok := a.projectUsers(a.projectKey)
 				if !ok {
 					a.pendingMention = &pm
-					return a, tea.Batch(append(cmds, fetchUsersForMention(a.client, a.projectKey))...)
+					return a, tea.Batch(append(cmds, fetchUsersForMention(a.client, a.projectKey, a.referenceCacheVersion))...)
 				}
 				cmds = append(cmds, a.completeCreateDesc(pm, users))
 				return a, tea.Batch(cmds...)
@@ -264,10 +264,10 @@ func (a *App) handleCreateFormPicker(msg components.CreateFormPickerMsg) (tea.Mo
 			a.createForm.SetFieldValue(idx, val, display)
 			return nil
 		}
-		if cached, ok := a.usersCache[a.projectKey]; ok {
+		if cached, ok := a.usersCache.get(a.projectKey); ok {
 			return a.showCreateUserPicker(cached)
 		}
-		return a, fetchUsers(a.client, a.projectKey, createUsersSentinel)
+		return a, fetchUsers(a.client, a.projectKey, createUsersSentinel, a.referenceCacheVersion)
 	}
 
 	items := msg.Items
@@ -398,11 +398,11 @@ func (a *App) handleCreateFormUserChecklist(field *components.CreateFormField, i
 		a.createForm.SetFieldValue(idx, users, strings.Join(names, ", "))
 		return nil
 	}
-	if cached, ok := a.usersCache[a.projectKey]; ok {
+	if cached, ok := a.usersCache.get(a.projectKey); ok {
 		a.modal.ShowChecklist("Select "+field.Name, a.buildUserItems(cached), nil)
 		return a, nil
 	}
-	return a, fetchUsers(a.client, a.projectKey, createUsersSentinel)
+	return a, fetchUsers(a.client, a.projectKey, createUsersSentinel, a.referenceCacheVersion)
 }
 
 // handleCreateFormSubmit sends create issue request

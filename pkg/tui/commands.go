@@ -233,13 +233,22 @@ type commentAddedMsg struct{ issueKey string }
 type commentUpdatedMsg struct{ issueKey string }
 type prioritiesLoadedMsg struct{ priorities []jira.Priority }
 type usersLoadedMsg struct {
-	users    []jira.User
-	issueKey string
+	users        []jira.User
+	issueKey     string
+	projectKey   string
+	fromCache    bool
+	cacheVersion uint64
 }
 type labelsLoadedMsg struct{ labels []string }
 type componentsLoadedMsg struct{ components []jira.Component }
 type issueTypesLoadedMsg struct{ issueTypes []jira.IssueType }
-type createMetaLoadedMsg struct{ fields []jira.CreateMetaField }
+type createMetaLoadedMsg struct {
+	fields       []jira.CreateMetaField
+	projectKey   string
+	issueTypeID  string
+	cacheVersion uint64
+	fromCache    bool
+}
 type issueCreatedMsg struct{ issue *jira.Issue }
 type createErrorMsg struct{ err error }
 
@@ -262,6 +271,8 @@ type customFieldOptionsMsg struct {
 	issueTypeID   string
 	projectKey    string
 	fieldNotFound bool
+	cacheVersion  uint64
+	fromCache     bool
 }
 
 func updateIssueField(client jira.ClientInterface, issueKey, field string, value any) tea.Cmd {
@@ -304,13 +315,13 @@ func updateComment(client jira.ClientInterface, issueKey, commentID string, body
 	}
 }
 
-func fetchCreateMeta(client jira.ClientInterface, projectKey, issueTypeID string) tea.Cmd {
+func fetchCreateMeta(client jira.ClientInterface, projectKey, issueTypeID string, cacheVersion uint64) tea.Cmd {
 	return func() tea.Msg {
 		fields, err := client.GetCreateMeta(context.Background(), projectKey, issueTypeID)
 		if err != nil {
 			return createPreFormErrorMsg{err: err}
 		}
-		return createMetaLoadedMsg{fields: fields}
+		return createMetaLoadedMsg{fields: fields, projectKey: projectKey, issueTypeID: issueTypeID, cacheVersion: cacheVersion}
 	}
 }
 
@@ -383,13 +394,13 @@ func prefetchUsers(projectKey string) tea.Cmd {
 	})
 }
 
-func fetchUsers(client jira.ClientInterface, projectKey, issueKey string) tea.Cmd {
+func fetchUsers(client jira.ClientInterface, projectKey, issueKey string, cacheVersion uint64) tea.Cmd {
 	return func() tea.Msg {
 		users, err := client.GetUsers(context.Background(), projectKey)
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return usersLoadedMsg{users: users, issueKey: issueKey}
+		return usersLoadedMsg{users: users, issueKey: issueKey, projectKey: projectKey, cacheVersion: cacheVersion}
 	}
 }
 
@@ -414,19 +425,43 @@ func fetchComponents(client jira.ClientInterface, projectKey string) tea.Cmd {
 }
 
 func (a *App) startSprintFetch(target sprintPickerTarget) tea.Cmd {
+	a.invalidateSprintFetch()
 	a.sprintFetchID++
 	target.requestID = a.sprintFetchID
+	target.cacheVersion = a.referenceCacheVersion
+	a.sprintLoadingID = target.requestID
 	a.onSelect = nil
-	return fetchSprints(a.client, target)
+
+	if options, ok := a.sprintsCache.get("all"); ok {
+		a.sprintLoadingModalID = 0
+		a.handleSprintsLoaded(sprintsLoadedMsg{target: target, options: options, fromCache: true})
+		return nil
+	}
+
+	loadingCmd := a.modal.ShowLoading("Loading sprints", "Loading sprint options…")
+	target.modalID = a.modal.Generation()
+	a.sprintLoadingModalID = target.modalID
+	boards, boardsCached := a.boardsCache.get("all")
+	return tea.Batch(fetchSprintOptions(a.client, target, boards, boardsCached), loadingCmd)
 }
 
 func fetchSprints(client jira.ClientInterface, target sprintPickerTarget) tea.Cmd {
+	return fetchSprintOptions(client, target, nil, false)
+}
+
+func fetchSprintOptions(client jira.ClientInterface, target sprintPickerTarget, cachedBoards []jira.Board, boardsCached bool) tea.Cmd {
 	return func() tea.Msg {
 		msg := sprintsLoadedMsg{target: target}
-		boards, err := client.GetBoards(context.Background())
-		if err != nil {
-			msg.err = fmt.Errorf("get boards for sprint picker: %w", err)
-			return msg
+		boards := cachedBoards
+		if !boardsCached {
+			var err error
+			boards, err = client.GetBoards(context.Background())
+			if err != nil {
+				msg.err = fmt.Errorf("get boards for sprint picker: %w", err)
+				return msg
+			}
+			msg.boards = boards
+			msg.boardsLoaded = true
 		}
 
 		seen := make(map[int]int)

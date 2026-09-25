@@ -273,7 +273,6 @@ func (g GUIConfig) ShouldSelectCreatedIssue() bool {
 	return g.SelectCreatedIssue == nil || *g.SelectCreatedIssue
 }
 
-// TODO not yet wired up
 type CacheConfig struct {
 	Enabled bool   `yaml:"enabled"`
 	TTL     string `yaml:"ttl"`

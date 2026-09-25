@@ -466,11 +466,11 @@ func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 		if cur := a.currentIssue(); cur != nil {
 			*a.logFlag = true
 			a.onSelect = a.makePersonSelectCallback(cur.Key, "assignee")
-			if cached, ok := a.usersCache[a.projectKey]; ok {
-				m, cmd := a.handleUsersLoaded(usersLoadedMsg{users: cached, issueKey: cur.Key})
+			if cached, ok := a.usersCache.get(a.projectKey); ok {
+				m, cmd := a.handleUsersLoaded(usersLoadedMsg{users: cached, issueKey: cur.Key, projectKey: a.projectKey, fromCache: true})
 				return m, cmd, true
 			}
-			return a, fetchUsers(a.client, a.projectKey, cur.Key), true
+			return a, fetchUsers(a.client, a.projectKey, cur.Key, a.referenceCacheVersion), true
 		}
 		return a, nil, true
 
@@ -489,6 +489,7 @@ func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 		return a, nil, true
 
 	case ActRefreshAll:
+		a.invalidateReferenceCaches()
 		return a, a.fetchActiveTab(), true
 	}
 	return nil, nil, false

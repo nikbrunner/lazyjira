@@ -160,8 +160,12 @@ func (a *App) handlePrioritiesLoaded(msg prioritiesLoadedMsg) (tea.Model, tea.Cm
 
 // handleUsersLoaded shows the assignee/reporter picker modal
 func (a *App) handleUsersLoaded(msg usersLoadedMsg) (tea.Model, tea.Cmd) {
-	if a.projectKey != "" && len(msg.users) > 0 {
-		a.usersCache[a.projectKey] = msg.users
+	projectKey := msg.projectKey
+	if projectKey == "" {
+		projectKey = a.projectKey
+	}
+	if projectKey != "" && !msg.fromCache && msg.cacheVersion == a.referenceCacheVersion {
+		a.usersCache.set(projectKey, msg.users)
 	}
 	if msg.issueKey == "" {
 		return a, nil
@@ -217,6 +221,15 @@ func (a *App) handleUsersLoaded(msg usersLoadedMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
+func (a *App) invalidateSprintFetch() {
+	a.sprintFetchID++
+	if a.sprintLoadingModalID != 0 && a.modal.IsVisible() && a.modal.Generation() == a.sprintLoadingModalID {
+		a.modal.Hide()
+	}
+	a.sprintLoadingID = 0
+	a.sprintLoadingModalID = 0
+}
+
 func (a *App) invalidateInFlight() {
 	a.parentEpoch++
 	a.childrenEpoch++
@@ -225,19 +238,46 @@ func (a *App) invalidateInFlight() {
 }
 
 func (a *App) handleSprintsLoaded(msg sprintsLoadedMsg) (tea.Model, tea.Cmd) {
-	if msg.target.requestID != a.sprintFetchID || a.modal.IsVisible() || a.onSelect != nil {
+	if msg.target.requestID != a.sprintFetchID || msg.target.requestID != a.sprintLoadingID {
+		return a, nil
+	}
+	if msg.target.cacheVersion != a.referenceCacheVersion {
+		a.invalidateSprintFetch()
+		return a, nil
+	}
+	if msg.fromCache {
+		if a.modal.IsVisible() {
+			a.sprintLoadingID = 0
+			return a, nil
+		}
+	} else if !a.modal.IsVisible() || msg.target.modalID != a.sprintLoadingModalID || a.modal.Generation() != msg.target.modalID {
+		a.sprintFetchID++
+		a.sprintLoadingID = 0
+		a.sprintLoadingModalID = 0
+		return a, nil
+	}
+	if a.onSelect != nil {
+		a.invalidateSprintFetch()
 		return a, nil
 	}
 	if msg.target.createForm {
 		if !a.createForm.IsVisible() {
+			a.invalidateSprintFetch()
 			return a, nil
 		}
 	} else if selected := a.issuesList.SelectedIssue(); selected == nil || selected.Key != msg.target.issueKey {
+		a.invalidateSprintFetch()
 		return a, nil
 	}
+	if msg.boardsLoaded {
+		a.boardsCache.set("all", msg.boards)
+	}
+	a.sprintLoadingID = 0
+	a.sprintLoadingModalID = 0
 	a.onSelect = nil
 	if msg.err != nil {
 		if msg.target.createForm {
+			a.modal.Hide()
 			a.createForm.Resume()
 			a.createForm.SetError(msg.err.Error())
 			a.statusPanel.SetError(msg.err.Error())
@@ -246,6 +286,9 @@ func (a *App) handleSprintsLoaded(msg sprintsLoadedMsg) (tea.Model, tea.Cmd) {
 		a.statusPanel.SetError(msg.err.Error())
 		a.modal.ShowError("Sprint picker", []components.ModalItem{{Label: msg.err.Error()}})
 		return a, nil
+	}
+	if !msg.fromCache && msg.target.cacheVersion == a.referenceCacheVersion {
+		a.sprintsCache.set("all", msg.options)
 	}
 
 	issueKey := msg.target.issueKey
@@ -483,12 +526,12 @@ func (a *App) handleCreateFormTypeSelected(msg components.CreateFormTypeSelected
 	a.createCtx.issueTypeID = msg.TypeID
 	a.createCtx.issueTypeName = msg.TypeName
 	cacheKey := a.createCtx.projectKey + ":" + msg.TypeID
-	if cached, ok := a.createMetaCache[cacheKey]; ok {
-		return a.handleCreateMetaLoaded(createMetaLoadedMsg{fields: cached})
+	if cached, ok := a.createMetaCache.get(cacheKey); ok {
+		return a.handleCreateMetaLoaded(createMetaLoadedMsg{fields: cached, projectKey: a.createCtx.projectKey, issueTypeID: msg.TypeID, cacheVersion: a.referenceCacheVersion, fromCache: true})
 	}
 	a.createForm.SetLoading(true)
 	*a.logFlag = true
-	return a, fetchCreateMeta(a.client, a.createCtx.projectKey, msg.TypeID)
+	return a, fetchCreateMeta(a.client, a.createCtx.projectKey, msg.TypeID, a.referenceCacheVersion)
 }
 
 // handleCreatePreFormError aborts a create flow that failed before the form was
@@ -506,9 +549,16 @@ func (a *App) handleCreatePreFormError(msg createPreFormErrorMsg) (tea.Model, te
 
 // handleCreateMetaLoaded builds form fields from metadata
 func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cmd) {
-	cacheKey := a.createCtx.projectKey + ":" + a.createCtx.issueTypeID
-	if _, ok := a.createMetaCache[cacheKey]; !ok {
-		a.createMetaCache[cacheKey] = msg.fields
+	projectKey := msg.projectKey
+	if projectKey == "" {
+		projectKey = a.createCtx.projectKey
+	}
+	issueTypeID := msg.issueTypeID
+	if issueTypeID == "" {
+		issueTypeID = a.createCtx.issueTypeID
+	}
+	if projectKey != "" && issueTypeID != "" && msg.cacheVersion == a.referenceCacheVersion && !msg.fromCache {
+		a.createMetaCache.set(projectKey+":"+issueTypeID, msg.fields)
 	}
 	fields := a.buildCreateFields(msg.fields)
 
@@ -525,12 +575,12 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 		applyDuplicatePrefill(fields, src, a.isCloud)
 	}
 
-	a.sprintFetchID++
+	a.invalidateSprintFetch()
 	a.createForm.ShowForm(fields, a.createCtx.issueTypeName, a.createCtx.projectKey)
 
 	var cmds []tea.Cmd
-	if _, ok := a.usersCache[a.projectKey]; !ok {
-		cmds = append(cmds, fetchUsers(a.client, a.projectKey, ""))
+	if _, ok := a.usersCache.get(a.projectKey); !ok {
+		cmds = append(cmds, fetchUsers(a.client, a.projectKey, "", a.referenceCacheVersion))
 	}
 	if len(cmds) > 0 {
 		return a, tea.Batch(cmds...)

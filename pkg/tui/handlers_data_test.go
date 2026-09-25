@@ -47,6 +47,18 @@ func TestHandleTransitionsLoaded(t *testing.T) {
 	})
 }
 
+func sprintResultForTest(t *testing.T, app *App, target sprintPickerTarget) sprintsLoadedMsg {
+	t.Helper()
+	app.sprintsCache.clear()
+	if cmd := app.startSprintFetch(target); cmd == nil {
+		t.Fatal("sprint request should start a fetch")
+	}
+	target.requestID = app.sprintFetchID
+	target.cacheVersion = app.referenceCacheVersion
+	target.modalID = app.sprintLoadingModalID
+	return sprintsLoadedMsg{target: target}
+}
+
 func TestHandleSprintsLoaded(t *testing.T) {
 	t.Parallel()
 
@@ -58,9 +70,10 @@ func TestHandleSprintsLoaded(t *testing.T) {
 		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "sprint", Name: "Sprint"}}, "Task", testProject)
 		app.createForm.Pause()
 		fetchCmd := app.startSprintFetch(sprintPickerTarget{createForm: true, fieldIndex: 0})
-		loaded := fetchCmd().(sprintsLoadedMsg)
+		loaded := sprintLoadedFromCmd(t, fetchCmd)
 
 		app.createForm.Hide()
+		app.modal.Hide()
 		updated, cancelCmd := app.Update(components.ModalCancelledMsg{})
 		app = updated.(*App)
 		if cancelCmd != nil {
@@ -85,7 +98,7 @@ func TestHandleSprintsLoaded(t *testing.T) {
 		app := newAppWithFake(t, fake)
 		app.issuesList.SetIssues([]jira.Issue{{Key: testKey}, {Key: mainKey}})
 		fetchCmd := app.startSprintFetch(sprintPickerTarget{issueKey: testKey})
-		loaded := fetchCmd().(sprintsLoadedMsg)
+		loaded := sprintLoadedFromCmd(t, fetchCmd)
 
 		app.issuesList.SelectByKey(mainKey)
 		updated, cmd := app.handleSprintsLoaded(loaded)
@@ -107,14 +120,12 @@ func TestHandleSprintsLoaded(t *testing.T) {
 		issue := &jira.Issue{Key: testKey}
 		app.issuesList.SetIssues([]jira.Issue{*issue})
 		app.issueCache[testKey] = issue
-
-		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{
-			target: sprintPickerTarget{issueKey: testKey},
-			options: []sprintOption{{
-				sprint:     jira.Sprint{ID: 1, Name: "Sprint 1", State: "active"},
-				boardNames: []string{"Cloud Platform Sprints / CP"},
-			}},
-		})
+		loaded := sprintResultForTest(t, app, sprintPickerTarget{issueKey: testKey})
+		loaded.options = []sprintOption{{
+			sprint:     jira.Sprint{ID: 1, Name: "Sprint 1", State: "active"},
+			boardNames: []string{"Cloud Platform Sprints / CP"},
+		}}
+		_, _ = app.handleSprintsLoaded(loaded)
 
 		if !app.modal.IsVisible() {
 			t.Fatal("sprint modal should be visible")
@@ -140,11 +151,9 @@ func TestHandleSprintsLoaded(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
-
-		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{
-			target: sprintPickerTarget{issueKey: testKey},
-			err:    errors.New("board does not support sprints"),
-		})
+		loaded := sprintResultForTest(t, app, sprintPickerTarget{issueKey: testKey})
+		loaded.err = errors.New("board does not support sprints")
+		_, _ = app.handleSprintsLoaded(loaded)
 
 		if !app.modal.IsVisible() || !strings.Contains(app.modal.View(), "board does not support sprints") {
 			t.Error("fetch error should be visible in an error modal")
@@ -161,10 +170,9 @@ func TestHandleSprintsLoaded(t *testing.T) {
 		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "sprint", Name: "Sprint"}}, "Task", testProject)
 		app.createForm.Pause()
 
-		updated, cmd := app.Update(sprintsLoadedMsg{
-			target: sprintPickerTarget{createForm: true, fieldIndex: 0},
-			err:    errors.New("board lookup failed"),
-		})
+		loaded := sprintResultForTest(t, app, sprintPickerTarget{createForm: true, fieldIndex: 0})
+		loaded.err = errors.New("board lookup failed")
+		updated, cmd := app.Update(loaded)
 		app = updated.(*App)
 		if cmd != nil {
 			t.Fatal("handling a sprint fetch error should not schedule another command")
@@ -195,13 +203,12 @@ func TestHandleSprintsLoaded(t *testing.T) {
 		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "sprint", Name: "Sprint"}}, "Task", testProject)
 		app.createForm.Pause()
 
-		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{
-			target: sprintPickerTarget{createForm: true, fieldIndex: 0},
-			options: []sprintOption{{
-				sprint:     jira.Sprint{ID: 1, Name: "Sprint 1", State: "active"},
-				boardNames: []string{"Cloud Platform Sprints / CP"},
-			}},
-		})
+		loaded := sprintResultForTest(t, app, sprintPickerTarget{createForm: true, fieldIndex: 0})
+		loaded.options = []sprintOption{{
+			sprint:     jira.Sprint{ID: 1, Name: "Sprint 1", State: "active"},
+			boardNames: []string{"Cloud Platform Sprints / CP"},
+		}}
+		_, _ = app.handleSprintsLoaded(loaded)
 
 		if !app.modal.IsVisible() || app.onSelect == nil {
 			t.Fatal("create-form sprint picker should open without a selected issue")
@@ -299,7 +306,6 @@ func TestHandleTransitionDone(t *testing.T) {
 func TestHandleUsersLoaded_ShowsAssigneeModal(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-	app.usersCache = map[string][]jira.User{}
 	app.projectKey = testProject
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 
@@ -311,7 +317,7 @@ func TestHandleUsersLoaded_ShowsAssigneeModal(t *testing.T) {
 	if !app.modal.IsVisible() {
 		t.Error("assignee modal should be visible")
 	}
-	if len(app.usersCache[testProject]) != 1 {
+	if users, ok := app.usersCache.get(testProject); !ok || len(users) != 1 {
 		t.Errorf("users not cached: %v", app.usersCache)
 	}
 }

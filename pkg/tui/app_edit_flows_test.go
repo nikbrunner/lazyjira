@@ -103,7 +103,7 @@ func TestEditInfoField_Dispatch(t *testing.T) {
 			fieldCfg: config.FieldConfig{ID: "assignee"},
 			setup: func(app *App, fake *jiratest.FakeClient) {
 				app.projectKey = testProject
-				app.usersCache[testProject] = []jira.User{{AccountID: "u1", DisplayName: "Ann"}}
+				app.usersCache.set(testProject, []jira.User{{AccountID: "u1", DisplayName: "Ann"}})
 				app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 			},
 			assert: func(t *testing.T, app *App) {
@@ -235,8 +235,8 @@ func TestEditSprint_UsesScrumBoardAndOriginalIssueContext(t *testing.T) {
 	if fetchCmd == nil {
 		t.Fatal("sprint edit should start a fetch")
 	}
-	loaded, ok := fetchCmd().(sprintsLoadedMsg)
-	if !ok || loaded.err != nil {
+	loaded := sprintLoadedFromCmd(t, fetchCmd)
+	if loaded.err != nil {
 		t.Fatalf("fetch result = %#v, want successful sprintsLoadedMsg", loaded)
 	}
 	updated, loadCmd := app.handleSprintsLoaded(loaded)
@@ -279,7 +279,7 @@ func TestEditSprintResultDoesNotReplaceAnotherFieldEditor(t *testing.T) {
 		t.Fatal("second field editor should be visible")
 	}
 
-	loaded := sprintCmd().(sprintsLoadedMsg)
+	loaded := sprintLoadedFromCmd(t, sprintCmd)
 	updated, _ := app.Update(loaded)
 	app = updated.(*App)
 	if !app.inputModal.IsVisible() || app.modal.IsVisible() {
@@ -635,7 +635,7 @@ func TestHandleCustomFieldOptions_MoreBranches(t *testing.T) {
 
 		_, _ = app.handleCustomFieldOptions(msg)
 
-		if _, ok := app.createMetaCache[testProject+":10001"]; !ok {
+		if _, ok := app.createMetaCache.get(testProject + ":10001"); !ok {
 			t.Error("create meta should be cached")
 		}
 	})
@@ -660,7 +660,7 @@ func TestHandleCustomFieldOptions_MoreBranches(t *testing.T) {
 		t.Parallel()
 		app := editFlowApp(t, &jiratest.FakeClient{T: t})
 		app.projectKey = testProject
-		app.usersCache[testProject] = []jira.User{{AccountID: "u1", DisplayName: "Ann"}}
+		app.usersCache.set(testProject, []jira.User{{AccountID: "u1", DisplayName: "Ann"}})
 		app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 
 		_, _ = app.handleCustomFieldOptions(customFieldOptionsMsg{

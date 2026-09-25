@@ -49,6 +49,8 @@ type Modal struct {
 	filterInput TextInput
 	searching   bool
 	isError     bool
+	generation  uint64
+	loading     *LoadingIndicator
 }
 
 func NewModal() Modal {
@@ -56,6 +58,8 @@ func NewModal() Modal {
 }
 
 func (m *Modal) show(title string, items []ModalItem, readOnly bool) {
+	m.stopLoading()
+	m.generation++
 	m.title = title
 	m.allItems = items
 	m.items = items
@@ -75,6 +79,19 @@ func (m *Modal) show(title string, items []ModalItem, readOnly bool) {
 
 func (m *Modal) Show(title string, items []ModalItem)         { m.show(title, items, false) }
 func (m *Modal) ShowReadOnly(title string, items []ModalItem) { m.show(title, items, true) }
+
+func (m *Modal) ShowLoading(title, label string) tea.Cmd {
+	m.show(title, []ModalItem{{Label: label}}, true)
+	m.loading = NewLoadingIndicator(label)
+	return m.loading.Start()
+}
+
+func (m *Modal) stopLoading() {
+	if m.loading != nil {
+		m.loading.Stop()
+		m.loading = nil
+	}
+}
 
 // ShowError opens a read-only modal with red border
 func (m *Modal) ShowError(title string, items []ModalItem) {
@@ -226,10 +243,16 @@ func (m *Modal) selectionContentW() int {
 	return min(contentW, maxW)
 }
 
-func (m *Modal) Hide()             { m.visible = false }
-func (m *Modal) IsVisible() bool   { return m.visible }
-func (m *Modal) IsSearching() bool { return m.searching }
-func (m *Modal) IsChecklist() bool { return m.checklist }
+func (m *Modal) Hide() {
+	m.stopLoading()
+	m.visible = false
+	m.generation++
+}
+func (m *Modal) IsVisible() bool    { return m.visible }
+func (m *Modal) Title() string      { return m.title }
+func (m *Modal) Generation() uint64 { return m.generation }
+func (m *Modal) IsSearching() bool  { return m.searching }
+func (m *Modal) IsChecklist() bool  { return m.checklist }
 
 // SearchView renders the modal search bar for external use
 func (m *Modal) SearchView(_ int) string {
@@ -253,6 +276,10 @@ func (m *Modal) Update(msg tea.Msg) (Modal, tea.Cmd) {
 		return m.handleKey(msg)
 	case tea.MouseMsg:
 		return m.handleMouse(msg)
+	case LoadingIndicatorTickMsg:
+		if m.loading != nil {
+			return *m, m.loading.Update(msg)
+		}
 	}
 	return *m, nil
 }
@@ -306,7 +333,7 @@ func (m *Modal) handleKey(msg tea.KeyMsg) (Modal, tea.Cmd) {
 	case "enter":
 		return m.handleEnter()
 	case "esc", "q", "h":
-		m.visible = false
+		m.Hide()
 		return *m, func() tea.Msg { return ModalCancelledMsg{} }
 	}
 	return *m, nil
@@ -314,7 +341,7 @@ func (m *Modal) handleKey(msg tea.KeyMsg) (Modal, tea.Cmd) {
 
 func (m *Modal) handleSpace() (Modal, tea.Cmd) {
 	if m.readOnly {
-		m.visible = false
+		m.Hide()
 		return *m, func() tea.Msg { return ModalCancelledMsg{} }
 	}
 	if m.checklist {
@@ -330,7 +357,7 @@ func (m *Modal) handleSpace() (Modal, tea.Cmd) {
 	}
 	if m.cursor >= 0 && m.cursor < len(m.items) && !m.items[m.cursor].Separator {
 		selected := m.items[m.cursor]
-		m.visible = false
+		m.Hide()
 		return *m, func() tea.Msg { return ModalSelectedMsg{Item: selected} }
 	}
 	return *m, nil
@@ -338,7 +365,7 @@ func (m *Modal) handleSpace() (Modal, tea.Cmd) {
 
 func (m *Modal) handleEnter() (Modal, tea.Cmd) {
 	if m.readOnly {
-		m.visible = false
+		m.Hide()
 		return *m, func() tea.Msg { return ModalCancelledMsg{} }
 	}
 	if m.checklist {
@@ -348,12 +375,12 @@ func (m *Modal) handleEnter() (Modal, tea.Cmd) {
 				result = append(result, item)
 			}
 		}
-		m.visible = false
+		m.Hide()
 		return *m, func() tea.Msg { return ChecklistConfirmedMsg{Selected: result} }
 	}
 	if m.cursor >= 0 && m.cursor < len(m.items) && !m.items[m.cursor].Separator {
 		selected := m.items[m.cursor]
-		m.visible = false
+		m.Hide()
 		return *m, func() tea.Msg { return ModalSelectedMsg{Item: selected} }
 	}
 	return *m, nil
@@ -396,7 +423,7 @@ func (m *Modal) handleMouse(msg tea.MouseMsg) (Modal, tea.Cmd) {
 					return *m, nil
 				}
 				selected := m.items[m.cursor]
-				m.visible = false
+				m.Hide()
 				return *m, func() tea.Msg { return ModalSelectedMsg{Item: selected} }
 			}
 		}
@@ -415,6 +442,10 @@ func (m *Modal) View() string {
 }
 
 func (m *Modal) viewReadOnly() string {
+	if m.loading != nil {
+		return m.viewLoading()
+	}
+
 	maxW := m.width * 7 / 10
 	if maxW < 40 {
 		maxW = min(m.width-4, 40)
@@ -461,6 +492,30 @@ func (m *Modal) viewReadOnly() string {
 	}
 	return RenderPanelFull(m.title, "", content, contentW, visibleH, true,
 		&ScrollInfo{Total: totalLines, Visible: visibleH, Offset: m.offset})
+}
+
+func (m *Modal) viewLoading() string {
+	maxW := m.width * 7 / 10
+	if maxW < 40 {
+		maxW = min(m.width-4, 40)
+	}
+	contentW := max(lipgloss.Width(m.title)+2, lipgloss.Width(m.loading.View())+6)
+	contentW = min(contentW, maxW)
+	labelW := max(contentW-6, 1)
+	wrapped := lipgloss.NewStyle().Width(labelW).Render(m.loading.View())
+	labelLines := strings.Split(wrapped, "\n")
+	maxContentH := max(m.height-4, 3)
+	maxLabelH := max(maxContentH-2, 1)
+	if len(labelLines) > maxLabelH {
+		labelLines = labelLines[:maxLabelH]
+	}
+
+	lines := []string{""}
+	for _, line := range labelLines {
+		lines = append(lines, "  "+line+"  ")
+	}
+	lines = append(lines, "")
+	return RenderPanelFull(m.title, "", strings.Join(lines, "\n"), contentW, len(lines), true, nil)
 }
 
 func (m *Modal) viewSelectable() string {
@@ -623,6 +678,13 @@ func (m *Modal) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	}
 	switch msg.(type) {
 	case tea.KeyMsg, tea.MouseMsg:
+		updated, cmd := m.Update(msg)
+		*m = updated
+		return cmd, true
+	case LoadingIndicatorTickMsg:
+		if m.loading == nil || !m.loading.owns(msg) {
+			return nil, false
+		}
 		updated, cmd := m.Update(msg)
 		*m = updated
 		return cmd, true

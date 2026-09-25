@@ -404,7 +404,8 @@ func TestHierarchy_Cloud_SelectProject_InvalidatesInFlightWalk(t *testing.T) {
 	a := newAppWithFake(t, fake)
 	a.isCloud = true
 	a.demoMode = true
-	a.usersCache = map[string][]jira.User{"OLD": nil, "NEW": nil}
+	a.usersCache.set("OLD", nil)
+	a.usersCache.set("NEW", nil)
 	a.issuesList.SetIssues([]jira.Issue{{Key: "EPIC-1"}})
 
 	cmd, _ := a.showChildren()

@@ -320,7 +320,7 @@ func TestHandleCreateFormPicker(t *testing.T) {
 		fake := &jiratest.FakeClient{T: t}
 		fake.GetUsersFunc = func(context.Context, string) ([]jira.User, error) { return nil, nil }
 		app := newAppWithFake(t, fake)
-		app.usersCache = map[string][]jira.User{}
+		app.usersCache.clear()
 		app.projectKey = testProject
 		app.createForm = formWithFields([]components.CreateFormField{
 			{FieldID: fldAssignee, Name: "Assignee", Type: components.CFFieldPerson},
@@ -340,7 +340,7 @@ func TestHandleCreateFormPicker(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.projectKey = testProject
-		app.usersCache = map[string][]jira.User{testProject: {{AccountID: "u1", DisplayName: "Ann"}}}
+		app.usersCache.set(testProject, []jira.User{{AccountID: "u1", DisplayName: "Ann"}})
 		app.createForm = formWithFields([]components.CreateFormField{
 			{FieldID: fldAssignee, Name: "Assignee", Type: components.CFFieldPerson},
 		})
@@ -420,7 +420,7 @@ func TestHandleCreateFormUserChecklist(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.projectKey = testProject
-		app.usersCache = map[string][]jira.User{testProject: {{AccountID: "u1", DisplayName: "Ann"}}}
+		app.usersCache.set(testProject, []jira.User{{AccountID: "u1", DisplayName: "Ann"}})
 		field := &components.CreateFormField{FieldID: "customfield_9", Name: "Reviewers", SchemaItems: schemaUser}
 
 		_, _ = app.handleCreateFormUserChecklist(field, 0)
@@ -438,7 +438,7 @@ func TestHandleCreateFormUserChecklist(t *testing.T) {
 		fake := &jiratest.FakeClient{T: t}
 		fake.GetUsersFunc = func(context.Context, string) ([]jira.User, error) { return nil, nil }
 		app := newAppWithFake(t, fake)
-		app.usersCache = map[string][]jira.User{}
+		app.usersCache.clear()
 		app.projectKey = testProject
 		field := &components.CreateFormField{FieldID: "customfield_9", Name: "Reviewers", SchemaItems: schemaUser}
 

@@ -245,7 +245,7 @@ func TestUpdate_RoutesDataMessages(t *testing.T) {
 			name: "prefetch users skipped when cached",
 			setup: func(app *App, fake *jiratest.FakeClient) {
 				app.projectKey = testProject
-				app.usersCache[testProject] = []jira.User{}
+				app.usersCache.set(testProject, []jira.User{})
 			},
 			msg: prefetchUsersMsg{projectKey: testProject},
 		},
@@ -264,7 +264,7 @@ func TestUpdate_RoutesDataMessages(t *testing.T) {
 			msg: usersLoadedMsg{users: []jira.User{{AccountID: "u1", DisplayName: "Ann"}}},
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
-				if len(app.usersCache[testProject]) != 1 {
+				if users, ok := app.usersCache.get(testProject); !ok || len(users) != 1 {
 					t.Error("users should be cached for project")
 				}
 			},
@@ -307,7 +307,7 @@ func TestUpdate_RoutesCreateAndEditMessages(t *testing.T) {
 			name: "create meta loaded shows form",
 			setup: func(app *App, fake *jiratest.FakeClient) {
 				app.projectKey = testProject
-				app.usersCache[testProject] = []jira.User{}
+				app.usersCache.set(testProject, []jira.User{})
 				app.createCtx = createCtx{projectKey: testProject, issueTypeID: "10001", issueTypeName: "Story"}
 			},
 			msg: createMetaLoadedMsg{fields: []jira.CreateMetaField{}},

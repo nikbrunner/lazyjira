@@ -2,6 +2,7 @@ package tui
 
 import (
 	"testing"
+	"time"
 
 	"github.com/nikbrunner/lazyjira/v2/pkg/config"
 	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
@@ -10,12 +11,16 @@ import (
 
 func newTestApp() *App {
 	return &App{
-		cfg:         &config.Config{Jira: config.JiraConfig{Host: "example.atlassian.net"}},
-		issuesList:  views.NewIssuesList(),
-		projectList: views.NewProjectList(),
-		detailView:  views.NewDetailView(views.BuiltinRenderer{}),
-		side:        sideLeft,
-		leftFocus:   focusIssues,
+		cfg:             &config.Config{Jira: config.JiraConfig{Host: "example.atlassian.net"}},
+		boardsCache:     newTTLCache[[]jira.Board](true, 5*time.Minute),
+		sprintsCache:    newTTLCache[[]sprintOption](true, 5*time.Minute),
+		usersCache:      newTTLCache[[]jira.User](true, 5*time.Minute),
+		createMetaCache: newTTLCache[[]jira.CreateMetaField](true, 5*time.Minute),
+		issuesList:      views.NewIssuesList(),
+		projectList:     views.NewProjectList(),
+		detailView:      views.NewDetailView(views.BuiltinRenderer{}),
+		side:            sideLeft,
+		leftFocus:       focusIssues,
 	}
 }
 

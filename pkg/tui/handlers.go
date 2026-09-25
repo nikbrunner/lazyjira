@@ -82,7 +82,7 @@ func (a *App) handleAutoFetch() (tea.Model, tea.Cmd) {
 }
 
 func (a *App) selectProject(p *jira.Project) tea.Cmd {
-	a.sprintFetchID++
+	a.invalidateSprintFetch()
 	a.projectKey = p.Key
 	a.projectID = p.ID
 	a.statusPanel.SetProject(p.Key)
@@ -90,13 +90,12 @@ func (a *App) selectProject(p *jira.Project) tea.Cmd {
 	a.issuesList.InvalidateTabCache()
 	a.issueCache = make(map[string]*jira.Issue)
 	a.childrenCache = make(map[string][]jira.Issue)
-	a.createMetaCache = make(map[string][]jira.CreateMetaField)
 	a.invalidateInFlight()
 	a.infoPanel.SetIssue(nil)
 	if !a.demoMode {
 		go saveLastProject(p.Key)
 	}
-	if _, ok := a.usersCache[p.Key]; !ok {
+	if _, ok := a.usersCache.get(p.Key); !ok {
 		return prefetchUsers(p.Key)
 	}
 	return nil

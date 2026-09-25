@@ -569,7 +569,7 @@ func TestHandleIssueAction_MoreBranches(t *testing.T) {
 			action: ActAssignee,
 			setup: func(app *App, fake *jiratest.FakeClient) {
 				app.projectKey = testProject
-				app.usersCache[testProject] = []jira.User{{AccountID: "u1", DisplayName: "Ann"}}
+				app.usersCache.set(testProject, []jira.User{{AccountID: "u1", DisplayName: "Ann"}})
 				app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 			},
 			assert: func(t *testing.T, app *App) {

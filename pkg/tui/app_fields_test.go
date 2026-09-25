@@ -281,7 +281,7 @@ func TestHandleCustomFieldOptions_WithOptionsCachesAndShowsModal(t *testing.T) {
 
 	_, _ = app.handleCustomFieldOptions(msg)
 
-	if _, ok := app.createMetaCache[testProject+":10000"]; !ok {
+	if _, ok := app.createMetaCache.get(testProject + ":10000"); !ok {
 		t.Error("createMetaCache should be populated when allFields provided")
 	}
 }
@@ -418,12 +418,12 @@ func TestFetchCustomFieldOptionsForEdit_CachedMetaUsed(t *testing.T) {
 		Summary:   testSummary,
 		IssueType: &jira.IssueType{ID: "10000", Name: "Story"},
 	}
-	app.createMetaCache[testProject+":10000"] = []jira.CreateMetaField{
+	app.createMetaCache.set(testProject+":10000", []jira.CreateMetaField{
 		{
 			FieldID:       "customfield_10001",
 			AllowedValues: []jira.CreateMetaValue{{ID: "1", Name: "Option A"}},
 		},
-	}
+	})
 	field := &views.InfoField{
 		FieldID: "customfield_10001",
 		Name:    "Category",

@@ -21,7 +21,12 @@ type pendingMention struct {
 }
 
 // mentionUsersLoadedMsg carries the users fetched for a deferred mention write.
-type mentionUsersLoadedMsg struct{ users []jira.User }
+type mentionUsersLoadedMsg struct {
+	users        []jira.User
+	projectKey   string
+	err          error
+	cacheVersion uint64
+}
 
 // mentionsApply reports whether an edit kind is rendered as ADF, where a
 // resolved @-mention becomes a real mention. Plain-text custom fields
@@ -39,17 +44,17 @@ func mentionsApply(kind editKind) bool {
 // projectUsers returns the cached assignable users for the given project key
 // and whether the cache holds an entry for it.
 func (a *App) projectUsers(projectKey string) ([]jira.User, bool) {
-	u, ok := a.usersCache[projectKey]
+	u, ok := a.usersCache.get(projectKey)
 	return u, ok
 }
 
 // fetchUsersForMention loads the project users for a deferred write. Unlike
 // fetchUsers it never emits errorMsg: on failure it returns an empty list so
 // the pending write still completes (mentions fall back to literal text).
-func fetchUsersForMention(client jira.ClientInterface, projectKey string) tea.Cmd {
+func fetchUsersForMention(client jira.ClientInterface, projectKey string, cacheVersion uint64) tea.Cmd {
 	return func() tea.Msg {
-		users, _ := client.GetUsers(context.Background(), projectKey)
-		return mentionUsersLoadedMsg{users: users}
+		users, err := client.GetUsers(context.Background(), projectKey)
+		return mentionUsersLoadedMsg{users: users, projectKey: projectKey, err: err, cacheVersion: cacheVersion}
 	}
 }
 
@@ -57,12 +62,12 @@ func fetchUsersForMention(client jira.ClientInterface, projectKey string) tea.Cm
 // deferred write.
 func (a *App) handleMentionUsersLoaded(msg mentionUsersLoadedMsg) (tea.Model, tea.Cmd) {
 	pm := a.pendingMention
-	a.pendingMention = nil
-	if pm == nil {
+	if pm == nil || pm.projectKey != msg.projectKey {
 		return a, nil
 	}
-	if pm.projectKey != "" && len(msg.users) > 0 {
-		a.usersCache[pm.projectKey] = msg.users
+	a.pendingMention = nil
+	if pm.projectKey != "" && msg.err == nil && msg.cacheVersion == a.referenceCacheVersion {
+		a.usersCache.set(msg.projectKey, msg.users)
 	}
 	if pm.createDesc {
 		return a, a.completeCreateDesc(*pm, msg.users)

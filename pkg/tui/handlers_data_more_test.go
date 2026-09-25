@@ -135,11 +135,11 @@ func TestHandleCreateFormTypeSelected(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.createForm = components.NewCreateForm(nil)
-		app.usersCache = map[string][]jira.User{testProject: {}}
+		app.usersCache.set(testProject, []jira.User{})
 		app.createCtx = createCtx{projectKey: testProject}
-		app.createMetaCache[testProject+":10001"] = []jira.CreateMetaField{
+		app.createMetaCache.set(testProject+":10001", []jira.CreateMetaField{
 			{FieldID: "summary", Name: "Summary", Required: true, Schema: jira.CreateMetaSchema{Type: "string", System: "summary"}},
-		}
+		})
 
 		_, _ = app.handleCreateFormTypeSelected(components.CreateFormTypeSelectedMsg{TypeID: "10001", TypeName: "Story"})
 
@@ -153,7 +153,7 @@ func TestHandleCreateMetaLoaded(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.createForm = components.NewCreateForm(nil)
-	app.usersCache = map[string][]jira.User{testProject: {}}
+	app.usersCache.set(testProject, []jira.User{})
 	app.createCtx = createCtx{projectKey: testProject, issueTypeID: "10001", issueTypeName: "Story"}
 
 	_, _ = app.handleCreateMetaLoaded(createMetaLoadedMsg{fields: []jira.CreateMetaField{
@@ -163,7 +163,7 @@ func TestHandleCreateMetaLoaded(t *testing.T) {
 	if !app.createForm.IsVisible() {
 		t.Error("create form should be visible")
 	}
-	if _, ok := app.createMetaCache[testProject+":10001"]; !ok {
+	if _, ok := app.createMetaCache.get(testProject + ":10001"); !ok {
 		t.Error("create meta should be cached")
 	}
 }
@@ -172,7 +172,7 @@ func TestHandleCreateMetaLoaded_DuplicatePrefill(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.createForm = components.NewCreateForm(nil)
-	app.usersCache = map[string][]jira.User{testProject: {}}
+	app.usersCache.set(testProject, []jira.User{})
 	app.createCtx = createCtx{
 		projectKey:    testProject,
 		issueTypeID:   "10001",
@@ -487,7 +487,7 @@ func TestHandleUsersLoaded_CreateSentinel(t *testing.T) {
 	t.Run("checklist callback shows user checklist", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.usersCache = map[string][]jira.User{}
+		app.usersCache.clear()
 		app.onChecklist = func([]components.ModalItem) tea.Cmd { return nil }
 
 		_, _ = app.handleUsersLoaded(usersLoadedMsg{
@@ -503,7 +503,7 @@ func TestHandleUsersLoaded_CreateSentinel(t *testing.T) {
 	t.Run("no checklist falls back to picker", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.usersCache = map[string][]jira.User{}
+		app.usersCache.clear()
 
 		_, _ = app.handleUsersLoaded(usersLoadedMsg{
 			users:    []jira.User{{AccountID: "u1", DisplayName: "Ann"}},

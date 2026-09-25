@@ -69,6 +69,24 @@ func TestContextBindings_ContainsQuit(t *testing.T) {
 	}
 }
 
+func TestContextBindings_RefreshAllIsGlobal(t *testing.T) {
+	t.Parallel()
+	app := appForKeybindings(t)
+	for _, focus := range []focusPanel{focusIssues, focusInfo, focusProjects} {
+		app.leftFocus = focus
+		found := false
+		for _, binding := range app.ContextBindings() {
+			if binding.Description == "refresh all data" && binding.Key == "R" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Refresh All binding missing for focus %v", focus)
+		}
+	}
+}
+
 func TestContextBindings_DetailCommentsIncludesEdit(t *testing.T) {
 	t.Parallel()
 	app := appForKeybindings(t)

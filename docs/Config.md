@@ -136,6 +136,8 @@ worktree:
     defaultPath: ".."
 ```
 
+`cache.enabled` and `cache.ttl` control in-memory TTL caching for Jira boards, sprint options, project users, and issue-creation metadata. The app-wide Refresh All binding (`R` by default) clears these entries. Close an open picker before using Refresh All. Issue details and child issues use their own freshness behavior.
+
 ## Server type
 
 Set `serverType` to connect to Jira Server or Data Center (uses REST API v2 instead of v3).

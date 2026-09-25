@@ -128,19 +128,24 @@ type batchPrefetchedMsg struct {
 }
 type autoFetchTickMsg struct{}
 type sprintPickerTarget struct {
-	issueKey   string
-	createForm bool
-	fieldIndex int
-	requestID  uint64
+	issueKey     string
+	createForm   bool
+	fieldIndex   int
+	requestID    uint64
+	cacheVersion uint64
+	modalID      uint64
 }
 type sprintOption struct {
 	sprint     jira.Sprint
 	boardNames []string
 }
 type sprintsLoadedMsg struct {
-	target  sprintPickerTarget
-	options []sprintOption
-	err     error
+	target       sprintPickerTarget
+	options      []sprintOption
+	err          error
+	boards       []jira.Board
+	boardsLoaded bool
+	fromCache    bool
 }
 type transitionsLoadedMsg struct {
 	issueKey    string
@@ -179,9 +184,12 @@ type App struct {
 	pendingMention *pendingMention
 	converter      ADFConverter
 
-	onSelect      onSelectFunc
-	onChecklist   onChecklistFunc
-	sprintFetchID uint64
+	onSelect              onSelectFunc
+	onChecklist           onChecklistFunc
+	sprintFetchID         uint64
+	sprintLoadingID       uint64
+	sprintLoadingModalID  uint64
+	referenceCacheVersion uint64
 
 	side            focusSide
 	leftFocus       focusPanel
@@ -199,10 +207,12 @@ type App struct {
 	isCloud         bool
 	demoMode        bool
 	currentUser     *jira.User
-	usersCache      map[string][]jira.User
+	boardsCache     ttlCache[[]jira.Board]
+	sprintsCache    ttlCache[[]sprintOption]
+	usersCache      ttlCache[[]jira.User]
 	issueCache      map[string]*jira.Issue
 	childrenCache   map[string][]jira.Issue
-	createMetaCache map[string][]jira.CreateMetaField
+	createMetaCache ttlCache[[]jira.CreateMetaField]
 	// previewKey identifies the issue displayed in the right-side views.
 	// Empty means nothing is displayed.
 	previewKey string
@@ -364,10 +374,12 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		isCloud:         cfg.Jira.IsCloud(),
 		demoMode:        authMethod == AuthDemo,
 		logFlag:         logFlag,
-		usersCache:      make(map[string][]jira.User),
+		boardsCache:     newTTLCache[[]jira.Board](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		sprintsCache:    newTTLCache[[]sprintOption](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		usersCache:      newTTLCache[[]jira.User](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
 		issueCache:      make(map[string]*jira.Issue),
 		childrenCache:   make(map[string][]jira.Issue),
-		createMetaCache: make(map[string][]jira.CreateMetaField),
+		createMetaCache: newTTLCache[[]jira.CreateMetaField](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
 		converter:       BuiltinConverter{},
 	}
 	// cfg.Converter is validated at config-load time; "" and "builtin"
@@ -520,8 +532,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleSprintsLoaded(msg)
 	case prefetchUsersMsg:
 		if msg.projectKey == a.projectKey {
-			if _, ok := a.usersCache[msg.projectKey]; !ok {
-				return a, fetchUsers(a.client, msg.projectKey, "")
+			if _, ok := a.usersCache.get(msg.projectKey); !ok {
+				return a, fetchUsers(a.client, msg.projectKey, "", a.referenceCacheVersion)
 			}
 		}
 		return a, nil
@@ -567,7 +579,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case components.CreateFormSubmitMsg:
 		return a.handleCreateFormSubmit(msg)
 	case components.CreateFormCancelMsg:
-		a.sprintFetchID++
+		a.invalidateSprintFetch()
 		a.createCtx = createCtx{}
 		a.onSelect = nil
 		return a, nil
@@ -836,7 +848,7 @@ func (a *App) editInfoField(sel *jira.Issue) (tea.Model, tea.Cmd) {
 	if field == nil {
 		return a, nil
 	}
-	a.sprintFetchID++
+	a.invalidateSprintFetch()
 	a.onSelect = nil
 	*a.logFlag = true
 	switch field.Type {
@@ -860,10 +872,10 @@ func (a *App) editInfoField(sel *jira.Issue) (tea.Model, tea.Cmd) {
 		}
 	case views.FieldPerson:
 		a.onSelect = a.makePersonSelectCallback(sel.Key, field.FieldID)
-		if cached, ok := a.usersCache[a.projectKey]; ok {
-			return a.handleUsersLoaded(usersLoadedMsg{users: cached, issueKey: sel.Key})
+		if cached, ok := a.usersCache.get(a.projectKey); ok {
+			return a.handleUsersLoaded(usersLoadedMsg{users: cached, issueKey: sel.Key, projectKey: a.projectKey, fromCache: true})
 		}
-		return a, fetchUsers(a.client, a.projectKey, sel.Key)
+		return a, fetchUsers(a.client, a.projectKey, sel.Key, a.referenceCacheVersion)
 	case views.FieldMultiSelect:
 		issueKey := sel.Key
 		switch field.FieldID {
@@ -951,7 +963,7 @@ func (a *App) applyEdit(mdContent string) tea.Cmd {
 			return a.completeApplyEdit(pendingMention{content: mdContent, editContext: ctx, projectKey: pk}, users)
 		}
 		a.pendingMention = &pendingMention{content: mdContent, editContext: ctx, projectKey: pk}
-		return fetchUsersForMention(a.client, pk)
+		return fetchUsersForMention(a.client, pk, a.referenceCacheVersion)
 	}
 	return a.convertAndSubmit(ctx, mdContent)
 }
@@ -1058,9 +1070,14 @@ func (a *App) fetchCustomFieldOptionsForEdit(sel *jira.Issue, field *views.InfoF
 		fieldType:    field.Type,
 		currentValue: field.Value,
 		useEditor:    multiline,
+		projectKey:   a.projectKey,
+		issueTypeID:  sel.IssueType.ID,
+		cacheVersion: a.referenceCacheVersion,
 	}
 	cacheKey := a.projectKey + ":" + sel.IssueType.ID
-	if cached, ok := a.createMetaCache[cacheKey]; ok {
+	if cached, ok := a.createMetaCache.get(cacheKey); ok {
+		info.allFields = cached
+		info.fromCache = true
 		found := false
 		for _, f := range cached {
 			if f.FieldID == field.FieldID {
@@ -1078,8 +1095,8 @@ func (a *App) fetchCustomFieldOptionsForEdit(sel *jira.Issue, field *views.InfoF
 }
 
 func (a *App) handleCustomFieldOptions(msg customFieldOptionsMsg) (tea.Model, tea.Cmd) {
-	if len(msg.allFields) > 0 && msg.issueTypeID != "" && msg.projectKey != "" {
-		a.createMetaCache[msg.projectKey+":"+msg.issueTypeID] = msg.allFields
+	if msg.issueTypeID != "" && msg.projectKey != "" && !msg.fromCache && msg.cacheVersion == a.referenceCacheVersion {
+		a.createMetaCache.set(msg.projectKey+":"+msg.issueTypeID, msg.allFields)
 	}
 	if msg.fieldNotFound {
 		if msg.useEditor {
@@ -1092,10 +1109,10 @@ func (a *App) handleCustomFieldOptions(msg customFieldOptionsMsg) (tea.Model, te
 	}
 	if a.isPersonSchema(msg.schemaType, msg.schemaItems) {
 		a.onSelect = a.makePersonSelectCallback(msg.issueKey, msg.fieldID)
-		if cached, ok := a.usersCache[a.projectKey]; ok {
-			return a.handleUsersLoaded(usersLoadedMsg{users: cached, issueKey: msg.issueKey})
+		if cached, ok := a.usersCache.get(a.projectKey); ok {
+			return a.handleUsersLoaded(usersLoadedMsg{users: cached, issueKey: msg.issueKey, projectKey: a.projectKey, fromCache: true})
 		}
-		return a, fetchUsers(a.client, a.projectKey, msg.issueKey)
+		return a, fetchUsers(a.client, a.projectKey, msg.issueKey, a.referenceCacheVersion)
 	}
 
 	items := make([]components.ModalItem, 0, len(msg.options))

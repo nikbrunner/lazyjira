@@ -88,7 +88,7 @@ func TestMentionWarmPath_Comment(t *testing.T) {
 	app.converter = identityConverter{}
 	app.isCloud = true
 	app.projectKey = testProject
-	app.usersCache[testProject] = []jira.User{soloUser()}
+	app.usersCache.set(testProject, []jira.User{soloUser()})
 	app.editContext = editCtx{kind: editCommentNew, issueKey: testKey}
 
 	cmd := app.applyEdit("ping @Solo_One")
@@ -124,7 +124,7 @@ func TestMentionSkippedForPlainTextField(t *testing.T) {
 	app.converter = identityConverter{}
 	app.isCloud = true
 	app.projectKey = testProject
-	app.usersCache[testProject] = []jira.User{soloUser()} // warm: would resolve if attempted
+	app.usersCache.set(testProject, []jira.User{soloUser()}) // warm: would resolve if attempted
 	app.editContext = editCtx{kind: editFieldText, issueKey: testKey, fieldID: "customfield_10010"}
 
 	cmd := app.applyEdit("ping @Solo_One")
@@ -148,6 +148,32 @@ func TestMentionSkippedForPlainTextField(t *testing.T) {
 	}
 }
 
+func TestMentionUsersResultKeepsItsProjectIdentity(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.GetUsersFunc = func(_ context.Context, projectKey string) ([]jira.User, error) {
+		if projectKey != "OTHER" {
+			t.Fatalf("GetUsers project = %q, want OTHER", projectKey)
+		}
+		return []jira.User{soloUser()}, nil
+	}
+	app := newAppWithFake(t, fake)
+	msg := fetchUsersForMention(fake, "OTHER", app.referenceCacheVersion)().(mentionUsersLoadedMsg)
+	if msg.projectKey != "OTHER" {
+		t.Fatalf("result project key = %q, want OTHER", msg.projectKey)
+	}
+	app.pendingMention = &pendingMention{projectKey: testProject}
+	if model, cmd := app.handleMentionUsersLoaded(msg); model != app || cmd != nil {
+		t.Fatal("mismatched mention-user response returned an unexpected update")
+	}
+	if app.pendingMention == nil {
+		t.Fatal("mismatched response consumed a pending mention for another project")
+	}
+	if _, ok := app.usersCache.get("OTHER"); ok {
+		t.Fatal("mismatched response populated another project's user cache")
+	}
+}
+
 func TestMentionColdPath_CreateDesc(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
@@ -168,7 +194,9 @@ func TestMentionColdPath_CreateDesc(t *testing.T) {
 		t.Fatal("create-desc cold path must defer via pendingMention")
 	}
 
-	app.handleMentionUsersLoaded(mentionUsersLoadedMsg{users: []jira.User{soloUser()}})
+	if model, cmd := app.handleMentionUsersLoaded(mentionUsersLoadedMsg{users: []jira.User{soloUser()}, projectKey: testProject}); model != app || cmd != nil {
+		t.Fatal("mention completion returned an unexpected update")
+	}
 
 	got, _ := app.createForm.FieldAt(1).Value.(string)
 	if !strings.Contains(got, "accountid:s1") {
@@ -188,7 +216,7 @@ func TestMentionWarmPath_CrossProject(t *testing.T) {
 	app.converter = identityConverter{}
 	app.isCloud = true
 	app.projectKey = testProject // board project differs from the edited issue
-	app.usersCache["OTHER"] = []jira.User{soloUser()}
+	app.usersCache.set("OTHER", []jira.User{soloUser()})
 	app.editContext = editCtx{kind: editCommentNew, issueKey: "OTHER-7"}
 
 	cmd := app.applyEdit("ping @Solo_One")
@@ -248,7 +276,7 @@ func TestMentionColdPath_CrossProject(t *testing.T) {
 	}
 	follow()
 
-	if _, ok := app.usersCache["OTHER"]; !ok {
+	if _, ok := app.usersCache.get("OTHER"); !ok {
 		t.Error("loaded users should be cached under the issue's project key OTHER")
 	}
 	if len(fake.AddCommentCalls) != 1 {

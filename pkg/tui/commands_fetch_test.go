@@ -217,7 +217,7 @@ func TestFetchCreateMeta(t *testing.T) {
 		fake.GetCreateMetaFunc = func(_ context.Context, _, _ string) ([]jira.CreateMetaField, error) {
 			return []jira.CreateMetaField{{FieldID: testSummary}}, nil
 		}
-		if _, ok := fetchCreateMeta(fake, testProject, "10001")().(createMetaLoadedMsg); !ok {
+		if _, ok := fetchCreateMeta(fake, testProject, "10001", 0)().(createMetaLoadedMsg); !ok {
 			t.Error("want createMetaLoadedMsg")
 		}
 	})
@@ -228,7 +228,7 @@ func TestFetchCreateMeta(t *testing.T) {
 		fake.GetCreateMetaFunc = func(_ context.Context, _, _ string) ([]jira.CreateMetaField, error) {
 			return nil, errors.New("x")
 		}
-		if _, ok := fetchCreateMeta(fake, testProject, "10001")().(createPreFormErrorMsg); !ok {
+		if _, ok := fetchCreateMeta(fake, testProject, "10001", 0)().(createPreFormErrorMsg); !ok {
 			t.Error("want createPreFormErrorMsg")
 		}
 	})
@@ -357,7 +357,7 @@ func TestFetchUsers_TagsIssueKey(t *testing.T) {
 		return []jira.User{{AccountID: "u1"}}, nil
 	}
 
-	msg := fetchUsers(fake, testProject, testKey)()
+	msg := fetchUsers(fake, testProject, testKey, 0)()
 	loaded, ok := msg.(usersLoadedMsg)
 	if !ok || loaded.issueKey != testKey || len(loaded.users) != 1 {
 		t.Errorf("msg = %#v", msg)
