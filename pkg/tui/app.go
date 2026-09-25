@@ -127,8 +127,21 @@ type batchPrefetchedMsg struct {
 	issues []jira.Issue
 }
 type autoFetchTickMsg struct{}
-type boardsLoadedMsg struct{ boards []jira.Board }
-type sprintsLoadedMsg struct{ sprints []jira.Sprint }
+type sprintPickerTarget struct {
+	issueKey   string
+	createForm bool
+	fieldIndex int
+	requestID  uint64
+}
+type sprintOption struct {
+	sprint     jira.Sprint
+	boardNames []string
+}
+type sprintsLoadedMsg struct {
+	target  sprintPickerTarget
+	options []sprintOption
+	err     error
+}
 type transitionsLoadedMsg struct {
 	issueKey    string
 	transitions []jira.Transition
@@ -166,15 +179,14 @@ type App struct {
 	pendingMention *pendingMention
 	converter      ADFConverter
 
-	onSelect    onSelectFunc
-	onChecklist onChecklistFunc
+	onSelect      onSelectFunc
+	onChecklist   onChecklistFunc
+	sprintFetchID uint64
 
 	side            focusSide
 	leftFocus       focusPanel
 	projectKey      string
 	projectID       string
-	boardID         int
-	boards          []jira.Board
 	showHelp        bool
 	maximized       bool
 	maximizedPane   focusPanel
@@ -432,7 +444,6 @@ func (a *App) Init() tea.Cmd {
 		fetchMyself(a.client),
 		fetchFieldDiscovery(a.client),
 		fetchProjects(a.client),
-		fetchBoards(a.client),
 		tea.Tick(30*time.Second, func(t time.Time) tea.Msg {
 			return autoFetchTickMsg{}
 		}),
@@ -505,8 +516,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.statusPanel.SetError(msg.err.Error())
 		}
 		return a, nil
-	case boardsLoadedMsg:
-		return a.handleBoardsLoaded(msg)
 	case sprintsLoadedMsg:
 		return a.handleSprintsLoaded(msg)
 	case prefetchUsersMsg:
@@ -558,7 +567,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case components.CreateFormSubmitMsg:
 		return a.handleCreateFormSubmit(msg)
 	case components.CreateFormCancelMsg:
+		a.sprintFetchID++
 		a.createCtx = createCtx{}
+		a.onSelect = nil
 		return a, nil
 
 	case components.ModalSelectedMsg:
@@ -825,6 +836,8 @@ func (a *App) editInfoField(sel *jira.Issue) (tea.Model, tea.Cmd) {
 	if field == nil {
 		return a, nil
 	}
+	a.sprintFetchID++
+	a.onSelect = nil
 	*a.logFlag = true
 	switch field.Type {
 	case views.FieldSingleSelect:
@@ -839,11 +852,7 @@ func (a *App) editInfoField(sel *jira.Issue) (tea.Model, tea.Cmd) {
 				return a, fetchIssueTypes(a.client, a.projectID)
 			}
 		case fldSprint:
-			if a.boardID != 0 {
-				return a, fetchSprints(a.client, a.boardID)
-			}
-			a.statusPanel.SetError("no agile board found for this project")
-			return a, nil
+			return a, a.startSprintFetch(sprintPickerTarget{issueKey: sel.Key})
 		default:
 			if isCustomField(field.FieldID) {
 				return a.fetchCustomFieldOptionsForEdit(sel, field)

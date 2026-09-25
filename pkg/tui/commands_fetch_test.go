@@ -376,55 +376,79 @@ func TestFetchComponents(t *testing.T) {
 	}
 }
 
-func TestFetchBoards(t *testing.T) {
-	t.Parallel()
-
-	t.Run("success returns boardsLoadedMsg", func(t *testing.T) {
-		t.Parallel()
-		fake := &jiratest.FakeClient{T: t}
-		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) {
-			return []jira.Board{{ID: 1}}, nil
-		}
-		if _, ok := fetchBoards(fake)().(boardsLoadedMsg); !ok {
-			t.Error("want boardsLoadedMsg")
-		}
-	})
-
-	t.Run("error is silent nil", func(t *testing.T) {
-		t.Parallel()
-		fake := newFakeClient(t)
-		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) { return nil, errors.New("no agile") }
-		if msg := fetchBoards(fake)(); msg != nil {
-			t.Errorf("msg = %T, want nil", msg)
-		}
-	})
-}
-
 func TestFetchSprints(t *testing.T) {
 	t.Parallel()
 
-	t.Run("success returns sprints", func(t *testing.T) {
+	t.Run("loads active and future sprints from Scrum boards only", func(t *testing.T) {
 		t.Parallel()
 		fake := &jiratest.FakeClient{T: t}
-		fake.GetSprintsFunc = func(_ context.Context, _ int) ([]jira.Sprint, error) {
-			return []jira.Sprint{{ID: 1, Name: "Sprint 1"}}, nil
+		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) {
+			return []jira.Board{
+				{ID: 1, Name: "Kanban", Type: "kanban", ProjectKey: "WEBSDK"},
+				{ID: 2, Name: "Cloud Platform Sprints", Type: "scrum", ProjectKey: "CP"},
+				{ID: 3, Name: "Cloud Sprints", Type: "scrum", ProjectKey: "CP"},
+			}, nil
 		}
-		msg := fetchSprints(fake, 5)()
-		loaded, ok := msg.(sprintsLoadedMsg)
-		if !ok || len(loaded.sprints) != 1 {
-			t.Errorf("msg = %#v", msg)
+		fake.GetSprintsFunc = func(_ context.Context, boardID int) ([]jira.Sprint, error) {
+			switch boardID {
+			case 2:
+				return []jira.Sprint{
+					{ID: 10, Name: "Current", State: "active"},
+					{ID: 11, Name: "Next", State: "future"},
+					{ID: 12, Name: "Closed", State: "closed"},
+				}, nil
+			case 3:
+				return []jira.Sprint{{ID: 10, Name: "Current", State: "active"}}, nil
+			default:
+				t.Fatalf("unexpected board %d", boardID)
+				return nil, nil
+			}
+		}
+
+		loaded, ok := fetchSprints(fake, sprintPickerTarget{issueKey: testKey})().(sprintsLoadedMsg)
+		if !ok {
+			t.Fatalf("message = %#v, want sprintsLoadedMsg", loaded)
+		}
+		if loaded.err != nil {
+			t.Fatalf("loaded.err = %v", loaded.err)
+		}
+		if len(loaded.options) != 2 {
+			t.Fatalf("len(options) = %d, want 2", len(loaded.options))
+		}
+		if got := loaded.options[0].boardNames; len(got) != 2 {
+			t.Errorf("duplicate sprint board names = %v, want both source boards", got)
+		}
+		if got := fake.GetSprintsCalls; len(got) != 2 || got[0].BoardID != 2 || got[1].BoardID != 3 {
+			t.Errorf("GetSprints calls = %#v, want only Scrum boards 2 and 3", got)
 		}
 	})
 
-	t.Run("error returns empty sprints not errorMsg", func(t *testing.T) {
+	t.Run("board discovery error is returned", func(t *testing.T) {
 		t.Parallel()
 		fake := newFakeClient(t)
-		fake.GetSprintsFunc = func(_ context.Context, _ int) ([]jira.Sprint, error) {
-			return nil, errors.New("unsupported")
+		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) {
+			return nil, errors.New("boards unavailable")
 		}
-		loaded, ok := fetchSprints(fake, 5)().(sprintsLoadedMsg)
-		if !ok || loaded.sprints != nil {
-			t.Errorf("want sprintsLoadedMsg with nil sprints")
+
+		loaded, ok := fetchSprints(fake, sprintPickerTarget{issueKey: testKey})().(sprintsLoadedMsg)
+		if !ok || loaded.err == nil {
+			t.Fatalf("message = %#v, want sprintsLoadedMsg with error", loaded)
+		}
+	})
+
+	t.Run("sprint fetch error is returned", func(t *testing.T) {
+		t.Parallel()
+		fake := newFakeClient(t)
+		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) {
+			return []jira.Board{{ID: 2, Type: "scrum"}}, nil
+		}
+		fake.GetSprintsFunc = func(context.Context, int) ([]jira.Sprint, error) {
+			return nil, errors.New("sprints unavailable")
+		}
+
+		loaded, ok := fetchSprints(fake, sprintPickerTarget{issueKey: testKey})().(sprintsLoadedMsg)
+		if !ok || loaded.err == nil {
+			t.Fatalf("message = %#v, want sprintsLoadedMsg with error", loaded)
 		}
 	})
 }

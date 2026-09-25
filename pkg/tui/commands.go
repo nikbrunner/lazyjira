@@ -413,24 +413,53 @@ func fetchComponents(client jira.ClientInterface, projectKey string) tea.Cmd {
 	}
 }
 
-func fetchBoards(client jira.ClientInterface) tea.Cmd {
-	return func() tea.Msg {
-		boards, err := client.GetBoards(context.Background())
-		if err != nil {
-			return nil // silent fail — boards are optional (agile API may be unavailable)
-		}
-		return boardsLoadedMsg{boards: boards}
-	}
+func (a *App) startSprintFetch(target sprintPickerTarget) tea.Cmd {
+	a.sprintFetchID++
+	target.requestID = a.sprintFetchID
+	a.onSelect = nil
+	return fetchSprints(a.client, target)
 }
 
-func fetchSprints(client jira.ClientInterface, boardID int) tea.Cmd {
+func fetchSprints(client jira.ClientInterface, target sprintPickerTarget) tea.Cmd {
 	return func() tea.Msg {
-		sprints, err := client.GetSprints(context.Background(), boardID)
+		msg := sprintsLoadedMsg{target: target}
+		boards, err := client.GetBoards(context.Background())
 		if err != nil {
-			// silently ignore, board may not support sprints
-			return sprintsLoadedMsg{sprints: nil}
+			msg.err = fmt.Errorf("get boards for sprint picker: %w", err)
+			return msg
 		}
-		return sprintsLoadedMsg{sprints: sprints}
+
+		seen := make(map[int]int)
+		for _, board := range boards {
+			if !strings.EqualFold(board.Type, "scrum") {
+				continue
+			}
+			sprints, err := client.GetSprints(context.Background(), board.ID)
+			if err != nil {
+				msg.err = fmt.Errorf("get sprints for board %s: %w", board.Name, err)
+				return msg
+			}
+			for _, sprint := range sprints {
+				state := strings.ToLower(sprint.State)
+				if state != "active" && state != "future" {
+					continue
+				}
+				boardName := board.Name
+				if board.ProjectKey != "" {
+					boardName += " / " + board.ProjectKey
+				}
+				if index, ok := seen[sprint.ID]; ok {
+					msg.options[index].boardNames = append(msg.options[index].boardNames, boardName)
+					continue
+				}
+				seen[sprint.ID] = len(msg.options)
+				msg.options = append(msg.options, sprintOption{
+					sprint:     sprint,
+					boardNames: []string{boardName},
+				})
+			}
+		}
+		return msg
 	}
 }
 

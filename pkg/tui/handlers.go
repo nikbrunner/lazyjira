@@ -82,6 +82,7 @@ func (a *App) handleAutoFetch() (tea.Model, tea.Cmd) {
 }
 
 func (a *App) selectProject(p *jira.Project) tea.Cmd {
+	a.sprintFetchID++
 	a.projectKey = p.Key
 	a.projectID = p.ID
 	a.statusPanel.SetProject(p.Key)
@@ -92,7 +93,6 @@ func (a *App) selectProject(p *jira.Project) tea.Cmd {
 	a.createMetaCache = make(map[string][]jira.CreateMetaField)
 	a.invalidateInFlight()
 	a.infoPanel.SetIssue(nil)
-	a.resolveBoardID()
 	if !a.demoMode {
 		go saveLastProject(p.Key)
 	}

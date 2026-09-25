@@ -217,13 +217,6 @@ func (a *App) handleUsersLoaded(msg usersLoadedMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
-// handleBoardsLoaded caches boards and resolves the board for the current project
-func (a *App) handleBoardsLoaded(msg boardsLoadedMsg) (tea.Model, tea.Cmd) {
-	a.boards = msg.boards
-	a.resolveBoardID()
-	return a, nil
-}
-
 func (a *App) invalidateInFlight() {
 	a.parentEpoch++
 	a.childrenEpoch++
@@ -231,55 +224,92 @@ func (a *App) invalidateInFlight() {
 	a.pendingWalk = pendingWalk{}
 }
 
-func (a *App) resolveBoardID() {
-	a.boardID = 0
-	for _, b := range a.boards {
-		if b.ProjectKey == a.projectKey {
-			a.boardID = b.ID
-			return
-		}
-	}
-}
-
-// handleSprintsLoaded shows the sprint picker modal
 func (a *App) handleSprintsLoaded(msg sprintsLoadedMsg) (tea.Model, tea.Cmd) {
-	sel := a.issuesList.SelectedIssue()
-	if sel == nil {
+	if msg.target.requestID != a.sprintFetchID || a.modal.IsVisible() || a.onSelect != nil {
 		return a, nil
 	}
-	currentSprintID := 0
-	if sel.Sprint != nil {
-		currentSprintID = sel.Sprint.ID
+	if msg.target.createForm {
+		if !a.createForm.IsVisible() {
+			return a, nil
+		}
+	} else if selected := a.issuesList.SelectedIssue(); selected == nil || selected.Key != msg.target.issueKey {
+		return a, nil
 	}
-	var items []components.ModalItem
-	items = append(items, components.ModalItem{ID: "0", Label: "None", Active: currentSprintID == 0})
-	for _, s := range msg.sprints {
-		if s.State == "closed" {
+	a.onSelect = nil
+	if msg.err != nil {
+		if msg.target.createForm {
+			a.createForm.Resume()
+			a.createForm.SetError(msg.err.Error())
+			a.statusPanel.SetError(msg.err.Error())
+			return a, nil
+		}
+		a.statusPanel.SetError(msg.err.Error())
+		a.modal.ShowError("Sprint picker", []components.ModalItem{{Label: msg.err.Error()}})
+		return a, nil
+	}
+
+	issueKey := msg.target.issueKey
+	currentSprintID := 0
+	if cached := a.issueCache[issueKey]; cached != nil && cached.Sprint != nil {
+		currentSprintID = cached.Sprint.ID
+	} else if selected := a.issuesList.SelectedIssue(); selected != nil && selected.Key == issueKey && selected.Sprint != nil {
+		currentSprintID = selected.Sprint.ID
+	}
+
+	items := []components.ModalItem{{ID: "0", Label: "None", Active: currentSprintID == 0}}
+	sprintsByID := make(map[string]jira.Sprint, len(msg.options))
+	for _, option := range msg.options {
+		sprint := option.sprint
+		if strings.EqualFold(sprint.State, "closed") {
 			continue
 		}
-		label := s.Name
-		if s.State == "active" {
+		label := sprint.Name
+		if strings.EqualFold(sprint.State, "active") {
 			label += " (active)"
 		}
+		if len(option.boardNames) > 0 {
+			label += " [" + strings.Join(option.boardNames, ", ") + "]"
+		}
+		id := strconv.Itoa(sprint.ID)
+		sprintsByID[id] = sprint
 		items = append(items, components.ModalItem{
-			ID:     strconv.Itoa(s.ID),
+			ID:     id,
 			Label:  label,
-			Active: s.ID == currentSprintID,
+			Active: sprint.ID == currentSprintID,
 		})
 	}
-	if a.onSelect == nil {
-		issueKey := sel.Key
+
+	if msg.target.createForm {
+		fieldIndex := msg.target.fieldIndex
 		a.onSelect = func(item components.ModalItem) tea.Cmd {
-			sprintID, _ := strconv.Atoi(item.ID)
-			if sprintID == 0 {
-				a.optimisticFieldUpdate(issueKey, fldSprint, nil)
-				return updateIssueField(a.client, issueKey, "sprint", nil)
+			if item.ID == "0" {
+				a.createForm.SetFieldValue(fieldIndex, nil, "None")
+			} else {
+				sprintID, _ := strconv.Atoi(item.ID)
+				a.createForm.SetFieldValue(fieldIndex, sprintID, item.Label)
 			}
-			a.optimisticFieldUpdate(issueKey, fldSprint, &jira.Sprint{ID: sprintID, Name: item.Label})
-			return moveToSprint(a.client, sprintID, issueKey)
+			return nil
 		}
+		a.modal.Show("Select Sprint", items)
+		return a, nil
 	}
-	a.modal.Show("Sprint: "+sel.Key, items)
+	if issueKey == "" {
+		return a, nil
+	}
+
+	a.onSelect = func(item components.ModalItem) tea.Cmd {
+		if item.ID == "0" {
+			a.optimisticFieldUpdate(issueKey, fldSprint, nil)
+			return updateIssueField(a.client, issueKey, "sprint", nil)
+		}
+		sprint, ok := sprintsByID[item.ID]
+		if !ok {
+			return nil
+		}
+		a.optimisticFieldUpdate(issueKey, fldSprint, &sprint)
+		return moveToSprint(a.client, sprint.ID, issueKey)
+	}
+	a.modal.Show("Sprint: "+issueKey, items)
 	return a, nil
 }
 
@@ -377,7 +407,6 @@ func (a *App) handleProjectsLoaded(msg projectsLoadedMsg) (tea.Model, tea.Cmd) {
 		a.projectID = projects[0].ID
 		a.statusPanel.SetProject(a.projectKey)
 		a.projectList.SetActiveKey(a.projectKey)
-		a.resolveBoardID()
 		return a, a.fetchActiveTab()
 	}
 	return a, nil
@@ -496,6 +525,7 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 		applyDuplicatePrefill(fields, src, a.isCloud)
 	}
 
+	a.sprintFetchID++
 	a.createForm.ShowForm(fields, a.createCtx.issueTypeName, a.createCtx.projectKey)
 
 	var cmds []tea.Cmd

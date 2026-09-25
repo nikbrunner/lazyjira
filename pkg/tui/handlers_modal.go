@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -36,6 +35,7 @@ func (a *App) applyParentEdit(issueKey, text string) tea.Cmd {
 
 // handleModalSelected dispatches modal selection via the onSelect callback
 func (a *App) handleModalSelected(msg components.ModalSelectedMsg) (tea.Model, tea.Cmd) {
+	a.sprintFetchID++
 	a.createForm.Resume()
 	fn := a.onSelect
 	a.onSelect = nil
@@ -57,6 +57,7 @@ func (a *App) handleChecklistConfirmed(msg components.ChecklistConfirmedMsg) (te
 
 // handleModalCancelled clears modal callbacks
 func (a *App) handleModalCancelled() (tea.Model, tea.Cmd) {
+	a.sprintFetchID++
 	a.createForm.Resume()
 	if !a.createForm.IsVisible() {
 		a.createCtx = createCtx{}
@@ -280,16 +281,7 @@ func (a *App) handleCreateFormPicker(msg components.CreateFormPickerMsg) (tea.Mo
 			}
 			return a, fetchPriorities(a.client)
 		case fldSprint:
-			if a.boardID != 0 {
-				a.onSelect = func(item components.ModalItem) tea.Cmd {
-					sprintID, _ := strconv.Atoi(item.ID)
-					a.createForm.SetFieldValue(idx, sprintID, item.Label)
-					return nil
-				}
-				return a, fetchSprints(a.client, a.boardID)
-			}
-			a.createForm.Resume()
-			return a, nil
+			return a, a.startSprintFetch(sprintPickerTarget{createForm: true, fieldIndex: idx})
 		default:
 			// no items and no known fetch, resume form
 			a.createForm.Resume()

@@ -28,6 +28,96 @@ func numberedObjects(count int, build func(index int) map[string]any) []map[stri
 	return objects
 }
 
+func TestClient_GetBoards_FollowsIsLastAfterServerCapsPageSize(t *testing.T) {
+	t.Parallel()
+
+	pages := make([]testkit.StubResponse, 4)
+	for pageIndex := range pages {
+		start := pageIndex * 50
+		count := 50
+		if pageIndex == len(pages)-1 {
+			count = 35
+		}
+		values := make([]map[string]any, count)
+		for index := range values {
+			id := start + index + 1
+			board := map[string]any{"id": id, "name": fmt.Sprintf("Board %d", id), "type": "kanban"}
+			if id == 185 {
+				board["id"] = 2043
+				board["name"] = "Cloud Platform Sprints"
+				board["type"] = "scrum"
+				board["location"] = map[string]string{"projectKey": "CP"}
+			}
+			values[index] = board
+		}
+		pages[pageIndex] = testkit.StubResponse{
+			Status: http.StatusOK,
+			Body: marshalPage(t, map[string]any{
+				"values": values,
+				"isLast": pageIndex == len(pages)-1,
+			}),
+		}
+	}
+
+	client, recorded := newSequenceClient(t, cloudOpts(), pages...)
+	boards, err := client.GetBoards(t.Context())
+	if err != nil {
+		t.Fatalf("GetBoards: %v", err)
+	}
+	if len(boards) != 185 {
+		t.Fatalf("len(boards) = %d, want 185", len(boards))
+	}
+	found := false
+	for _, board := range boards {
+		if board.ID == 2043 {
+			found = board.Name == "Cloud Platform Sprints" && board.Type == "scrum" && board.ProjectKey == "CP"
+		}
+	}
+	if !found {
+		t.Fatal("GetBoards did not return Scrum board 2043 from the fourth page")
+	}
+	if len(*recorded) != 4 {
+		t.Fatalf("request count = %d, want 4", len(*recorded))
+	}
+	for index, want := range []string{"0", "50", "100", "150"} {
+		testkit.AssertEqual(t, fmt.Sprintf("page %d startAt", index+1), (*recorded)[index].Query.Get("startAt"), want)
+	}
+}
+
+func TestClient_GetBoards_FallbackWhenIsLastIsMissing(t *testing.T) {
+	t.Parallel()
+
+	t.Run("short page without isLast ends pagination", func(t *testing.T) {
+		t.Parallel()
+		client, recorded := newSequenceClient(t, cloudOpts(), testkit.StubResponse{
+			Status: http.StatusOK,
+			Body:   `{"values":[{"id":1,"name":"Board 1","type":"scrum"}]}`,
+		})
+		boards, err := client.GetBoards(t.Context())
+		if err != nil {
+			t.Fatalf("GetBoards: %v", err)
+		}
+		if len(boards) != 1 || len(*recorded) != 1 {
+			t.Fatalf("boards=%d requests=%d, want one board and one request", len(boards), len(*recorded))
+		}
+	})
+
+	t.Run("empty page with isLast false stops pagination", func(t *testing.T) {
+		t.Parallel()
+		client, recorded := newSequenceClient(t, cloudOpts(),
+			testkit.StubResponse{Status: http.StatusOK, Body: `{"values":[],"isLast":false}`},
+			testkit.StubResponse{Status: http.StatusOK, Body: `{"values":[{"id":2,"name":"Board 2","type":"scrum"}],"isLast":true}`},
+		)
+		boards, err := client.GetBoards(t.Context())
+		if err != nil {
+			t.Fatalf("GetBoards: %v", err)
+		}
+		if len(boards) != 0 || len(*recorded) != 1 {
+			t.Fatalf("boards=%d requests=%d, want no boards and one request", len(boards), len(*recorded))
+		}
+	})
+}
+
 func TestClient_PaginatedMethods_FetchAllPages(t *testing.T) {
 	t.Parallel()
 

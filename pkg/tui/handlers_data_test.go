@@ -1,11 +1,16 @@
 package tui
 
 import (
+	"context"
+	"errors"
+	"strings"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
 	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
 func TestHandleTransitionsLoaded(t *testing.T) {
@@ -42,57 +47,168 @@ func TestHandleTransitionsLoaded(t *testing.T) {
 	})
 }
 
-func TestHandleBoardsLoaded_ResolvesBoardForProject(t *testing.T) {
-	t.Parallel()
-
-	t.Run("matching project sets board id", func(t *testing.T) {
-		t.Parallel()
-		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.projectKey = testProject
-
-		_, _ = app.handleBoardsLoaded(boardsLoadedMsg{boards: []jira.Board{{ID: 7, ProjectKey: testProject}}})
-
-		testkit.AssertEqual(t, "boardID", app.boardID, 7)
-	})
-
-	t.Run("no matching project leaves board id zero", func(t *testing.T) {
-		t.Parallel()
-		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.projectKey = testProject
-
-		_, _ = app.handleBoardsLoaded(boardsLoadedMsg{boards: []jira.Board{{ID: 7, ProjectKey: "OPS"}}})
-
-		testkit.AssertEqual(t, "boardID", app.boardID, 0)
-	})
-}
-
 func TestHandleSprintsLoaded(t *testing.T) {
 	t.Parallel()
 
-	t.Run("shows modal for selected issue", func(t *testing.T) {
+	t.Run("ignores results after create-form cancellation", func(t *testing.T) {
+		t.Parallel()
+		fake := &jiratest.FakeClient{T: t}
+		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) { return nil, nil }
+		app := newAppWithFake(t, fake)
+		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "sprint", Name: "Sprint"}}, "Task", testProject)
+		app.createForm.Pause()
+		fetchCmd := app.startSprintFetch(sprintPickerTarget{createForm: true, fieldIndex: 0})
+		loaded := fetchCmd().(sprintsLoadedMsg)
+
+		app.createForm.Hide()
+		updated, cancelCmd := app.Update(components.ModalCancelledMsg{})
+		app = updated.(*App)
+		if cancelCmd != nil {
+			t.Fatal("cancelling the modal should not schedule another command")
+		}
+		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "priority", Name: "Priority"}}, "Task", testProject)
+		updated, sprintCmd := app.handleSprintsLoaded(loaded)
+		app = updated.(*App)
+		if sprintCmd != nil {
+			t.Fatal("ignoring stale sprint results should not schedule another command")
+		}
+
+		if app.modal.IsVisible() {
+			t.Error("late sprint result should not open a picker for a replacement form")
+		}
+	})
+
+	t.Run("ignores results after issue selection changes", func(t *testing.T) {
+		t.Parallel()
+		fake := &jiratest.FakeClient{T: t}
+		fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) { return nil, nil }
+		app := newAppWithFake(t, fake)
+		app.issuesList.SetIssues([]jira.Issue{{Key: testKey}, {Key: mainKey}})
+		fetchCmd := app.startSprintFetch(sprintPickerTarget{issueKey: testKey})
+		loaded := fetchCmd().(sprintsLoadedMsg)
+
+		app.issuesList.SelectByKey(mainKey)
+		updated, cmd := app.handleSprintsLoaded(loaded)
+		app = updated.(*App)
+		if cmd != nil {
+			t.Fatal("ignoring results for another issue should not schedule another command")
+		}
+
+		if app.modal.IsVisible() {
+			t.Error("late sprint result should not open a picker for a different issue")
+		}
+	})
+
+	t.Run("labels sprint by board and keeps its raw name for issue updates", func(t *testing.T) {
+		t.Parallel()
+		fake := &jiratest.FakeClient{T: t}
+		fake.MoveToSprintFunc = func(context.Context, int, string) error { return nil }
+		app := newAppWithFake(t, fake)
+		issue := &jira.Issue{Key: testKey}
+		app.issuesList.SetIssues([]jira.Issue{*issue})
+		app.issueCache[testKey] = issue
+
+		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{
+			target: sprintPickerTarget{issueKey: testKey},
+			options: []sprintOption{{
+				sprint:     jira.Sprint{ID: 1, Name: "Sprint 1", State: "active"},
+				boardNames: []string{"Cloud Platform Sprints / CP"},
+			}},
+		})
+
+		if !app.modal.IsVisible() {
+			t.Fatal("sprint modal should be visible")
+		}
+		app.modal.SetSize(120, 30)
+		if view := app.modal.View(); !strings.Contains(view, "Cloud Platform Sprints / CP") {
+			t.Errorf("sprint modal does not identify its board: %q", view)
+		}
+		if app.onSelect == nil {
+			t.Fatal("onSelect should be set")
+		}
+		cmd := app.onSelect(components.ModalItem{ID: "1", Label: "Sprint 1 (active) [Cloud Platform Sprints / CP]"})
+		if cmd == nil {
+			t.Fatal("selecting a sprint should move the issue")
+		}
+		cmd()
+		if got := app.issueCache[testKey].Sprint.Name; got != "Sprint 1" {
+			t.Errorf("cached sprint name = %q, want undecorated name", got)
+		}
+	})
+
+	t.Run("fetch error is surfaced instead of showing None-only picker", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
 
-		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{sprints: []jira.Sprint{
-			{ID: 1, Name: "Sprint 1", State: "active"},
-			{ID: 2, Name: "Old", State: "closed"},
-		}})
+		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{
+			target: sprintPickerTarget{issueKey: testKey},
+			err:    errors.New("board does not support sprints"),
+		})
 
-		if !app.modal.IsVisible() {
-			t.Error("sprint modal should be visible")
+		if !app.modal.IsVisible() || !strings.Contains(app.modal.View(), "board does not support sprints") {
+			t.Error("fetch error should be visible in an error modal")
 		}
-		if app.onSelect == nil {
-			t.Error("onSelect should be set")
+		if app.onSelect != nil {
+			t.Error("fetch failure should not leave a selection callback")
 		}
 	})
 
-	t.Run("no selected issue is noop", func(t *testing.T) {
+	t.Run("create form recovers from a fetch error", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{sprints: []jira.Sprint{{ID: 1}}})
+		app.overlays = components.OverlayStack{&app.createForm}
+		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "sprint", Name: "Sprint"}}, "Task", testProject)
+		app.createForm.Pause()
+
+		updated, cmd := app.Update(sprintsLoadedMsg{
+			target: sprintPickerTarget{createForm: true, fieldIndex: 0},
+			err:    errors.New("board lookup failed"),
+		})
+		app = updated.(*App)
+		if cmd != nil {
+			t.Fatal("handling a sprint fetch error should not schedule another command")
+		}
+
+		if !app.createForm.IsVisible() {
+			t.Fatal("create form should remain visible")
+		}
 		if app.modal.IsVisible() {
-			t.Error("modal should stay hidden without a selected issue")
+			t.Fatal("create-form errors should render inline, not open a modal behind the form")
+		}
+		app.createForm.SetSize(80, 24)
+		view := app.createForm.Render(testkit.BlankCanvas(80, 24), 80, 24)
+		if !strings.Contains(view, "board lookup failed") {
+			t.Errorf("create form does not show fetch error: %q", view)
+		}
+		before := app.createForm.FocusedPanel()
+		updated, _ = app.Update(tea.KeyMsg{Type: tea.KeyTab})
+		app = updated.(*App)
+		if app.createForm.FocusedPanel() == before {
+			t.Error("create form should resume keyboard input after fetch failure")
+		}
+	})
+
+	t.Run("create form picker works without selected issue", func(t *testing.T) {
+		t.Parallel()
+		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+		app.createForm.ShowForm([]components.CreateFormField{{FieldID: "sprint", Name: "Sprint"}}, "Task", testProject)
+		app.createForm.Pause()
+
+		_, _ = app.handleSprintsLoaded(sprintsLoadedMsg{
+			target: sprintPickerTarget{createForm: true, fieldIndex: 0},
+			options: []sprintOption{{
+				sprint:     jira.Sprint{ID: 1, Name: "Sprint 1", State: "active"},
+				boardNames: []string{"Cloud Platform Sprints / CP"},
+			}},
+		})
+
+		if !app.modal.IsVisible() || app.onSelect == nil {
+			t.Fatal("create-form sprint picker should open without a selected issue")
+		}
+		app.onSelect(components.ModalItem{ID: "1", Label: "Sprint 1 (active) [Cloud Platform Sprints / CP]"})
+		if field := app.createForm.FieldAt(0); field == nil || field.DisplayValue != "Sprint 1 (active) [Cloud Platform Sprints / CP]" {
+			t.Errorf("create sprint field = %#v", field)
 		}
 	})
 }

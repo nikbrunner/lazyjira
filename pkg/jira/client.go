@@ -460,14 +460,15 @@ func (c *Client) GetBoards(ctx context.Context) ([]Board, error) {
 	for range maxPages {
 		var page struct {
 			Values []boardResponse `json:"values"`
-			IsLast bool            `json:"isLast"`
+			IsLast *bool           `json:"isLast"`
 		}
 		path := fmt.Sprintf("/board?startAt=%d&maxResults=%d", startAt, batchSize)
 		if err := c.doAgile(ctx, path, &page); err != nil {
 			return nil, fmt.Errorf("get boards: %w", err)
 		}
 		all = append(all, page.Values...)
-		if page.IsLast || len(page.Values) < batchSize {
+		if len(page.Values) == 0 || (page.IsLast != nil && *page.IsLast) ||
+			(page.IsLast == nil && len(page.Values) < batchSize) {
 			break
 		}
 		startAt = len(all)

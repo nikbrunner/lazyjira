@@ -86,23 +86,9 @@ func TestEditInfoField_Dispatch(t *testing.T) {
 			fieldCfg: config.FieldConfig{ID: "issuetype"},
 		},
 		{
-			name:     "sprint with board fetches sprints",
+			name:     "sprint fetches across scrum boards",
 			fieldCfg: config.FieldConfig{ID: "sprint"},
-			setup: func(app *App, fake *jiratest.FakeClient) {
-				app.boardID = 7
-				fake.GetSprintsFunc = func(context.Context, int) ([]jira.Sprint, error) { return nil, nil }
-			},
-			wantCmd: true,
-		},
-		{
-			name:     "sprint without board surfaces error",
-			fieldCfg: config.FieldConfig{ID: "sprint"},
-			assert: func(t *testing.T, app *App) {
-				t.Helper()
-				if app.statusPanel.ErrorMessage() == "" {
-					t.Error("missing board should surface an error")
-				}
-			},
+			wantCmd:  true,
 		},
 		{
 			name:     "custom single select fetches field options",
@@ -215,6 +201,89 @@ func TestEditInfoField_Dispatch(t *testing.T) {
 				tc.assert(t, app)
 			}
 		})
+	}
+}
+
+func TestEditSprint_UsesScrumBoardAndOriginalIssueContext(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) {
+		return []jira.Board{
+			{ID: 181, Name: "Risks Web SDK", Type: "kanban", ProjectKey: "WEBSDK"},
+			{ID: 2043, Name: "Cloud Platform Sprints", Type: "scrum", ProjectKey: "CP"},
+		}, nil
+	}
+	fake.GetSprintsFunc = func(_ context.Context, boardID int) ([]jira.Sprint, error) {
+		if boardID != 2043 {
+			t.Fatalf("sprints requested for board %d, want Scrum board 2043", boardID)
+		}
+		return []jira.Sprint{{ID: 1108, Name: "Sprint 24 Sept - 15 Oct", State: "active"}}, nil
+	}
+	fake.MoveToSprintFunc = func(_ context.Context, sprintID int, issueKey string) error {
+		if sprintID != 1108 || issueKey != testKey {
+			t.Errorf("MoveToSprint(%d, %q), want (1108, %q)", sprintID, issueKey, testKey)
+		}
+		return nil
+	}
+
+	app := editFlowApp(t, fake)
+	issue := &jira.Issue{Key: testKey}
+	app.issuesList.SetIssues([]jira.Issue{*issue})
+	app.issueCache[testKey] = issue
+	selected := selectInfoField(t, app, issue, config.FieldConfig{ID: "sprint"})
+	_, fetchCmd := app.editInfoField(selected)
+	if fetchCmd == nil {
+		t.Fatal("sprint edit should start a fetch")
+	}
+	loaded, ok := fetchCmd().(sprintsLoadedMsg)
+	if !ok || loaded.err != nil {
+		t.Fatalf("fetch result = %#v, want successful sprintsLoadedMsg", loaded)
+	}
+	updated, loadCmd := app.handleSprintsLoaded(loaded)
+	app = updated.(*App)
+	if loadCmd != nil {
+		t.Fatal("handling sprint results should not schedule another command")
+	}
+	if app.onSelect == nil {
+		t.Fatal("sprint picker should install a selection callback")
+	}
+	moveCmd := app.onSelect(components.ModalItem{ID: "1108"})
+	if moveCmd == nil {
+		t.Fatal("selecting a sprint should move the issue")
+	}
+	if _, ok := moveCmd().(issueUpdatedMsg); !ok {
+		t.Fatal("move command should report the issue update")
+	}
+	if len(fake.MoveToSprintCalls) != 1 {
+		t.Fatalf("MoveToSprint call count = %d, want 1", len(fake.MoveToSprintCalls))
+	}
+}
+
+func TestEditSprintResultDoesNotReplaceAnotherFieldEditor(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.GetBoardsFunc = func(context.Context) ([]jira.Board, error) { return nil, nil }
+	app := editFlowApp(t, fake)
+	issue := &jira.Issue{Key: testKey}
+	app.issuesList.SetIssues([]jira.Issue{*issue})
+
+	sprintField := selectInfoField(t, app, issue, config.FieldConfig{ID: "sprint"})
+	_, sprintCmd := app.editInfoField(sprintField)
+	if sprintCmd == nil {
+		t.Fatal("sprint edit should start a fetch")
+	}
+
+	textField := selectInfoField(t, app, issue, config.FieldConfig{ID: "summary", Name: "Summary", Type: "text"})
+	_, _ = app.editInfoField(textField)
+	if !app.inputModal.IsVisible() {
+		t.Fatal("second field editor should be visible")
+	}
+
+	loaded := sprintCmd().(sprintsLoadedMsg)
+	updated, _ := app.Update(loaded)
+	app = updated.(*App)
+	if !app.inputModal.IsVisible() || app.modal.IsVisible() {
+		t.Error("late sprint result should not replace the active text editor")
 	}
 }
 

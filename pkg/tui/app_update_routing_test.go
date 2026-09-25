@@ -229,21 +229,8 @@ func TestUpdate_RoutesDataMessages(t *testing.T) {
 			msg:  fieldsDiscoveredMsg{},
 		},
 		{
-			name: "boards loaded resolves board id",
-			setup: func(app *App, fake *jiratest.FakeClient) {
-				app.projectKey = testProject
-			},
-			msg: boardsLoadedMsg{boards: []jira.Board{{ID: 7, ProjectKey: testProject}}},
-			assert: func(t *testing.T, app *App) {
-				t.Helper()
-				if app.boardID != 7 {
-					t.Errorf("boardID = %d, want 7", app.boardID)
-				}
-			},
-		},
-		{
-			name: "sprints loaded without selection is noop",
-			msg:  sprintsLoadedMsg{sprints: []jira.Sprint{{ID: 1, Name: "S1"}}},
+			name: "sprints loaded without target is noop",
+			msg:  sprintsLoadedMsg{},
 		},
 		{
 			name: "prefetch users for current project fetches",
