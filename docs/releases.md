@@ -1,6 +1,6 @@
 # Releases
 
-Release with an agent: run [`lj-dev-release`](../.agents/skills/lj-dev-release/SKILL.md). It asks for approval
+Release with an agent: run [`lj-release`](../.agents/skills/lj-release/SKILL.md). It asks for approval
 before it merges the release PR.
 
 This page is the process that skill follows, and every step can also be run by hand.
@@ -31,7 +31,7 @@ version and `fix` the patch version. A `Release-As: X.Y.Z` footer in a commit bo
 ## Prepare the changelog
 
 Read the proposed version from the release PR title. Curate its `CHANGELOG.md` section with
-[`lj-dev-changelog`](../.agents/skills/lj-dev-changelog/references/curated-release.md) in release mode:
+[`lj-changelog`](../.agents/skills/lj-changelog/references/curated-release.md) in release mode:
 highlights by impact, the trimmed log below them, and the heading date set to the release day. The version in the heading
 must match the release PR.
 

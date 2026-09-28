@@ -1,5 +1,5 @@
 ---
-name: lj-dev-commit
+name: lj-commit
 description:
   "Prepare a commit in the lazyjira repository. Use this when the user asks to commit, stage, ship, or finish a change. Add
   the changelog entry, stage selectively, run the CI-parity checks, show the exact Conventional Commit, and wait for explicit
@@ -30,7 +30,7 @@ restore, or clean.
 
 ## 2. Verify the changelog entry
 
-The change already carries its user-facing line under `CHANGELOG.md`; `lj-dev-changelog` writes it as part of every
+The change already carries its user-facing line under `CHANGELOG.md`; `lj-changelog` writes it as part of every
 implementation. Confirm it is present, accurate, and under the correct Unreleased category. Write a new entry only when the
 implementation did not add one.
 

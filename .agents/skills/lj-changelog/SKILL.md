@@ -1,5 +1,5 @@
 ---
-name: lj-dev-changelog
+name: lj-changelog
 description:
   "Write CHANGELOG.md for lazyjira: the mechanical entry every implementation adds, and the curated release section before
   a release ships. Use it for every change; only formatting-only, generated-only, changelog-only, or merge/revert changes

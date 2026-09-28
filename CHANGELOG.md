@@ -138,7 +138,7 @@ and `collapsedPanelHeight` has no effect.
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Agent skills — nbr <nikolaus.brunner@protonmail.ch>
-  - `lj-dev-changelog`, `lj-dev-commit`, and `lj-dev-release` cover changelog entries, commits, and
+  - `lj-changelog`, `lj-commit`, and `lj-release` cover changelog entries, commits, and
     releases.
 - CI and releases — nbr <nikolaus.brunner@protonmail.ch>
   - release-please proposes versions from Conventional Commits, and GoReleaser publishes binaries with the curated
