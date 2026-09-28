@@ -204,7 +204,7 @@ func (t *TextInput) View() string {
 	var b strings.Builder
 	if cursorInWindow >= 0 && cursorInWindow < len(visible) {
 		b.WriteString(string(visible[:cursorInWindow]))
-		b.WriteString(cursorStyle.Render(string(visible[cursorInWindow])))
+		b.WriteString(cursorStyle.Reverse(true).Render(string(visible[cursorInWindow])))
 		b.WriteString(string(visible[cursorInWindow+1:]))
 	} else {
 		b.WriteString(string(visible))
@@ -232,7 +232,7 @@ func (t *TextInput) viewHighlighted(visible []rune, cursorInWindow int, cursorSt
 			if len(before) > 0 {
 				b.WriteString(seg.Style.Render(string(before)))
 			}
-			b.WriteString(cursorStyle.Render(string(at)))
+			b.WriteString(cursorStyle.Reverse(true).Render(string(at)))
 			if len(after) > 0 {
 				b.WriteString(seg.Style.Render(string(after)))
 			}
