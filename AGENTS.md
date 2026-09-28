@@ -10,7 +10,8 @@
 
 ## Agent configuration
 
-- `AGENTS.md` and `.agents/skills/` are canonical. `CLAUDE.md` and `.claude` are relative symlinks; keep them as symlinks.
+- `AGENTS.md` and `.agents/skills/` are canonical and agent-neutral. `CLAUDE.md` and `.claude/skills` are relative symlinks to them; keep them as symlinks.
+- Agent-specific config lives in that agent's own directory: `.claude/settings.json`, `.pi/extensions/`.
 - Load the `terminal-rendering` skill for ANSI styling, display-width calculations, truncation, padding, alignment, and selection-background changes.
 
 ## Local preview
