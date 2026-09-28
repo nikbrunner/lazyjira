@@ -1,4 +1,4 @@
-.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check startup-smoke check-demo tidy fix release preview e2e e2e-gen e2e-update nix-deps hooks check-staged
+.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check startup-smoke check-demo tidy fix preview e2e e2e-gen e2e-update nix-deps hooks check-staged
 
 build:
 	go build -o lazyjira ./cmd/lazyjira
@@ -55,14 +55,6 @@ tidy:
 	go mod tidy
 
 fix: tidy lint-fix nix-deps
-
-release:
-	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=2.7.0" && exit 1)
-	keepachangelog release $(VERSION)
-	git add CHANGELOG.md
-	git commit -m "release v$(VERSION)"
-	git tag v$(VERSION)
-	@echo "Tagged v$(VERSION). Push with: git push && git push --tags"
 
 check-demo:
 	go tool golangci-lint run --build-tags demo ./...

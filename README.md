@@ -126,6 +126,10 @@ Press `?` inside the app for all keybindings.
 - [Keybindings](docs/Keybindings.md) - full list of default keys
 - [Custom Fields](docs/Custom_Fields.md) - displaying Jira custom fields
 
+## Releases
+
+Versions and GitHub Releases are cut by [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org/). Release notes come from the curated [CHANGELOG](CHANGELOG.md); the maintainer process is in [docs/releases.md](docs/releases.md).
+
 ## License
 
 MIT

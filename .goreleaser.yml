@@ -39,6 +39,7 @@ changelog:
   sort: asc
 
 release:
+  mode: replace
   footer: |
     ---
     **Full changelog:**
