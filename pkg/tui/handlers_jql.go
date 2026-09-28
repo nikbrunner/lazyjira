@@ -26,6 +26,7 @@ func (a *App) handleJQLSearchResult(msg jqlSearchResultMsg) (tea.Model, tea.Cmd)
 	a.side = sideLeft
 	a.leftFocus = focusIssues
 	a.updateFocusState()
+	a.ensureActiveIssueTabVisible()
 	cmds := make([]tea.Cmd, 0, len(msg.issues))
 	for _, issue := range msg.issues {
 		cmds = append(cmds, prefetchIssue(a.client, issue.Key))

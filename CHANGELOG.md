@@ -28,6 +28,7 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
   - Scrolling the Issue tabs pane by mouse wheel or overflow click stops at the last full window.
   - Closing a JQL or children tab keeps the other one with its issues and filters.
+  - Opening or closing a JQL tab scrolls the Issue tabs pane to the active tab.
   - The text cursor stays visible when it sits inside the text, including on spaces.
 - JQL search — nbr <nikolaus.brunner@protonmail.ch>
   - A failed JQL search shows Jira's error messages in a wrapped Error panel above the history.

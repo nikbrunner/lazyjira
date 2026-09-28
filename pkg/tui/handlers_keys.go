@@ -421,6 +421,7 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 	case ActCloseJQLTab:
 		if a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.IsJQLTab() {
 			a.issuesList.RemoveJQLTab()
+			a.ensureActiveIssueTabVisible()
 			if !a.issuesList.HasCachedTab() {
 				return a, a.fetchActiveTab(), true
 			}
