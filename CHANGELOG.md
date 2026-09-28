@@ -50,6 +50,14 @@ In the Issues panel, `space` marks single issues and `v` marks a range from the 
 and keep it marked, then add or remove single issues with `space`. `y` copies the marked issue rows as plain text, one line
 per issue with your configured columns, and `esc` clears the marks. Without marks, `y` copies the issue URL.
 
+Copied rows drop square brackets, so a summary like `[web-ui] Release` does not turn into a Markdown link when pasted.
+`sanitize.remove` sets which strings are removed, and custom commands use the same list through `{{.Summary | sanitize}}`:
+
+```yaml
+sanitize:
+  remove: ["[", "]"]
+```
+
 While issues are marked, these keys keep their built-in meaning even if a custom command uses the same key. Remap the range
 key with `keybinding.issues.visualSelect`.
 

@@ -74,6 +74,7 @@ type Config struct {
 	Git              GitConfig             `yaml:"git"`
 	Worktree         WorktreeConfig        `yaml:"worktree"`
 	CustomCommands   []CustomCommandConfig `yaml:"customCommands"`
+	Sanitize         SanitizeConfig        `yaml:"sanitize"`
 	Converter        string                `yaml:"converter"`
 	Renderer         string                `yaml:"renderer"`
 	RendererStyle    string                `yaml:"rendererStyle"`
@@ -311,6 +312,7 @@ func DefaultConfig() *Config {
 			AutoRefresh: true,
 			Interval:    "30s",
 		},
+		Sanitize: SanitizeConfig{Remove: []string{"[", "]"}},
 	}
 }
 

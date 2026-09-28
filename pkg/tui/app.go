@@ -297,6 +297,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	if len(cfg.GUI.PriorityIcons) > 0 {
 		issuesList.SetPriorityIcons(cfg.GUI.PriorityIcons)
 	}
+	issuesList.SetSanitizer(cfg.Sanitize.Apply)
 	issuesList.SetTabs(cfg.IssueTabs)
 	issuesList.SetFocused(true)
 	issuesList.SetUserEmail(cfg.Jira.Email)

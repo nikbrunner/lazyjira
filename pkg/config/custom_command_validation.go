@@ -205,19 +205,19 @@ func validateTemplateAction(pipe *parse.PipeNode) (bool, error) {
 		return false, nil
 	}
 	if len(pipe.Cmds) != 2 || len(pipe.Cmds[1].Args) != 1 {
-		return false, errors.New("unsupported template formatting; use shellescape, slugify, or shellraw")
+		return false, errors.New("unsupported template formatting; use shellescape, slugify, sanitize, or shellraw")
 	}
 	helper, ok := pipe.Cmds[1].Args[0].(*parse.IdentifierNode)
 	if !ok {
-		return false, errors.New("unsupported template formatting; use shellescape, slugify, or shellraw")
+		return false, errors.New("unsupported template formatting; use shellescape, slugify, sanitize, or shellraw")
 	}
 	switch helper.Ident {
-	case "shellescape", "slugify":
+	case "shellescape", "slugify", "sanitize":
 		return false, nil
 	case "shellraw":
 		return true, nil
 	default:
-		return false, fmt.Errorf("unsupported template helper %q; use shellescape, slugify, or shellraw", helper.Ident)
+		return false, fmt.Errorf("unsupported template helper %q; use shellescape, slugify, sanitize, or shellraw", helper.Ident)
 	}
 }
 

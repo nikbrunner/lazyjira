@@ -186,6 +186,7 @@ func (c *Config) ResolveCustomCommandsForShell(shell string) ([]ResolvedCustomCo
 		tmpl, err := template.New("customCommand").
 			Option("missingkey=error").
 			Funcs(commandFuncMap).
+			Funcs(template.FuncMap{"sanitize": func(value any) string { return c.Sanitize.Apply(templateString(value)) }}).
 			Parse(entry.Command)
 		if err != nil {
 			return nil, fmt.Errorf("customCommands[%d] (%q): template parse error: %w", i, entry.Key, err)

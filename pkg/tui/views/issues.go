@@ -54,6 +54,7 @@ type IssuesList struct {
 	maximized        bool
 	marked           map[string]bool
 	visualAnchor     string
+	sanitize         func(string) string
 }
 
 func NewIssuesList() *IssuesList {
@@ -71,10 +72,11 @@ func (m *IssuesList) SetSize(w, h int) {
 	m.AdjustOffset()
 }
 
-func (m *IssuesList) SetFields(fields []string)    { m.fields = fields }
-func (m *IssuesList) SetFocusHint(hint string)     { m.focusHint = hint }
-func (m *IssuesList) SetMaximized(maximized bool)  { m.maximized = maximized }
-func (m *IssuesList) SetClearFilterKey(key string) { m.clearFilterKey = key }
+func (m *IssuesList) SetFields(fields []string)           { m.fields = fields }
+func (m *IssuesList) SetFocusHint(hint string)            { m.focusHint = hint }
+func (m *IssuesList) SetMaximized(maximized bool)         { m.maximized = maximized }
+func (m *IssuesList) SetSanitizer(fn func(string) string) { m.sanitize = fn }
+func (m *IssuesList) SetClearFilterKey(key string)        { m.clearFilterKey = key }
 func (m *IssuesList) SetTypeIcons(icons map[string]string) {
 	m.typeIcons = icons
 	max := 0

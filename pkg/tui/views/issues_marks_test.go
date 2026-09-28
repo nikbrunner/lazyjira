@@ -133,6 +133,19 @@ func TestIssuesList_RangeStopsAtListEdges(t *testing.T) {
 	}
 }
 
+func TestIssuesList_MarkedRowsTextIsSanitized(t *testing.T) {
+	t.Parallel()
+	list := NewIssuesList()
+	list.SetSanitizer(config.DefaultConfig().Sanitize.Apply)
+	list.SetFields([]string{"key", "summary"})
+	list.SetIssues([]jira.Issue{{Key: "A-1", Summary: "[web-ui] Release [0.7.0]"}})
+	list.ToggleMark()
+
+	if got, want := list.MarkedRowsText(), "A-1 web-ui Release 0.7.0"; got != want {
+		t.Fatalf("MarkedRowsText() = %q, want %q", got, want)
+	}
+}
+
 //nolint:paralleltest // The terminal color profile is process-wide.
 func TestIssuesList_MarkedRowsShowGlyphAndKeepWidth(t *testing.T) {
 	profile := lipgloss.ColorProfile()

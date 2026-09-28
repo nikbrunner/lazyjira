@@ -87,6 +87,7 @@ func (m *IssuesList) MarkedIssues() []jira.Issue {
 
 // MarkedRowsText renders the marked issues as plain-text issue rows, one per
 // line, with the Summary column fitted to the longest summary in the issue list.
+// Each value passes through the configured sanitizer.
 func (m *IssuesList) MarkedRowsText() string {
 	columns := m.issueColumns(math.MaxInt32)
 	marked := m.MarkedIssues()
@@ -94,7 +95,11 @@ func (m *IssuesList) MarkedRowsText() string {
 	for _, issue := range marked {
 		cells := make([]string, len(columns))
 		for i, column := range columns {
-			cells[i] = padRight(components.TruncateEnd(m.issueFieldValue(issue, column.field), column.width), column.width)
+			value := components.TruncateEnd(m.issueFieldValue(issue, column.field), column.width)
+			if m.sanitize != nil {
+				value = m.sanitize(value)
+			}
+			cells[i] = padRight(value, column.width)
 		}
 		lines = append(lines, strings.TrimRight(strings.Join(cells, " "), " "))
 	}

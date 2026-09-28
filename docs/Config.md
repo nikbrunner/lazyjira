@@ -135,6 +135,8 @@ git:
     worktreeFormat: "{{if .RepoName}}{{.RepoName}}-{{end}}{{.Key}}-{{.Summary}}"
 worktree:
     defaultPath: ".."
+sanitize:
+    remove: ["[", "]"]
 ```
 
 `cache.enabled` and `cache.ttl` control in-memory TTL caching for Jira boards, sprint options, project users, and issue-creation metadata. The app-wide Refresh All binding (`R` by default) clears these entries. Close an open picker before using Refresh All. Issue details and child issues use their own freshness behavior.
@@ -559,6 +561,15 @@ rendererStyle: auto
 
 Any other value causes lazyjira to exit on startup with an error naming the invalid setting.
 
+## Sanitizing copied text (`sanitize`)
+
+`sanitize.remove` lists strings removed from copied text: each cell of yanked issue rows and every value passed through the `sanitize` custom command helper. The default removes square brackets, so pasted summaries such as `[web-ui] Release` do not form Markdown links. A configured list replaces the default; `remove: []` keeps copied text unchanged.
+
+```yaml
+sanitize:
+  remove: ["[", "]", "`"]
+```
+
 ## Custom commands
 
 Bind shell commands to keys, with Go template access to the focused issue, project, or comment. Custom bindings take precedence over built-in keys, so they can be used to override any action. While issues are marked in the Issues panel, the marking keys (`select`, `visualSelect`, `copyURL`, `focusLeft`) keep their built-in behavior.
@@ -659,6 +670,7 @@ Direct field values are shell-escaped as one argument; `slugify` produces a shel
 |`{{.X \| shellescape}}`|Explicitly wraps the value in single quotes with inner quotes escaped.|
 |`{{.X \| shellraw}}`|Inserts the value without shell escaping. Use only for trusted shell syntax. Other template values are checked against the rendered command after raw values are inserted.|
 |`{{.Summary \| slugify}}`|Converts text to a lowercase ASCII slug containing letters, digits, and hyphens.|
+|`{{.Summary \| sanitize}}`|Removes the strings listed in `sanitize.remove`, then shell-escapes the value.|
 
 Validation follows the configured `$SHELL` for POSIX `sh`, `bash`, `zsh`, or `mksh`. Zsh parsing is experimental, so uncommon valid syntax may be rejected. Quoting keeps Jira text in an argument; it is not a sandbox. A trusted command can still reinterpret arguments with `eval`, `sh -c`, or another interpreter.
 
