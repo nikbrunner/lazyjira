@@ -27,6 +27,7 @@ type ListBase struct {
 	HeaderRows int
 	Focused    bool
 	ResolveNav NavResolver
+	NoWrap     bool
 	itemCount  int
 	dblClick   DblClickDetector
 }
@@ -90,13 +91,13 @@ func (l *ListBase) KeyNav(key string) bool {
 	case NavDown:
 		if l.Cursor < l.itemCount-1 {
 			l.Cursor++
-		} else if l.itemCount > 0 {
+		} else if l.itemCount > 0 && !l.NoWrap {
 			l.Cursor = 0
 		}
 	case NavUp:
 		if l.Cursor > 0 {
 			l.Cursor--
-		} else if l.itemCount > 0 {
+		} else if l.itemCount > 0 && !l.NoWrap {
 			l.Cursor = l.itemCount - 1
 		}
 	case NavTop:

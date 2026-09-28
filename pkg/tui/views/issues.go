@@ -476,6 +476,7 @@ func (m *IssuesList) Update(msg tea.Msg) (*IssuesList, tea.Cmd) {
 		return m, nil
 	}
 	if msg, ok := msg.(tea.KeyMsg); ok {
+		m.NoWrap = m.visualAnchor != ""
 		if m.KeyNav(msg.String()) {
 			return m, func() tea.Msg {
 				return IssueSelectedMsg{Issue: m.SelectedIssue()}

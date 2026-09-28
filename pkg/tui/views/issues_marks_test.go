@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
@@ -104,6 +105,31 @@ func TestIssuesList_MarkedRowsTextKeepsFullSummaries(t *testing.T) {
 	want := "A-2  Second, longer summary\nA-10 Fourth"
 	if got := list.MarkedRowsText(); got != want {
 		t.Fatalf("MarkedRowsText() = %q, want %q", got, want)
+	}
+}
+
+func TestIssuesList_RangeStopsAtListEdges(t *testing.T) {
+	t.Parallel()
+	list := makeFocusedIssuesList([]jira.Issue{{Key: "A-1"}, {Key: "A-2"}})
+	down := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")}
+	up := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")}
+
+	list.Cursor = 1
+	list.ToggleVisual()
+	list.Update(down)
+	if list.Cursor != 1 {
+		t.Fatalf("cursor after j at bottom in range = %d, want 1", list.Cursor)
+	}
+	list.Cursor = 0
+	list.Update(up)
+	if list.Cursor != 0 {
+		t.Fatalf("cursor after k at top in range = %d, want 0", list.Cursor)
+	}
+
+	list.ClearMarks()
+	list.Update(up)
+	if list.Cursor != 1 {
+		t.Fatalf("cursor after k at top without range = %d, want wrap to 1", list.Cursor)
 	}
 }
 
