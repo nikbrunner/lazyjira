@@ -354,3 +354,22 @@ func TestPresetsReturnsCopy(t *testing.T) {
 		t.Errorf("Presets backing slice was mutated: got %q, want %q", again[0].Name, original)
 	}
 }
+
+func TestInitSelectsBorderShape(t *testing.T) {
+	t.Cleanup(func() { _ = SetTheme("default") })
+	for _, tt := range []struct {
+		borders string
+		want    lipgloss.Border
+	}{
+		{"", lipgloss.RoundedBorder()},
+		{"rounded", lipgloss.RoundedBorder()},
+		{"sharp", lipgloss.NormalBorder()},
+	} {
+		if err := Init(Options{Preset: "default", Borders: tt.borders}); err != nil {
+			t.Fatal(err)
+		}
+		if Default.Border != tt.want {
+			t.Errorf("borders %q: Border = %+v, want %+v", tt.borders, Default.Border, tt.want)
+		}
+	}
+}

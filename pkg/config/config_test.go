@@ -239,6 +239,19 @@ func TestValidateConverter(t *testing.T) {
 	}
 }
 
+func TestValidateBorders(t *testing.T) {
+	t.Parallel()
+	for _, value := range []string{"", BordersRounded, BordersSharp} {
+		if err := validateBorders(value); err != nil {
+			t.Errorf("validateBorders(%q) = %v, want nil", value, err)
+		}
+	}
+	err := validateBorders("square")
+	if err == nil || !strings.Contains(err.Error(), "square") {
+		t.Errorf("validateBorders(%q) = %v, want error naming the value", "square", err)
+	}
+}
+
 func TestValidateRenderer(t *testing.T) {
 	t.Parallel()
 	cases := []struct {

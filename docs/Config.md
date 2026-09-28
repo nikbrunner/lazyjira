@@ -197,6 +197,8 @@ gui:
 
 `sidePanelWidth` controls the left column width in terminal cells. It defaults to 22 and caps at 35% of the terminal on narrow screens. If the terminal cannot fit the configured issue columns, lazyjira shows the minimum required size.
 
+`borders` sets the border shape of panels, modals, and toasts: `rounded` (default, `╭─╮`) or `sharp` (`┌─┐`). Any other value is an error.
+
 The Project selector and App status panel share the top row. Issue tabs and Issues share the upper workspace row; Issue info and Issue details share the lower row. The command log and help bar stay along the bottom. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
 
 `theme` selects the color palette. Supported values: `default` (terminal ANSI colors), `auto`, [Catppuccin](https://github.com/catppuccin/catppuccin) presets (`catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`). Omitting the `theme` key or setting it to `""` selects the `default` palette. Use `theme: auto` to opt into runtime detection: lazyjira inspects your terminal background and picks `catppuccin-mocha` (dark) or `catppuccin-latte` (light). An unknown theme name is an error. Hex-based themes require a terminal with truecolor support.

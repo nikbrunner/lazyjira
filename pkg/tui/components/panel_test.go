@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
 )
 
 func TestRenderCollapsedBar_FocusedContainsTitle(t *testing.T) {
@@ -81,5 +83,18 @@ func TestRenderPanel_TruncatesExtraContentLines(t *testing.T) {
 	lineCount := strings.Count(out, "\n")
 	if lineCount > 10 {
 		t.Errorf("expected at most ~8 lines for innerHeight=5, got %d", lineCount)
+	}
+}
+
+//nolint:paralleltest // Replaces the process-wide theme border.
+func TestRenderPanel_UsesThemeBorder(t *testing.T) {
+	previous := theme.Default.Border
+	theme.Default.Border = lipgloss.NormalBorder()
+	t.Cleanup(func() { theme.Default.Border = previous })
+
+	out := stripANSI(RenderPanelFull("T", "1", "x", 8, 1, false, nil))
+	want := "┌─T────┐\n│x     │\n└────1─┘"
+	if out != want {
+		t.Errorf("panel =\n%s\nwant\n%s", out, want)
 	}
 }

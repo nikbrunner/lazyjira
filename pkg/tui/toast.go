@@ -37,7 +37,7 @@ func (a *App) renderCopyToast(base string) string {
 	contentWidth := min(60, a.width-2) - 4
 	style := lipgloss.NewStyle().
 		Foreground(theme.ColorGreen).
-		Border(lipgloss.RoundedBorder()).
+		Border(theme.Default.Border).
 		BorderForeground(theme.ColorGreen).
 		Padding(0, 1)
 	popup := style.Render(ansi.Truncate(a.toastText, contentWidth, "…"))

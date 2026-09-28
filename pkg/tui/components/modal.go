@@ -565,9 +565,10 @@ func (m *Modal) viewSelectable() string {
 	lines = visible
 
 	borderStyle := lipgloss.NewStyle().Foreground(theme.ColorGreen)
-	bv := borderStyle.Render("│")
+	b := theme.Default.Border
+	bv := borderStyle.Render(b.Left)
 
-	topLine := borderStyle.Render("╭" + strings.Repeat("─", contentW) + "╮")
+	topLine := borderStyle.Render(b.TopLeft + strings.Repeat(b.Top, contentW) + b.TopRight)
 
 	var body strings.Builder
 	body.WriteString(topLine + "\n")
@@ -582,9 +583,9 @@ func (m *Modal) viewSelectable() string {
 	footerStyled := borderStyle.Render(footer)
 	footerLen := lipgloss.Width(footerStyled)
 	pad := max(contentW-footerLen, 0)
-	bottomLine := borderStyle.Render("╰"+strings.Repeat("─", pad)) +
+	bottomLine := borderStyle.Render(b.BottomLeft+strings.Repeat(b.Bottom, pad)) +
 		footerStyled +
-		borderStyle.Render("╯")
+		borderStyle.Render(b.BottomRight)
 	body.WriteString(bottomLine)
 
 	return body.String()
@@ -719,7 +720,7 @@ func (m *Modal) HintView() string {
 	const hintH = 2
 	hintContent := lipgloss.NewStyle().Width(contentW).Render(" " + hint)
 	return lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(theme.Default.Border).
 		BorderForeground(theme.ColorWhite).
 		Width(contentW).
 		Height(hintH).

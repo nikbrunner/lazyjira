@@ -62,6 +62,7 @@ type Theme struct {
 
 	Colors        ColorPalette
 	AuthorPalette []lipgloss.Color
+	Border        lipgloss.Border
 }
 
 // Default is the singleton theme instance
@@ -162,6 +163,7 @@ func buildTheme(p ColorPalette, authors []lipgloss.Color) *Theme {
 
 		Colors:        p,
 		AuthorPalette: authors,
+		Border:        lipgloss.RoundedBorder(),
 	}
 }
 
@@ -199,11 +201,15 @@ func syncColors() {
 // "red", "yellow", "cyan", "magenta", "white", "gray", "orange", "highlight".
 // Unknown keys and empty values are silently ignored so configs stay
 // forward-compatible.
+//
+// Borders selects the border shape: "sharp" uses square corners, any other
+// value keeps the rounded default.
 type Options struct {
 	Preset      string
 	Colors      map[string]string
 	ColorsDark  map[string]string
 	ColorsLight map[string]string
+	Borders     string
 }
 
 // Init selects a preset, applies any user overrides, and refreshes the
@@ -246,6 +252,9 @@ func Init(opts Options) error {
 	}
 
 	Default = buildTheme(palette, built.AuthorPalette)
+	if opts.Borders == "sharp" {
+		Default.Border = lipgloss.NormalBorder()
+	}
 	syncColors()
 	return nil
 }

@@ -81,6 +81,7 @@ func run() error {
 		Colors:      cfg.GUI.ThemeColors,
 		ColorsDark:  cfg.GUI.ThemeDark,
 		ColorsLight: cfg.GUI.ThemeLight,
+		Borders:     cfg.GUI.Borders,
 	}); err != nil {
 		return err
 	}

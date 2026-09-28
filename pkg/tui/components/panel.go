@@ -85,9 +85,10 @@ func renderPanelImpl(title, footer, content string, width, innerHeight int, bord
 	// Top border.
 	titleLen := lipgloss.Width(styledTitle)
 	topPadding := max(contentWidth-titleLen-1, 0)
-	topLine := borderStyle.Render("╭─") +
+	b := th.Border
+	topLine := borderStyle.Render(b.TopLeft+b.Top) +
 		styledTitle +
-		borderStyle.Render(strings.Repeat("─", topPadding)+"╮")
+		borderStyle.Render(strings.Repeat(b.Top, topPadding)+b.TopRight)
 
 	// Content lines.
 	lines := strings.Split(content, "\n")
@@ -124,7 +125,7 @@ func renderPanelImpl(title, footer, content string, width, innerHeight int, bord
 		thumbEnd = min(thumbStart+thumbH, scrollArea)
 	}
 
-	borderVert := borderStyle.Render("│")
+	borderVert := borderStyle.Render(b.Left)
 	thumbChar := borderStyle.Render("▐")
 	var body strings.Builder
 	for i, line := range lines {
@@ -147,11 +148,11 @@ func renderPanelImpl(title, footer, content string, width, innerHeight int, bord
 		styledFooter := borderStyle.Render(footer)
 		footerLen := lipgloss.Width(styledFooter)
 		padding := max(contentWidth-footerLen-1, 0)
-		bottomLine = borderStyle.Render("╰"+strings.Repeat("─", padding)) +
+		bottomLine = borderStyle.Render(b.BottomLeft+strings.Repeat(b.Bottom, padding)) +
 			styledFooter +
-			borderStyle.Render("─╯")
+			borderStyle.Render(b.Bottom+b.BottomRight)
 	} else {
-		bottomLine = borderStyle.Render("╰" + strings.Repeat("─", contentWidth) + "╯")
+		bottomLine = borderStyle.Render(b.BottomLeft + strings.Repeat(b.Bottom, contentWidth) + b.BottomRight)
 	}
 
 	return topLine + "\n" + body.String() + bottomLine

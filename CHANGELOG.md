@@ -78,6 +78,16 @@ cache:
   ttl: 5m
 ```
 
+#### Sharp borders
+
+Panels, modals, and toasts can drop the rounded corners. Rounded stays the default
+([#6](https://github.com/nikbrunner/lazyjira/issues/6)).
+
+```yaml
+gui:
+  borders: sharp
+```
+
 #### Important fixes
 
 - The sprint picker follows Jira pagination across Scrum boards and lists every available sprint.

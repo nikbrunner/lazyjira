@@ -412,15 +412,16 @@ func (m *JQLModal) View() string {
 	inner := strings.Join(parts, "\n")
 
 	innerLines := strings.Split(inner, "\n")
-	topLine := borderStyle.Render("╭" + strings.Repeat("─", m.width-2) + "╮")
-	bottomLine := borderStyle.Render("╰" + strings.Repeat("─", m.width-2) + "╯")
+	border := theme.Default.Border
+	topLine := borderStyle.Render(border.TopLeft + strings.Repeat(border.Top, m.width-2) + border.TopRight)
+	bottomLine := borderStyle.Render(border.BottomLeft + strings.Repeat(border.Bottom, m.width-2) + border.BottomRight)
 
 	var b strings.Builder
 	b.WriteString(topLine + "\n")
 	for _, line := range innerLines {
 		lineW := lipgloss.Width(line)
 		pad := max(m.width-2-lineW, 0)
-		b.WriteString(borderStyle.Render("│") + line + strings.Repeat(" ", pad) + borderStyle.Render("│") + "\n")
+		b.WriteString(borderStyle.Render(border.Left) + line + strings.Repeat(" ", pad) + borderStyle.Render(border.Right) + "\n")
 	}
 	b.WriteString(bottomLine)
 

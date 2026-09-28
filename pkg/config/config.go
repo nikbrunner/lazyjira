@@ -60,6 +60,22 @@ func validateRendererStyle(value string) error {
 	}
 }
 
+// Valid values for GUIConfig.Borders. Empty string is treated as BordersRounded.
+const (
+	BordersRounded = "rounded"
+	BordersSharp   = "sharp"
+)
+
+func validateBorders(value string) error {
+	switch value {
+	case "", BordersRounded, BordersSharp:
+		return nil
+	default:
+		return fmt.Errorf("unknown borders %q; valid: %q (default), %q",
+			value, BordersRounded, BordersSharp)
+	}
+}
+
 type Config struct {
 	Jira             JiraConfig            `yaml:"jira"`
 	Projects         []ProjectConfig       `yaml:"projects"`
@@ -257,7 +273,7 @@ type GUIConfig struct {
 	ShowIcons            bool              `yaml:"showIcons"`  // TODO not yet wired up
 	DateFormat           string            `yaml:"dateFormat"` // TODO not yet wired up
 	Mouse                bool              `yaml:"mouse"`      // TODO not yet wired up
-	Borders              string            `yaml:"borders"`    // TODO not yet wired up
+	Borders              string            `yaml:"borders"`
 	IssueListFields      []string          `yaml:"issueListFields"`
 	PrefillFromTab       *bool             `yaml:"prefillFromTab"`
 	SelectCreatedIssue   *bool             `yaml:"selectCreatedIssue"`
@@ -436,6 +452,10 @@ func Load() (*Config, error) {
 	}
 
 	if err := validateRendererStyle(cfg.RendererStyle); err != nil {
+		return nil, err
+	}
+
+	if err := validateBorders(cfg.GUI.Borders); err != nil {
 		return nil, err
 	}
 
