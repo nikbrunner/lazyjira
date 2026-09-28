@@ -68,6 +68,7 @@ func (a *App) ContextBindings() []Binding {
 		bindings = append(bindings,
 			a.bind(ActOpen, "open issue detail"),
 			a.bind(ActFocusRight, "open issue detail"),
+			a.bind(ActInfoTab, "focus Issue info"),
 			a.bind(ActSelect, "mark issue"),
 			a.bind(ActVisualSelect, "mark range"),
 			a.bind(ActShowChildren, "show children"),
@@ -228,6 +229,7 @@ func (a *App) helpBarItems() []components.HelpItem {
 		items = append(items,
 			components.HelpItem{Key: km.Keys(ActOpen), Description: "detail"},
 			components.HelpItem{Key: km.Keys(ActSelect), Description: "mark"},
+			components.HelpItem{Key: km.Keys(ActFilterPicker), Description: "filter"},
 		)
 		if cur != nil {
 			if children, resolved := a.childrenForList(cur); resolved && len(children) > 0 {

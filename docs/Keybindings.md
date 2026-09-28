@@ -35,6 +35,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | Key | Action |
 |-----|--------|
 | `enter` | Open issue detail |
+| `i` | Focus the Issue info pane for the selected issue; `esc` returns to the Issues panel |
 | `space` | Mark or unmark the issue |
 | `>` | Open the issue's children in a temporary tab; `backspace` opens the parent and `esc` goes back |
 | `v` | Start a marked range at the cursor; press again to end it and keep the range marked |
