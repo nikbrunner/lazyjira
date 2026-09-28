@@ -124,8 +124,8 @@ Branch format templates use lowercase variables, and `{{.Summary}}` is already a
 
 Quoted placeholders in custom commands fail validation. Remove the quotes around them; lazyjira escapes the value itself.
 
-In the Issues panel, `space` marks the issue and `enter` opens its detail. Opening an issue's children from the list has no
-key yet ([#3](https://github.com/nikbrunner/lazyjira/issues/3)).
+In the Issues panel, `space` marks the issue, `enter` opens its detail, and `>` opens its children
+([#3](https://github.com/nikbrunner/lazyjira/issues/3)).
 
 In the Issue details pane, `ctrl+d` and `ctrl+u` scroll, and `H` `J` `K` `L` move focus. `sidePanelWidth` defaults to `22`,
 and `collapsedPanelHeight` has no effect.

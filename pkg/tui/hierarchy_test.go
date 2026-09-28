@@ -744,7 +744,7 @@ func TestHelpBar_Backspace_OnlyWhenParent(t *testing.T) {
 	}
 }
 
-func TestHelpBar_Enter_ChildrenVsDetail(t *testing.T) {
+func TestHelpBar_ChildrenOnlyWhenIssueHasChildren(t *testing.T) {
 	t.Parallel()
 	fake := &jiratest.FakeClient{T: t}
 	a := newAppWithFake(t, fake)
@@ -753,11 +753,11 @@ func TestHelpBar_Enter_ChildrenVsDetail(t *testing.T) {
 	a.issuesList.SetIssues([]jira.Issue{
 		{Key: "A1", Subtasks: []jira.Issue{{Key: "S1"}}},
 	})
-	if _, ok := findHelpItem(a.helpBarItems(), "children"); !ok {
-		t.Errorf("help bar missing 'children' entry when subtasks exist")
+	if item, ok := findHelpItem(a.helpBarItems(), "children"); !ok || item.Key != ">" {
+		t.Errorf("help bar children entry = %+v, %v; want key >", item, ok)
 	}
-	if _, ok := findHelpItem(a.helpBarItems(), "detail"); ok {
-		t.Errorf("help bar shows 'detail' when subtasks exist")
+	if _, ok := findHelpItem(a.helpBarItems(), "detail"); !ok {
+		t.Errorf("help bar missing 'detail' entry when subtasks exist")
 	}
 
 	a.issuesList.SetIssues([]jira.Issue{{Key: "A1"}})
@@ -766,6 +766,24 @@ func TestHelpBar_Enter_ChildrenVsDetail(t *testing.T) {
 	}
 	if _, ok := findHelpItem(a.helpBarItems(), "children"); ok {
 		t.Errorf("help bar shows 'children' for leaf issue")
+	}
+}
+
+func TestShowChildrenKey_OpensHierarchyTab(t *testing.T) {
+	t.Parallel()
+	a := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	a.keymap = DefaultKeymap()
+	a.side = sideLeft
+	a.leftFocus = focusIssues
+	a.issuesList.SetIssues([]jira.Issue{{Key: "A1", Subtasks: []jira.Issue{{Key: "S1"}}}})
+
+	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(">")})
+
+	if !a.issuesList.IsHierarchyTab() {
+		t.Fatal("> should open the children hierarchy tab")
+	}
+	if sel := a.issuesList.SelectedIssue(); sel == nil || sel.Key != "S1" {
+		t.Errorf("SelectedIssue() = %+v, want S1", sel)
 	}
 }
 

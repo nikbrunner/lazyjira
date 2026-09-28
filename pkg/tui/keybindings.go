@@ -70,6 +70,7 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActFocusRight, "open issue detail"),
 			a.bind(ActSelect, "mark issue"),
 			a.bind(ActVisualSelect, "mark range"),
+			a.bind(ActShowChildren, "show children"),
 			a.bind(ActCopyURL, "copy URL, or marked rows"),
 			a.bind(ActTransition, "transition issue status"),
 			a.bind(ActEdit, "edit summary"),
@@ -223,14 +224,15 @@ func (a *App) helpBarItems() []components.HelpItem {
 			items = append(items, components.HelpItem{Key: km.Keys(ActCloseJQLTab), Description: "close JQL"})
 		}
 		cur := a.currentIssue()
-		enterDesc := "detail"
+		items = append(items,
+			components.HelpItem{Key: km.Keys(ActOpen), Description: "detail"},
+			components.HelpItem{Key: km.Keys(ActSelect), Description: "mark"},
+		)
 		if cur != nil {
-			children, resolved := a.childrenForList(cur)
-			if resolved && len(children) > 0 {
-				enterDesc = "children"
+			if children, resolved := a.childrenForList(cur); resolved && len(children) > 0 {
+				items = append(items, components.HelpItem{Key: km.Keys(ActShowChildren), Description: "children"})
 			}
 		}
-		items = append(items, components.HelpItem{Key: km.Keys(ActSelect), Description: enterDesc})
 		if cur != nil && cur.Parent != nil && cur.Parent.Key != "" {
 			items = append(items, components.HelpItem{Key: km.Keys(ActShowParent), Description: "parent"})
 		}

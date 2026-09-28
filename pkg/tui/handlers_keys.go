@@ -111,6 +111,11 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, cmd
 		}
 		return a, nil
+	case ActShowChildren:
+		if cmd, ok := a.showChildren(); ok {
+			return a, cmd
+		}
+		return a, nil
 	case ActToggleMaximize:
 		if a.side == sideRight {
 			a.toggleMaximize(focusDetailPane)

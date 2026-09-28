@@ -50,6 +50,7 @@ const (
 	ActCreateSubtask    Action = "createSubtask"
 	ActDuplicateIssue   Action = "duplicateIssue"
 	ActShowParent       Action = "showParent"
+	ActShowChildren     Action = "showChildren"
 	ActVisualSelect     Action = "visualSelect"
 
 	ActNavDown     Action = "navDown"
@@ -108,6 +109,7 @@ func DefaultKeymap() Keymap {
 		ActDuplicateIssue:   {"ctrl+n"},
 		ActCreateSubtask:    {"S"},
 		ActShowParent:       {"backspace"},
+		ActShowChildren:     {">"},
 		ActVisualSelect:     {"v"},
 
 		ActNavDown:     {"j", "down", "ctrl+j"},
@@ -169,6 +171,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActCreateIssue, kcfg.Issues.CreateIssue)
 	set(ActCreateSubtask, kcfg.Issues.CreateSubtask)
 	set(ActVisualSelect, kcfg.Issues.VisualSelect)
+	set(ActShowChildren, kcfg.Issues.ShowChildren)
 	// Detail
 	set(ActFocusLeft, kcfg.Detail.FocusLeft)
 	set(ActInfoTab, kcfg.Detail.InfoTab)

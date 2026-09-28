@@ -178,6 +178,7 @@ type IssueKeys struct {
 	CreateIssue      string `yaml:"createIssue"`
 	CreateSubtask    string `yaml:"createSubtask"`
 	VisualSelect     string `yaml:"visualSelect"`
+	ShowChildren     string `yaml:"showChildren"`
 }
 
 type ProjectKeys struct {

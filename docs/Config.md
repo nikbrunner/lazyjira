@@ -102,6 +102,7 @@ keybinding:
         urlPicker: u
         copyURL: "y"
         visualSelect: v
+        showChildren: ">"
         closeJQLTab: x
         copyBranchName: b
         createBranch: B
