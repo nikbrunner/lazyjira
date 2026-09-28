@@ -50,6 +50,7 @@ type IssuesList struct {
 	hierarchyTitle   string
 	hierarchyStack   *navstack.NavStack
 	focusHint        string
+	clearFilterKey   string
 	maximized        bool
 }
 
@@ -68,9 +69,10 @@ func (m *IssuesList) SetSize(w, h int) {
 	m.AdjustOffset()
 }
 
-func (m *IssuesList) SetFields(fields []string)   { m.fields = fields }
-func (m *IssuesList) SetFocusHint(hint string)    { m.focusHint = hint }
-func (m *IssuesList) SetMaximized(maximized bool) { m.maximized = maximized }
+func (m *IssuesList) SetFields(fields []string)    { m.fields = fields }
+func (m *IssuesList) SetFocusHint(hint string)     { m.focusHint = hint }
+func (m *IssuesList) SetMaximized(maximized bool)  { m.maximized = maximized }
+func (m *IssuesList) SetClearFilterKey(key string) { m.clearFilterKey = key }
 func (m *IssuesList) SetTypeIcons(icons map[string]string) {
 	m.typeIcons = icons
 	max := 0
@@ -561,7 +563,34 @@ func (m *IssuesList) issueTitleLayout(maxTitleW int) issueTitleLayout {
 }
 
 func (m *IssuesList) buildTitle(maxTitleW int) string {
-	return m.issueTitleLayout(maxTitleW).title()
+	title := m.issueTitleLayout(maxTitleW).title()
+	return title + m.filterTitleSegment(maxTitleW-lipgloss.Width(title))
+}
+
+// filterTitleSegment renders " ─ /query (key to clear)", truncating the query
+// to fit available cells. It follows the maximize button so the button's
+// click target keeps its position.
+func (m *IssuesList) filterTitleSegment(available int) string {
+	if m.filter == "" {
+		return ""
+	}
+	sep := " ─ "
+	hint := ""
+	if m.clearFilterKey != "" {
+		hint = " (" + m.clearFilterKey + " to clear)"
+	}
+	hint += " "
+	queryW := available - lipgloss.Width(sep) - lipgloss.Width(hint) - 1
+	if queryW < 1 {
+		return ""
+	}
+	borderColor := theme.ColorNone
+	if m.Focused {
+		borderColor = theme.ColorGreen
+	}
+	return lipgloss.NewStyle().Foreground(borderColor).Render(sep) +
+		lipgloss.NewStyle().Foreground(theme.ColorCyan).Render("/"+components.TruncateEnd(m.filter, queryW)) +
+		lipgloss.NewStyle().Foreground(theme.ColorGray).Render(hint)
 }
 
 func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, width int, selected bool) string {

@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/nikbrunner/lazyjira/v2/pkg/config"
+	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
 )
 
 func topBorderLine(m *IssuesList) string {
@@ -66,5 +67,42 @@ func TestIssuesList_MaximizeTitleHitTarget(t *testing.T) {
 	m.SetMaximized(true)
 	if !strings.Contains(stripANSI(topBorderLine(m)), "[−]") {
 		t.Fatal("maximized title does not show restore control")
+	}
+}
+
+func TestIssuesList_TitleShowsActiveFilter(t *testing.T) {
+	t.Parallel()
+	m := makeIssuesListWithTabs(80, 8, "Sprint")
+	m.SetClearFilterKey("esc")
+	m.SetIssues([]jira.Issue{{Key: "PLAT-1", Summary: "beta"}})
+
+	if plain := stripANSI(topBorderLine(m)); strings.Contains(plain, "/") {
+		t.Fatalf("unfiltered title = %q, want no filter segment", plain)
+	}
+
+	m.SetFilter("beta")
+	plain := stripANSI(topBorderLine(m))
+	if !strings.Contains(plain, "[1] [Sprint] [+] ─ /beta (esc to clear) ─") {
+		t.Errorf("title = %q, want filter query and clear hint after the button", plain)
+	}
+}
+
+func TestIssuesList_FilterTitleTruncatesQueryKeepsHint(t *testing.T) {
+	t.Parallel()
+	for _, width := range []int{20, 40, 60} {
+		m := makeIssuesListWithTabs(width, 8, "Sprint")
+		m.SetClearFilterKey("esc")
+		m.SetFilter("a rather long 界 query that cannot fit")
+		line := topBorderLine(m)
+		if got := lipgloss.Width(line); got != width {
+			t.Errorf("width %d title line occupies %d cells", width, got)
+		}
+		plain := stripANSI(line)
+		if strings.Contains(plain, "/") && !strings.Contains(plain, "…") {
+			t.Errorf("width %d title = %q, want truncated query", width, plain)
+		}
+		if strings.Contains(plain, "/") != strings.Contains(plain, "(esc to clear)") {
+			t.Errorf("width %d title = %q, want query and hint together", width, plain)
+		}
 	}
 }

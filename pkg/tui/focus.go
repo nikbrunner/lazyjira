@@ -27,6 +27,7 @@ func (a *App) handleSpatialFocus(key string) (tea.Model, tea.Cmd, bool) {
 
 func (a *App) updateFocusHints() {
 	a.issuesList.SetFocusHint(a.keymap.Keys(ActFocusIssues))
+	a.issuesList.SetClearFilterKey(a.keymap.Keys(ActFocusLeft))
 	a.detailView.SetFocusHint(a.keymap.Keys(ActFocusDetail))
 	a.infoPanel.SetFocusHint(a.keymap.Keys(ActFocusInfo))
 	a.projectList.SetFocusHint(a.keymap.Keys(ActFocusProj))
