@@ -13,6 +13,11 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
   - Filter picker counts update as values are toggled, and values that would leave no issues are dimmed and cannot be checked.
   - The filter picker title shows how many loaded issues the current selection leaves, e.g. `Filter issues · 4 of 50`.
 
+### Changed
+
+- Workspace — nbr <nikolaus.brunner@protonmail.ch>
+  - The Issues row takes two-fifths of the workspace height and the Issue details row three-fifths.
+
 ### Fixed
 
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>

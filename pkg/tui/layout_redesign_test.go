@@ -133,7 +133,7 @@ func TestIssueTabsPane_OverflowIndicatorsAndClicks(t *testing.T) {
 	if lipgloss.Width(lines[0]) != app.geometry().tabs.width {
 		t.Fatalf("top border width = %d", lipgloss.Width(lines[0]))
 	}
-	if len(lines) != app.geometry().tabs.height || !strings.Contains(view, "↓ 6 more") {
+	if len(lines) != app.geometry().tabs.height || !strings.Contains(view, "↓ 4 more") {
 		t.Fatalf("overflow pane = %q", view)
 	}
 
@@ -152,7 +152,7 @@ func TestIssueTabsPane_OverflowIndicatorsAndClicks(t *testing.T) {
 		t.Fatalf("top overflow click activated tab or failed to scroll back: index=%d offset=%d", app.issuesList.GetTabIndex(), app.tabOffset)
 	}
 	app.switchIssueCollection(-1)
-	if app.issuesList.GetTabIndex() != len(tabs)-1 || app.tabOffset != len(tabs)-6 {
+	if app.issuesList.GetTabIndex() != len(tabs)-1 || app.tabOffset != len(tabs)-8 {
 		t.Fatalf("keyboard collection change did not reveal active tab: index=%d offset=%d", app.issuesList.GetTabIndex(), app.tabOffset)
 	}
 	lastWindow := ansi.Strip(app.renderIssueTabs(app.geometry().tabs.width, app.geometry().tabs.height))
@@ -172,9 +172,9 @@ func TestIssueTabsPane_ResizeKeepsActiveCollectionVisible(t *testing.T) {
 		tabs[i] = config.IssueTabConfig{Name: "Collection " + string(rune('A'+i))}
 	}
 	app.issuesList.SetTabs(tabs)
-	app.tabOffset = 6
+	app.tabOffset = 4
 	app.renderIssueTabs(app.geometry().tabs.width, app.geometry().tabs.height)
-	if app.tabOffset != 6 {
+	if app.tabOffset != 4 {
 		t.Fatalf("initial render changed offset to %d", app.tabOffset)
 	}
 

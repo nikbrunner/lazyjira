@@ -9,7 +9,7 @@ The proposed layout in [`ui.tldraw`](../ui.tldraw) is the visual reference. `doc
 - Enter or a click on the Project selector opens a project picker overlay. Typing filters projects by key or name immediately, only while the picker is open. Keyboard navigation, Enter to confirm, and Esc to cancel stay inside the overlay. Confirming or cancelling returns focus to the selector. Moving through picker results does not preview projects in Issue details.
 - The default direct-focus keys are `0` selector, `1` Issue tabs, `2` Issues, `3` Issue info, and `4` Issue details. All five are configurable. `focusStatus` is removed; `focusProjects` targets the selector and `focusIssueTabs` targets Issue tabs. Startup focus remains on Issues. `HJKL` follows adjacent focusable panes without diagonal jumps: `K` from Issues does nothing because App status is display-only.
 - Project switching keeps current query semantics: tabs using `{{.ProjectKey}}` change with the project; fixed JQL and temporary search tabs retain their queries.
-- Keep the existing sidebar width policy, one-third/two-thirds Issues/Details height split, maximize behavior, command log, and help bar.
+- Keep the existing sidebar width policy, two-fifths/three-fifths Issues/Details height split, maximize behavior, command log, and help bar.
 
 ## Implementation order
 

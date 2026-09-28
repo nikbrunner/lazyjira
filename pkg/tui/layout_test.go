@@ -74,7 +74,7 @@ func TestApp_GeometryUsesStableSplit(t *testing.T) {
 	if layout.tooSmall {
 		t.Fatalf("80×24 marked too small, requires %d×%d", layout.requiredWidth, layout.requiredHeight)
 	}
-	if layout.projects != (rect{0, 0, 22, 3}) || layout.status != (rect{22, 0, 58, 3}) || layout.tabs != (rect{0, 3, 22, 5}) || layout.issues != (rect{22, 3, 58, 5}) || layout.info != (rect{0, 8, 22, 10}) || layout.detail != (rect{22, 8, 58, 10}) || layout.log != (rect{0, 18, 80, 5}) || layout.help != (rect{0, 23, 80, 1}) {
+	if layout.projects != (rect{0, 0, 22, 3}) || layout.status != (rect{22, 0, 58, 3}) || layout.tabs != (rect{0, 3, 22, 6}) || layout.issues != (rect{22, 3, 58, 6}) || layout.info != (rect{0, 9, 22, 9}) || layout.detail != (rect{22, 9, 58, 9}) || layout.log != (rect{0, 18, 80, 5}) || layout.help != (rect{0, 23, 80, 1}) {
 		t.Fatalf("unexpected 80×24 layout: %+v", layout)
 	}
 
@@ -102,8 +102,8 @@ func TestApp_GeometryAlignedRowsCoverScreen(t *testing.T) {
 				t.Fatalf("workspace row boundaries do not align: %+v", layout)
 			}
 			bodyHeight := layout.log.y - statusHeight
-			if layout.issues.height != bodyHeight/3 || layout.detail.height != bodyHeight-bodyHeight/3 {
-				t.Fatalf("Issues/Details split is not one-third/two-thirds: %+v", layout)
+			if layout.issues.height != bodyHeight*2/5 || layout.detail.height != bodyHeight-bodyHeight*2/5 {
+				t.Fatalf("Issues/Details split is not two-fifths/three-fifths: %+v", layout)
 			}
 			panes := []rect{layout.projects, layout.status, layout.tabs, layout.issues, layout.info, layout.detail, layout.log, layout.help}
 			coverage := make([]int, size.width*size.height)
