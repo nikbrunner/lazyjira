@@ -25,6 +25,7 @@ type NavFrame struct {
 	Source       Source
 	ParentKey    string
 	OriginTabIdx int
+	Filter       string
 }
 
 type NavStack struct {

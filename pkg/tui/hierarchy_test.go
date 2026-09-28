@@ -787,6 +787,47 @@ func TestShowChildrenKey_OpensHierarchyTab(t *testing.T) {
 	}
 }
 
+func TestShowChildren_IgnoresLocalFilterAndRestoresItOnBack(t *testing.T) {
+	t.Parallel()
+	a := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	a.keymap = DefaultKeymap()
+	a.side = sideLeft
+	a.leftFocus = focusIssues
+	a.issuesList.SetTabs([]config.IssueTabConfig{{Name: "All"}})
+	a.issuesList.SetIssues([]jira.Issue{
+		{Key: "X-1", Summary: "unrelated"},
+		{Key: "Y-1", Summary: "V1 other"},
+		{Key: "V1-EPIC", Summary: "V1 epic", Subtasks: []jira.Issue{
+			{Key: "S-1", Summary: "alpha"},
+			{Key: "S-2", Summary: "V1 beta"},
+			{Key: "S-3", Summary: "gamma"},
+		}},
+	})
+	a.issuesList.SetFilter("V1")
+	a.issuesList.Cursor = 1
+
+	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(">")})
+
+	if a.issuesList.IsFiltered() {
+		t.Errorf("children tab kept filter %q", a.issuesList.Filter())
+	}
+	if got := a.issuesList.ItemCount(); got != 3 {
+		t.Errorf("children shown = %d, want 3", got)
+	}
+
+	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+
+	if a.issuesList.IsHierarchyTab() {
+		t.Fatal("esc should leave the children tab")
+	}
+	if got := a.issuesList.Filter(); got != "V1" {
+		t.Errorf("filter after back = %q, want V1", got)
+	}
+	if sel := a.issuesList.SelectedIssue(); sel == nil || sel.Key != "V1-EPIC" {
+		t.Errorf("SelectedIssue() after back = %+v, want V1-EPIC", sel)
+	}
+}
+
 func TestHierarchy_FullPop_RestoresOriginTab(t *testing.T) {
 	t.Parallel()
 	fake := &jiratest.FakeClient{T: t}
