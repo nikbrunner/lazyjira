@@ -31,6 +31,9 @@ type IssuesList struct {
 	issues           []jira.Issue
 	allIssues        []jira.Issue
 	filter           string
+	pickerFilters    map[int]map[string]bool
+	statusRank       map[string]int
+	pageInfo         map[int]pageInfo
 	tabs             []config.IssueTabConfig
 	tab              int
 	tabCache         map[int][]jira.Issue
@@ -122,6 +125,7 @@ func (m *IssuesList) AddJQLTab(jql string) {
 	if m.jqlTabIdx >= 0 {
 		m.jqlQuery = jql
 		m.tab = m.jqlTabIdx
+		m.dropTabState(m.jqlTabIdx)
 		return
 	}
 	m.tabs = append(m.tabs, config.IssueTabConfig{Name: "JQL", JQL: ""})
@@ -140,6 +144,7 @@ func (m *IssuesList) RemoveJQLTab() {
 	if m.tabCache != nil {
 		delete(m.tabCache, m.jqlTabIdx)
 	}
+	m.dropTabState(m.jqlTabIdx)
 	m.jqlTabIdx = -1
 	m.jqlQuery = ""
 	m.tab = 0
@@ -172,6 +177,7 @@ func (m *IssuesList) AddHierarchyTab(title string, issues []jira.Issue) int {
 	m.hierarchyTabIdx = len(m.tabs) - 1
 	m.hierarchyTitle = title
 	m.hierarchyStack = navstack.NewNavStack()
+	m.dropTabState(m.hierarchyTabIdx)
 	if m.tabCache == nil {
 		m.tabCache = make(map[int][]jira.Issue)
 	}
@@ -207,6 +213,7 @@ func (m *IssuesList) RemoveHierarchyTab() {
 	if m.tabCache != nil {
 		delete(m.tabCache, m.hierarchyTabIdx)
 	}
+	m.dropTabState(m.hierarchyTabIdx)
 	m.tabs = append(m.tabs[:m.hierarchyTabIdx], m.tabs[m.hierarchyTabIdx+1:]...)
 	m.hierarchyTabIdx = -1
 	m.hierarchyTitle = ""
@@ -345,12 +352,18 @@ func (m *IssuesList) SetIssuesForTab(tab int, issues []jira.Issue) {
 // InvalidateTabCache clears all cached tab data and removes transient tabs (JQL and Hierarchy).
 func (m *IssuesList) InvalidateTabCache() {
 	m.tabCache = nil
+	m.pageInfo = nil
 	trimFrom := len(m.tabs)
 	if m.jqlTabIdx >= 0 && m.jqlTabIdx < trimFrom {
 		trimFrom = m.jqlTabIdx
 	}
 	if m.hierarchyTabIdx >= 0 && m.hierarchyTabIdx < trimFrom {
 		trimFrom = m.hierarchyTabIdx
+	}
+	for tab := range m.pickerFilters {
+		if tab >= trimFrom {
+			delete(m.pickerFilters, tab)
+		}
 	}
 	if trimFrom < len(m.tabs) {
 		m.tabs = m.tabs[:trimFrom]
@@ -437,9 +450,9 @@ func (m *IssuesList) SelectByKey(key string) bool {
 }
 
 func (m *IssuesList) applyFilter() {
-	source := m.allIssues
+	source := m.sortedByStatus(m.allIssues)
 
-	if m.filter == "" {
+	if m.filter == "" && !m.IsPickerFiltered() {
 		m.issues = source
 	} else {
 		q := strings.ToLower(m.filter)
@@ -449,7 +462,7 @@ func (m *IssuesList) applyFilter() {
 			if issue.Assignee != nil {
 				haystack += " " + strings.ToLower(issue.Assignee.DisplayName)
 			}
-			if strings.Contains(haystack, q) {
+			if strings.Contains(haystack, q) && m.matchesPickerFilter(issue) {
 				filtered = append(filtered, issue)
 			}
 		}
@@ -496,11 +509,8 @@ func (m *IssuesList) View() string {
 	maxTitleW := contentWidth - 1
 
 	if m.Height <= 1 {
-		footer := ""
-		if n := len(m.issues); n > 0 {
-			footer = fmt.Sprintf("%d of %d", m.Cursor+1, n)
-		}
-		return components.RenderCollapsedBar(m.buildTitle(maxTitleW), footer, m.Width, m.Focused)
+		title := m.buildTitle(maxTitleW)
+		return components.RenderCollapsedBar(title, m.footer(m.Width-4-lipgloss.Width(title)), m.Width, m.Focused)
 	}
 
 	visible := m.VisibleRows()
@@ -524,12 +534,26 @@ func (m *IssuesList) View() string {
 
 	content := strings.Join(rows, "\n")
 	title := m.buildTitle(maxTitleW)
-	footer := ""
-	if len(m.issues) > 0 {
-		footer = fmt.Sprintf("%d of %d", m.Cursor+1, len(m.issues))
-	}
+	footer := m.footer(contentWidth - 1)
 	scroll := &components.ScrollInfo{Total: len(m.issues), Visible: visible, Offset: m.Offset}
 	return components.RenderPanelFull(title, footer, content, m.Width, visible+m.HeaderRows, m.Focused, scroll)
+}
+
+// footer renders "3 of 50", adding the loaded hint only when the result fits
+// in available cells.
+func (m *IssuesList) footer(available int) string {
+	var parts []string
+	if len(m.issues) > 0 {
+		parts = append(parts, fmt.Sprintf("%d of %d", m.Cursor+1, len(m.issues)))
+	}
+	position := strings.Join(parts, "")
+	if hint := m.loadedHint(); hint != "" {
+		parts = append(parts, hint)
+	}
+	if full := strings.Join(parts, " · "); lipgloss.Width(full) <= available {
+		return full
+	}
+	return position
 }
 
 type issueTitleLayout struct {
@@ -574,11 +598,20 @@ func (m *IssuesList) buildTitle(maxTitleW int) string {
 	return title + m.filterTitleSegment(maxTitleW-lipgloss.Width(title))
 }
 
-// filterTitleSegment renders " ─ /query (key to clear)", truncating the query
-// to fit available cells. It follows the maximize button so the button's
-// click target keeps its position.
+// filterTitleSegment renders " ─ /query status: A (key to clear)", truncating
+// the filters to fit available cells. It follows the maximize button so the
+// button's click target keeps its position.
 func (m *IssuesList) filterTitleSegment(available int) string {
-	if m.filter == "" {
+	var parts []string
+	lead := ""
+	if m.filter != "" {
+		lead = "/"
+		parts = append(parts, m.filter)
+	}
+	if label := m.pickerFilterLabel(); label != "" {
+		parts = append(parts, label)
+	}
+	if len(parts) == 0 {
 		return ""
 	}
 	sep := " ─ "
@@ -596,7 +629,7 @@ func (m *IssuesList) filterTitleSegment(available int) string {
 		borderColor = theme.ColorGreen
 	}
 	return lipgloss.NewStyle().Foreground(borderColor).Render(sep) +
-		lipgloss.NewStyle().Foreground(theme.ColorCyan).Render("/"+components.TruncateEnd(m.filter, queryW)) +
+		lipgloss.NewStyle().Foreground(theme.ColorCyan).Render(lead+components.TruncateEnd(strings.Join(parts, " "), queryW)) +
 		lipgloss.NewStyle().Foreground(theme.ColorGray).Render(hint)
 }
 

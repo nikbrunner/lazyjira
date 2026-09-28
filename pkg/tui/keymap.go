@@ -52,6 +52,7 @@ const (
 	ActShowParent       Action = "showParent"
 	ActShowChildren     Action = "showChildren"
 	ActVisualSelect     Action = "visualSelect"
+	ActFilterPicker     Action = "filterPicker"
 
 	ActNavDown     Action = "navDown"
 	ActNavUp       Action = "navUp"
@@ -111,6 +112,7 @@ func DefaultKeymap() Keymap {
 		ActShowParent:       {"backspace"},
 		ActShowChildren:     {">"},
 		ActVisualSelect:     {"v"},
+		ActFilterPicker:     {"f"},
 
 		ActNavDown:     {"j", "down", "ctrl+j"},
 		ActNavUp:       {"k", "up", "ctrl+k"},
@@ -172,6 +174,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActCreateSubtask, kcfg.Issues.CreateSubtask)
 	set(ActVisualSelect, kcfg.Issues.VisualSelect)
 	set(ActShowChildren, kcfg.Issues.ShowChildren)
+	set(ActFilterPicker, kcfg.Issues.FilterPicker)
 	// Detail
 	set(ActFocusLeft, kcfg.Detail.FocusLeft)
 	set(ActInfoTab, kcfg.Detail.InfoTab)

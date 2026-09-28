@@ -5,6 +5,14 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [Unreleased]
 
+### Added
+
+- Issues panel ([#7](https://github.com/nikbrunner/lazyjira/issues/7)) — nbr <nikolaus.brunner@protonmail.ch>
+  - `statusOrder` groups issue lists by status, keeping JQL order within each status and in tabs with `sortByStatus: false`.
+  - `f` opens a per-tab filter picker for status, issue type, and priority, and the panel title shows the active selection.
+  - `esc` clears marks, then the local filter, then the picker filter.
+  - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
+
 ---
 
 ## `0.6.5` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.28

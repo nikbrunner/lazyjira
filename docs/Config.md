@@ -103,6 +103,7 @@ keybinding:
         copyURL: "y"
         visualSelect: v
         showChildren: ">"
+        filterPicker: f
         closeJQLTab: x
         copyBranchName: b
         createBranch: B
@@ -388,6 +389,25 @@ issueTabs:
 ```
 
 Resolution order: per-tab `maxResults` → global `maxResults` → built-in default (50). Values `<= 0` are treated as unset. Note that the Jira server may enforce its own upper bound and silently return fewer issues than requested.
+
+When Jira holds more results than a tab loaded, the Issues panel footer shows a hint such as `50/312 loaded`. Jira Cloud does not report a total, so there the hint reads `50+ loaded`. Status order and the filter picker work on the loaded issues only.
+
+## Status order (`statusOrder`)
+
+Jira often returns statuses in an order that does not follow your workflow. `statusOrder` lists status names in the order issue lists should group them:
+
+```yaml
+statusOrder: [Backlog, To Do, In Progress, In Review, QA, Done]
+issueTabs:
+  - name: "Recent"
+    jql: "project = {{.ProjectKey}} AND updated >= -7d ORDER BY updated DESC"
+    sortByStatus: false  # keep pure JQL order
+```
+
+- One list covers every workflow. Statuses a project does not use are skipped, and names match case-insensitively.
+- Within one status, issues keep their JQL order. Statuses missing from the list come last, also in JQL order.
+- The order applies to configured tabs, JQL search tabs, and children tabs. Set `sortByStatus: false` on a tab to keep its JQL order.
+- Without `statusOrder`, every list keeps its JQL order.
 
 ## Keybindings
 

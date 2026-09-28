@@ -89,8 +89,10 @@ type onSelectFunc func(components.ModalItem) tea.Cmd
 type onChecklistFunc func([]components.ModalItem) tea.Cmd
 
 type issuesLoadedMsg struct {
-	issues []jira.Issue
-	tab    int
+	issues  []jira.Issue
+	tab     int
+	total   int
+	hasMore bool
 }
 type issueDetailLoadedMsg struct{ issue *jira.Issue }
 
@@ -299,6 +301,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	}
 	issuesList.SetSanitizer(cfg.Sanitize.Apply)
 	issuesList.SetTabs(cfg.IssueTabs)
+	issuesList.SetStatusOrder(cfg.StatusOrder)
 	issuesList.SetFocused(true)
 	issuesList.SetUserEmail(cfg.Jira.Email)
 	infoPanel := views.NewInfoPanel()

@@ -328,6 +328,11 @@ func (c *Client) SearchIssues(ctx context.Context, jql string, startAt, maxResul
 		StartAt:    raw.StartAt,
 		Issues:     make([]Issue, len(raw.Issues)),
 	}
+	if c.isCloud {
+		result.HasMore = raw.NextPageToken != "" || (raw.IsLast != nil && !*raw.IsLast)
+	} else {
+		result.HasMore = raw.StartAt+len(raw.Issues) < raw.Total
+	}
 	for i, ri := range raw.Issues {
 		result.Issues[i] = ri.toIssue()
 		c.fillSprintFromCustomField(&result.Issues[i], ri.Fields.RawExtra)
@@ -1189,10 +1194,12 @@ func (r *boardResponse) toBoard() Board {
 }
 
 type searchResponse struct {
-	Issues     []issueResponse `json:"issues"`
-	Total      int             `json:"total"`
-	MaxResults int             `json:"maxResults"`
-	StartAt    int             `json:"startAt"`
+	Issues        []issueResponse `json:"issues"`
+	Total         int             `json:"total"`
+	MaxResults    int             `json:"maxResults"`
+	StartAt       int             `json:"startAt"`
+	IsLast        *bool           `json:"isLast"`
+	NextPageToken string          `json:"nextPageToken"`
 }
 
 type changelogResponse struct {

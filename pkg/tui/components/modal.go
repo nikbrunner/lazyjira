@@ -113,6 +113,20 @@ func (m *Modal) ShowChecklist(title string, items []ModalItem, selected map[stri
 	m.sortChecklist()
 }
 
+// ShowGroupedChecklist opens a multi-select checklist that keeps the given
+// item order, including separator rows as group headings.
+func (m *Modal) ShowGroupedChecklist(title string, items []ModalItem, selected map[string]bool) {
+	sel := make(map[string]bool, len(selected))
+	for k, v := range selected {
+		if v {
+			sel[k] = true
+		}
+	}
+	m.show(title, items, false)
+	m.checklist = true
+	m.selected = sel
+}
+
 // sortChecklist sorts items with selected first then unselected preserving relative order
 func (m *Modal) sortChecklist() {
 	var cursorID, cursorLabel string

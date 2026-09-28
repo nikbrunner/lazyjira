@@ -18,6 +18,7 @@ func (a *App) handleJQLSearchResult(msg jqlSearchResultMsg) (tea.Model, tea.Cmd)
 	*a.logFlag = false
 	a.jqlModal.Hide()
 	a.issuesList.AddJQLTab(msg.jql)
+	a.issuesList.SetTabPageInfo(a.issuesList.GetTabIndex(), msg.total, msg.hasMore)
 	a.issuesList.SetIssues(msg.issues)
 	history := LoadJQLHistory()
 	history = AddToHistory(history, msg.jql)

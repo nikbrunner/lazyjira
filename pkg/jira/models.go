@@ -186,6 +186,9 @@ type SearchResult struct {
 	Total      int     `json:"total"`
 	MaxResults int     `json:"maxResults"`
 	StartAt    int     `json:"startAt"`
+	// HasMore reports that Jira holds results beyond this page. Total is 0
+	// when the server does not report it (Jira Cloud's /search/jql).
+	HasMore bool `json:"-"`
 }
 
 type CreateMetaField struct {
