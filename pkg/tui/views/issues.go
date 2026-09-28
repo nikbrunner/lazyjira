@@ -52,6 +52,8 @@ type IssuesList struct {
 	focusHint        string
 	clearFilterKey   string
 	maximized        bool
+	marked           map[string]bool
+	visualAnchor     string
 }
 
 func NewIssuesList() *IssuesList {
@@ -247,6 +249,7 @@ func (m *IssuesList) PrevTab() {
 }
 
 func (m *IssuesList) loadFromCache() {
+	m.ClearMarks()
 	if m.tabCache != nil {
 		if cached, ok := m.tabCache[m.tab]; ok {
 			m.allIssues = cached
@@ -512,7 +515,7 @@ func (m *IssuesList) View() string {
 	}
 	end := min(m.Offset+visible, len(m.issues))
 	for i := m.Offset; i < end; i++ {
-		rows = append(rows, m.renderIssueRow(m.issues[i], columns, contentWidth, i == m.Cursor))
+		rows = append(rows, m.renderIssueRow(m.issues[i], columns, contentWidth, i == m.Cursor, m.isMarked(i)))
 	}
 
 	content := strings.Join(rows, "\n")
@@ -593,7 +596,7 @@ func (m *IssuesList) filterTitleSegment(available int) string {
 		lipgloss.NewStyle().Foreground(theme.ColorGray).Render(hint)
 }
 
-func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, width int, selected bool) string {
+func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, width int, selected, marked bool) string {
 	style := m.theme.NormalItem
 	if selected && m.Focused {
 		style = m.theme.SelectedItem
@@ -605,13 +608,19 @@ func (m *IssuesList) renderIssueRow(issue jira.Issue, columns []issueColumn, wid
 		parts[i] = style.Foreground(column.color).Render(cell)
 	}
 	space := style.Render(" ")
-	line := space + strings.Join(parts, space)
+	lead := space
+	if marked {
+		lead = style.Foreground(theme.ColorMagenta).Bold(true).Render(markGlyph)
+	}
+	line := lead + strings.Join(parts, space)
 	if ansi.StringWidth(line) > width {
 		line = ansi.Truncate(line, width, "")
 	}
 
 	return style.Width(width).Render(line)
 }
+
+const markGlyph = "+"
 
 // padRight pads s with spaces to width w using visible ANSI-aware width
 func padRight(s string, w int) string {

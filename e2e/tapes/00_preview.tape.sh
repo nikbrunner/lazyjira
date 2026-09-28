@@ -11,8 +11,9 @@ Output e2e/golden/00_preview.gif
 @panel 2
 @tab_next
 
-# Open PLAT-3 (space = activate + open)
-@select
+# Open PLAT-3
+Enter
+Sleep 400ms
 
 # Detail tabs: Body→Cmt→Hist
 @tab_next 2
@@ -102,8 +103,9 @@ Set TypingSpeed 0ms
 Enter
 Sleep 300ms
 
-# Select result, change assignee from info
-@select
+# Open result, change assignee from info
+Enter
+Sleep 400ms
 Type "i"
 Sleep 100ms
 Type "a"

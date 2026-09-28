@@ -57,7 +57,7 @@ func TestHierarchy_EnterWithoutChildren_FocusesDetail(t *testing.T) {
 	a := newAppWithFake(t, fake)
 	a.issuesList.SetIssues([]jira.Issue{{Key: "LEAF-1"}})
 
-	_, _ = a.handleActionSelect()
+	_, _ = a.handleActionOpen()
 
 	if a.issuesList.HasHierarchyTab() {
 		t.Errorf("HasHierarchyTab() = true, want false (no children)")

@@ -84,14 +84,14 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 			wantHandled: true,
 		},
 		{
-			name:        "select opens issue detail",
+			name:        "select marks issue",
 			key:         tea.KeyMsg{Type: tea.KeySpace},
 			setup:       seedSelectedIssue,
 			wantHandled: true,
 			assert: func(t *testing.T, app *App, cmd tea.Cmd) {
 				t.Helper()
-				if app.side != sideRight {
-					t.Error("select should focus detail")
+				if app.side != sideLeft || !app.issuesList.HasMarks() {
+					t.Error("select should mark the issue and keep focus")
 				}
 			},
 		},
@@ -643,7 +643,7 @@ func TestStartDuplicateIssue_RequiresProjectKey(t *testing.T) {
 func TestHandleActionSelect_MoreBranches(t *testing.T) {
 	t.Parallel()
 
-	t.Run("issues with subtasks walks into children", func(t *testing.T) {
+	t.Run("issues with subtasks marks the parent", func(t *testing.T) {
 		t.Parallel()
 		app := focusApp(t)
 		app.side = sideLeft
@@ -652,8 +652,11 @@ func TestHandleActionSelect_MoreBranches(t *testing.T) {
 
 		_, _ = app.handleActionSelect()
 
-		if !app.issuesList.IsHierarchyTab() {
-			t.Error("select on parent should open hierarchy tab")
+		if app.issuesList.IsHierarchyTab() {
+			t.Error("select on parent should not open hierarchy tab")
+		}
+		if !app.issuesList.HasMarks() {
+			t.Error("select on parent should mark it")
 		}
 	})
 

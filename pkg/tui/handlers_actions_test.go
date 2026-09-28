@@ -118,22 +118,21 @@ func TestHandleActionEdit_DetailDescriptionLaunchesEditor(t *testing.T) {
 	testkit.AssertEqual(t, "editContext kind", app.editContext.kind, editDesc)
 }
 
-func TestHandleActionSelect_IssuesSwitchesToDetailSide(t *testing.T) {
+func TestHandleActionSelect_IssuesTogglesMark(t *testing.T) {
 	t.Parallel()
-	fake := &jiratest.FakeClient{T: t}
-	stubFullIssueFetch(fake, &jira.Issue{Key: testKey, Summary: testSummary})
-	app := newAppWithFake(t, fake)
-	app.keymap = DefaultKeymap()
-	app.width = 120
-	app.height = 40
-	app.layoutPanels()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.side = sideLeft
 	app.leftFocus = focusIssues
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey, Summary: testSummary}})
 
 	_, _ = app.handleActionSelect()
 
-	testkit.AssertEqual(t, "side after select", app.side, sideRight)
+	testkit.AssertEqual(t, "side after select", app.side, sideLeft)
+	testkit.AssertEqual(t, "marked after select", len(app.issuesList.MarkedIssues()), 1)
+
+	_, _ = app.handleActionSelect()
+
+	testkit.AssertEqual(t, "marked after second select", len(app.issuesList.MarkedIssues()), 0)
 }
 
 func TestHandleActionSelect_ProjectsOpensProject(t *testing.T) {

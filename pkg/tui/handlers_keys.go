@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,9 +22,12 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a.handleHelpKeys(msg)
 	}
 	// Custom commands take precedence over built-in keybindings so users
-	// can override any action they want.
-	if m, cmd, ok := a.handleCustomCommand(msg.String()); ok {
-		return m, cmd
+	// can override any action they want, except the marking keys while
+	// issues are marked.
+	if !a.isMarkingKey(msg.String()) {
+		if m, cmd, ok := a.handleCustomCommand(msg.String()); ok {
+			return m, cmd
+		}
 	}
 	if m, cmd, ok := a.handleSpatialFocus(msg.String()); ok {
 		return m, cmd
@@ -43,6 +47,11 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "k":
 			return a, a.switchIssueCollection(-1)
 		}
+	}
+
+	if action == ActFocusLeft && a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.HasMarks() {
+		a.issuesList.ClearMarks()
+		return a, nil
 	}
 
 	if action == ActFocusLeft && a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.IsFiltered() {
@@ -82,6 +91,11 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return a, nil
 		}
 		return a.handleActionOpen()
+	case ActVisualSelect:
+		if a.side == sideLeft && a.leftFocus == focusIssues {
+			a.issuesList.ToggleVisual()
+		}
+		return a, nil
 	case ActURLPicker:
 		return a.handleActionURLPicker()
 	case ActEdit:
@@ -397,6 +411,17 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 	switch action { //nolint:exhaustive
 	case ActCopyURL:
+		if a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.HasMarks() {
+			n := len(a.issuesList.MarkedIssues())
+			copyToClipboard(a.issuesList.MarkedRowsText())
+			a.issuesList.ClearMarks()
+			rows := "rows"
+			if n == 1 {
+				rows = "row"
+			}
+			a.helpBar.SetStatusMsg(fmt.Sprintf("Copied %d issue %s", n, rows))
+			return a, nil, true
+		}
 		if cur := a.currentIssue(); cur != nil {
 			copyToClipboard(a.cfg.Jira.Host + "/browse/" + cur.Key)
 		}
@@ -608,7 +633,22 @@ func (a *App) startCreateIssue() (tea.Model, tea.Cmd) {
 	return a, fetchIssueTypes(a.client, a.projectID)
 }
 
+func (a *App) isMarkingKey(key string) bool {
+	if a.side != sideLeft || a.leftFocus != focusIssues || !a.issuesList.HasMarks() {
+		return false
+	}
+	switch a.keymap.Match(key) { //nolint:exhaustive
+	case ActSelect, ActVisualSelect, ActCopyURL, ActFocusLeft:
+		return true
+	}
+	return false
+}
+
 func (a *App) handleActionSelect() (tea.Model, tea.Cmd) {
+	if a.side == sideLeft && a.leftFocus == focusIssues {
+		a.issuesList.ToggleMark()
+		return a, nil
+	}
 	if cmd, ok := a.showChildren(); ok {
 		return a, cmd
 	}

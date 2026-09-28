@@ -34,7 +34,9 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 
 | Key | Action |
 |-----|--------|
-| `enter` / `space` | Open issue detail |
+| `enter` | Open issue detail |
+| `space` | Mark or unmark the issue |
+| `v` | Start a marked range at the cursor; press again to end it and keep the range marked |
 | `t` | Transition status |
 | `e` | Edit (summary, description, or focused field) |
 | `p` | Change priority |
@@ -45,14 +47,14 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `c` | View comments |
 | `o` | Open in browser |
 | `u` | Pick URL from description |
-| `y` | Copy issue URL |
+| `y` | Copy marked issue rows as plain text, one per line, and clear the marks. Without marks, copy the issue URL |
 | `b` | Copy branch name (issues, info, or detail panel) |
 | `B` | Create branch from issue using the same name as `b` |
 | `w` | Copy repository-prefixed worktree name (issues, info, or detail panel) |
 | `W` | Create a worktree using the `w` string for its branch and default directory name (issues, info, or detail panel) |
 | `s` | JQL search |
 | `x` | Close JQL tab |
-| `esc` | Clear local filter |
+| `esc` | Clear marks, otherwise clear local filter |
 
 ## Help popup
 

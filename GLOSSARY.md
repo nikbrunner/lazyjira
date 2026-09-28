@@ -46,6 +46,7 @@
 | **Local filter** | A text filter applied to issues already loaded for the active issue tab. | JQL query, search without qualification |
 | **Issue list** | The ordered collection of issues in the active issue tab after any local filter is applied. | Visible rows when referring to all matching issues |
 | **Issue row** | The table-like line representing one issue through its configured columns. | Current line, cell |
+| **Marked issue** | An issue in the issue list picked for a bulk action with `space` or a `v` range, shown with a mark before its issue row. Selection refers to the cursor row. | Selected issue |
 | **Column** | An aligned vertical slot for one configured issue field, in `issueListFields` order. | Field when referring to layout |
 | **Cell** | The displayed value at the intersection of an issue row and a column. | Column, row |
 | **Column header row** | The fixed row of field labels above the issue rows inside the Issues panel. | Header without qualification, table-header-like row |
