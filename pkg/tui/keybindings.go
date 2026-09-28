@@ -80,6 +80,7 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActCopyWorktreeName, "copy worktree name"),
 			a.bind(ActCreateWorktree, "create worktree"),
 			a.bind(ActNew, "create issue"),
+			a.bind(ActFocusLeft, "clear filter"),
 			a.bind(ActDuplicateIssue, "duplicate issue"),
 			a.bind(ActCloseJQLTab, "close JQL tab"),
 			Binding{"[]", "switch tab"},

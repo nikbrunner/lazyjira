@@ -363,6 +363,8 @@ func (m *IssuesList) SetFilter(query string) {
 	m.applyFilter()
 }
 
+func (m *IssuesList) IsFiltered() bool { return m.filter != "" }
+
 // ClearFilter removes the search filter and preserves cursor position
 func (m *IssuesList) ClearFilter() {
 	m.filter = ""

@@ -45,6 +45,11 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if action == ActFocusLeft && a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.IsFiltered() {
+		a.issuesList.ClearFilter()
+		return a, nil
+	}
+
 	// In the hierarchy tab, ActFocusLeft pops a NavFrame instead of
 	// shifting focus.
 	if action == ActFocusLeft {

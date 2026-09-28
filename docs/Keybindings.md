@@ -52,6 +52,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `W` | Create a worktree using the `w` string for its branch and default directory name (issues, info, or detail panel) |
 | `s` | JQL search |
 | `x` | Close JQL tab |
+| `esc` | Clear local filter |
 
 ## Help popup
 

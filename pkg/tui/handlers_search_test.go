@@ -57,6 +57,46 @@ func TestHandleSearchConfirmed_UpdatesPreviewToLandedIssue(t *testing.T) {
 	}
 }
 
+func TestHandleSearchConfirmed_KeepsIssuesFilter(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	app.issuesList.SetIssues([]jira.Issue{{Key: testKey, Summary: "alpha"}, {Key: testKey2, Summary: "beta"}, {Key: "PLAT-3", Summary: "beta two"}})
+	app.side = sideLeft
+	app.leftFocus = focusIssues
+
+	app.issuesList.SetFilter("beta")
+	_, _ = app.handleSearchConfirmed()
+
+	if !app.issuesList.IsFiltered() || app.issuesList.ItemCount() != 2 {
+		t.Fatalf("filter cleared on confirm, %d items visible", app.issuesList.ItemCount())
+	}
+	if sel := app.issuesList.SelectedIssue(); sel == nil || sel.Key != testKey2 {
+		t.Errorf("cursor on %v, want first match PLAT-2", sel)
+	}
+}
+
+func TestEscInIssuesClearsKeptFilter(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	app.keymap = DefaultKeymap()
+	app.issuesList.SetIssues([]jira.Issue{{Key: testKey, Summary: "alpha"}, {Key: testKey2, Summary: "beta"}})
+	app.side = sideLeft
+	app.leftFocus = focusIssues
+	app.issuesList.SetFilter("beta")
+
+	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+
+	if app.issuesList.IsFiltered() {
+		t.Fatal("esc should clear the issues filter")
+	}
+	if app.leftFocus != focusIssues {
+		t.Errorf("leftFocus = %v, want focus to stay on issues", app.leftFocus)
+	}
+	if sel := app.issuesList.SelectedIssue(); sel == nil || sel.Key != testKey2 {
+		t.Errorf("cursor on %v, want PLAT-2 preserved", sel)
+	}
+}
+
 func TestHandleSearchConfirmed_ProjectsSwitches(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})

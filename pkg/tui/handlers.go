@@ -36,12 +36,12 @@ func (a *App) handleSearchChanged(msg components.SearchChangedMsg) (tea.Model, t
 }
 
 // handleSearchConfirmed finalizes search: selects the filtered item and loads data.
+// The issues filter stays applied until Esc clears it.
 func (a *App) handleSearchConfirmed() (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch {
 	case a.side == sideLeft && a.leftFocus == focusIssues:
 		selectedIssue := a.issuesList.SelectedIssue()
-		a.issuesList.ClearFilter()
 		if selectedIssue != nil {
 			if _, cmd := a.Update(views.IssueSelectedMsg{Issue: selectedIssue}); cmd != nil {
 				cmds = append(cmds, cmd)
