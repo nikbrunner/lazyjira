@@ -2,7 +2,9 @@ package components
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -54,11 +56,17 @@ func NewJQLModal() JQLModal {
 	}
 }
 
-// Show opens the modal with prefilled text and history items
+var jqlOrderByRe = regexp.MustCompile(`(?i)\s+ORDER\s+BY\s`)
+
+// Show opens the modal with prefilled text and history items. The cursor
+// starts before an ORDER BY clause, where new conditions belong.
 func (m *JQLModal) Show(prefill string, history []string) {
 	m.visible = true
 	m.focusInput = true
 	m.input.SetValue(prefill)
+	if loc := jqlOrderByRe.FindStringIndex(prefill); loc != nil {
+		m.input.setCursor(utf8.RuneCountInString(prefill[:loc[0]]))
+	}
 	m.items = history
 	m.cursor = 0
 	m.offset = 0

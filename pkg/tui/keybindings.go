@@ -61,7 +61,8 @@ func (a *App) ContextBindings() []Binding {
 	switch {
 	case a.side == sideLeft && a.leftFocus == focusIssueTabs:
 		bindings := slices.Concat(global, a.navBindings())
-		return append(bindings, Binding{"enter", "focus Issues"}, Binding{"j/k", "switch issue collection"})
+		return append(bindings, Binding{"enter", "focus Issues"}, Binding{"j/k", "switch issue collection"},
+			a.bind(ActJQLSearch, "JQL search from tab query"))
 
 	case a.side == sideLeft && a.leftFocus == focusIssues:
 		bindings := slices.Concat(global, a.navBindings(), a.detailScrollBindings())
@@ -218,6 +219,7 @@ func (a *App) helpBarItems() []components.HelpItem {
 		return []components.HelpItem{
 			{Key: "j/k", Description: "issue collection"},
 			{Key: "enter", Description: "Issues"},
+			{Key: km.Keys(ActJQLSearch), Description: "search from query"},
 			{Key: km.Keys(ActHelp), Description: "help"},
 		}
 	case a.side == sideLeft && a.leftFocus == focusIssues:

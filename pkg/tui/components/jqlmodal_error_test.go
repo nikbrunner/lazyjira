@@ -62,3 +62,24 @@ func TestJQLModal_ErrorCappedToKeepHistoryVisible(t *testing.T) {
 		t.Errorf("last kept error line = %q, want an ellipsis", last)
 	}
 }
+
+func TestJQLModal_ShowPlacesCursorBeforeOrderBy(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		prefill string
+		want    string
+	}{
+		{"statusCategory ≠ Done ORDER BY status DESC", "statusCategory ≠ Done AND status = Accepted ORDER BY status DESC"},
+		{"type = Bug order  by created", "type = Bug AND status = Accepted order  by created"},
+		{"project = WEB AND ", "project = WEB AND  AND status = Accepted"},
+	}
+	for _, tc := range cases {
+		m := NewJQLModal()
+		m.SetSize(80, 30)
+		m.Show(tc.prefill, nil)
+		m.input.InsertAtCursor(" AND status = Accepted")
+		if got := m.InputValue(); got != tc.want {
+			t.Errorf("Show(%q) then typing = %q, want %q", tc.prefill, got, tc.want)
+		}
+	}
+}

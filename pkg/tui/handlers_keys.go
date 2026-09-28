@@ -430,7 +430,10 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 	case ActJQLSearch:
 		history := LoadJQLHistory()
 		prefill := ""
-		if a.projectKey != "" {
+		if a.side == sideLeft && a.leftFocus == focusIssueTabs {
+			prefill = a.activeTabJQL()
+		}
+		if prefill == "" && a.projectKey != "" {
 			prefill = "project = " + a.projectKey + " AND "
 		}
 		a.jqlModal.Show(prefill, history)

@@ -107,6 +107,19 @@ func (a *App) renderIssueTabs(width, height int) string {
 	return components.RenderPanel(title, strings.Join(rows, "\n"), width, innerHeight, focused)
 }
 
+// activeTabJQL returns the active issue tab's query with template variables
+// expanded, or "" for tabs without one, such as children tabs.
+func (a *App) activeTabJQL() string {
+	if a.issuesList.IsJQLTab() {
+		return a.issuesList.JQLQuery()
+	}
+	tab := a.issuesList.ActiveTab()
+	if tab.JQL == "" || a.projectKey == "" {
+		return ""
+	}
+	return resolveTabJQL(tab, a.projectKey, a.cfg.Jira.Email)
+}
+
 // scrollIssueTabs moves the Issue tabs window by delta rows, stopping at the
 // last full window.
 func (a *App) scrollIssueTabs(delta int) {

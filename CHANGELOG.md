@@ -15,6 +15,8 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
   - `esc` clears marks, then the local filter, then the picker filter.
   - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
   - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
+- Workspace ([#11](https://github.com/nikbrunner/lazyjira/issues/11)) — nbr <nikolaus.brunner@protonmail.ch>
+  - `s` in the Issue tabs pane opens JQL search with the focused tab's query and the cursor before its `ORDER BY` clause.
 
 ### Changed
 
