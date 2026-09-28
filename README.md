@@ -130,6 +130,10 @@ Press `?` inside the app for all keybindings.
 
 Versions and GitHub Releases are cut by [release-please](https://github.com/googleapis/release-please) from [Conventional Commits](https://www.conventionalcommits.org/). Release notes come from the curated [CHANGELOG](CHANGELOG.md); the maintainer process is in [docs/releases.md](docs/releases.md).
 
+## Roadmap
+
+Planned work lives in the [enhancement issues](https://github.com/nikbrunner/lazyjira/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement).
+
 ## License
 
 MIT
