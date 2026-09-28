@@ -1,4 +1,4 @@
-.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check startup-smoke check-demo tidy fix preview e2e e2e-gen e2e-update nix-deps hooks check-staged
+.PHONY: build build-version build-demo lint lint-fix lint-docs vet test clean check startup-smoke check-demo tidy fix preview e2e e2e-gen e2e-update hooks check-staged
 
 build:
 	go build -o lazyjira ./cmd/lazyjira
@@ -54,7 +54,7 @@ check-staged:
 tidy:
 	go mod tidy
 
-fix: tidy lint-fix nix-deps
+fix: tidy lint-fix
 
 check-demo:
 	go tool golangci-lint run --build-tags demo ./...
@@ -80,9 +80,6 @@ e2e: build-demo e2e-gen
 
 e2e-gen:
 	@./e2e/tape.sh generate-all
-
-nix-deps:
-	gomod2nix generate
 
 e2e-update: build-demo e2e-gen
 	@pids=""; \

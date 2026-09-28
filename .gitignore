@@ -18,9 +18,6 @@ config.yml
 *.swp
 *~
 
-# Nix
-/result
-
 # Coverage
 cover.out
 

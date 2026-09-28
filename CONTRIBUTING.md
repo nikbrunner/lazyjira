@@ -42,27 +42,6 @@ make build-demo
 ./lazyjira --demo
 ```
 
-## Nix
-
-With Nix flakes enabled, you can develop without installing Go or other tools globally:
-
-```bash
-nix develop
-make check
-```
-
-### Adding a Go dependency
-
-After adding a package to `go.mod`, refresh the Nix dependency lockfile with `make nix-deps`:
-
-```bash
-make nix-deps
-```
-
-Run it inside `nix develop` with `nix develop -c make nix-deps`, or install `gomod2nix` first with `go install github.com/nix-community/gomod2nix@latest`.
-
-Commit `gomod2nix.toml` with `go.mod` and `go.sum`. Otherwise, the Nix CI job fails with a checksum error.
-
 ## Code style
 
 - Go standard formatting (`gofmt`)

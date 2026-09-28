@@ -78,7 +78,7 @@ cache:
 
 #### Upgrading from lazyjira 2.19.2
 
-Install from GitHub Releases, or with Go under the new module path:
+The Nix flake and package are gone. Install from GitHub Releases, or with Go under the new module path:
 
 ```sh
 go install github.com/nikbrunner/lazyjira/v2/cmd/lazyjira@main
