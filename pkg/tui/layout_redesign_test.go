@@ -329,6 +329,30 @@ func TestFocusActionRestoresSplitWhenTargetIsHidden(t *testing.T) {
 	}
 }
 
+func TestZoomedIssuesOpenZoomedDetailAndEscBacksOut(t *testing.T) {
+	t.Parallel()
+	app := appWithPanelDims(t, 120)
+	app.keymap = DefaultKeymap()
+	app.issuesList.SetIssues([]jira.Issue{{Key: "MAIN-1"}})
+	app.side, app.leftFocus = sideLeft, focusIssues
+	app.toggleMaximize(focusIssues)
+
+	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEnter})
+	if !app.maximized || app.maximizedPane != focusDetailPane || app.side != sideRight {
+		t.Fatalf("enter: max=%v pane=%d side=%v", app.maximized, app.maximizedPane, app.side)
+	}
+
+	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	if !app.maximized || app.maximizedPane != focusIssues || app.side != sideLeft || app.leftFocus != focusIssues {
+		t.Fatalf("first esc: max=%v pane=%d side=%v focus=%d", app.maximized, app.maximizedPane, app.side, app.leftFocus)
+	}
+
+	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	if app.maximized || app.side != sideLeft || app.leftFocus != focusIssues {
+		t.Fatalf("second esc: max=%v side=%v focus=%d", app.maximized, app.side, app.leftFocus)
+	}
+}
+
 func TestInfoMouseAndKeyboardTabsRequestSamePreview(t *testing.T) {
 	t.Parallel()
 	issue := &jira.Issue{
@@ -503,21 +527,5 @@ func TestMaximizedIssuesDoesNotScrollHiddenDetails(t *testing.T) {
 
 	if after := app.detailView.View(); after != before {
 		t.Fatal("Ctrl+D scrolled hidden Details while Issues was maximized")
-	}
-}
-
-func TestFocusRestorationAfterMaximizedIssueOpen(t *testing.T) {
-	t.Parallel()
-	app := appWithPanelDims(t, 120)
-	app.keymap = DefaultKeymap()
-	app.issuesList.SetIssues([]jira.Issue{{Key: "OLD-1"}})
-	app.maximized = true
-	app.maximizedPane = focusIssues
-	app.leftFocus = focusIssues
-
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEnter})
-
-	if app.maximized || app.side != sideRight {
-		t.Fatalf("open left maximized=%v side=%v", app.maximized, app.side)
 	}
 }

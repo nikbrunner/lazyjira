@@ -15,7 +15,7 @@ Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspa
 | `tab` / `shift+tab` | Switch issue collection without changing focus |
 | `H` / `J` / `K` / `L` | Move focus according to the pane map below |
 | `0` `1` `2` `3` `4` | Focus Project selector, Issue tabs, Issues, Issue info, Issue details |
-| `+` | Maximize or restore focused Issues or Details pane |
+| `+` | Maximize or restore focused Issues or Details pane; `enter` in maximized Issues opens maximized Details, and `esc` steps back to maximized Issues, then to the split layout |
 | `enter` in Issue tabs | Focus Issues without changing collection |
 
 The Project selector opens a searchable picker with `enter` or a click. The Issue tabs pane is directly focusable; `enter` there focuses Issues.

@@ -148,6 +148,8 @@ and `collapsedPanelHeight` has no effect.
 
 - Issues panel — nbr <nikolaus.brunner@protonmail.ch>
   - Summaries use the terminal's default foreground.
+  - `Enter` on a maximized Issues panel opens the issue in maximized Details. `Esc` returns to the maximized Issues panel, and
+    a second `Esc` restores the split layout.
 - Issue info pane — nbr <nikolaus.brunner@protonmail.ch>
   - Assignee and reporter use the regular text color.
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>

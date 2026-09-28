@@ -67,6 +67,21 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if action == ActFocusLeft && a.maximized {
+		if a.side == sideRight {
+			a.maximizedPane = focusIssues
+			a.side = sideLeft
+			a.leftFocus = focusIssues
+			a.updateFocusHints()
+			a.updateFocusState()
+			return a, nil
+		}
+		if a.leftFocus == focusIssues {
+			a.toggleMaximize(focusIssues)
+			return a, nil
+		}
+	}
+
 	switch action { //nolint:exhaustive
 	case ActQuit:
 		return a, tea.Quit
@@ -694,6 +709,10 @@ func (a *App) handleActionOpen() (tea.Model, tea.Cmd) {
 
 func (a *App) openIssueDetail() (tea.Model, tea.Cmd) {
 	if sel := a.issuesList.SelectedIssue(); sel != nil {
+		if a.maximized && a.maximizedPane == focusIssues {
+			a.maximizedPane = focusDetailPane
+			a.updateFocusHints()
+		}
 		a.side = sideRight
 		a.updateFocusState()
 		return a, fetchIssueDetail(a.client, sel.Key)
