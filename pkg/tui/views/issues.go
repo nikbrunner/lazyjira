@@ -458,11 +458,7 @@ func (m *IssuesList) applyFilter() {
 		q := strings.ToLower(m.filter)
 		var filtered []jira.Issue
 		for _, issue := range source {
-			haystack := strings.ToLower(issue.Key + " " + issue.Summary)
-			if issue.Assignee != nil {
-				haystack += " " + strings.ToLower(issue.Assignee.DisplayName)
-			}
-			if strings.Contains(haystack, q) && m.matchesPickerFilter(issue) {
+			if matchesText(issue, q) && m.matchesPickerFilter(issue) {
 				filtered = append(filtered, issue)
 			}
 		}
@@ -471,6 +467,16 @@ func (m *IssuesList) applyFilter() {
 	m.Cursor = 0
 	m.Offset = 0
 	m.SetItemCount(len(m.issues))
+}
+
+// matchesText reports whether the issue's key, summary, or assignee contains
+// the lowercased query.
+func matchesText(issue jira.Issue, q string) bool {
+	haystack := strings.ToLower(issue.Key + " " + issue.Summary)
+	if issue.Assignee != nil {
+		haystack += " " + strings.ToLower(issue.Assignee.DisplayName)
+	}
+	return strings.Contains(haystack, q)
 }
 
 // ContentHeight includes the column header, separator, and borders, with a minimum of 7.

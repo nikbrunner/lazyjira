@@ -46,7 +46,7 @@ func TestFilterPicker_AppliesCheckedValues(t *testing.T) {
 		t.Fatal("f should open the filter checklist")
 	}
 	var picked []components.ModalItem
-	for _, item := range a.issuesList.FilterPickerItems() {
+	for _, item := range a.issuesList.FilterPickerItems(nil) {
 		if item.ID == "status:In Progress" {
 			picked = append(picked, item)
 		}
@@ -126,5 +126,21 @@ func TestIssuesLoaded_RecordsLoadedHint(t *testing.T) {
 	})
 	if view := a.issuesList.View(); !strings.Contains(view, "1/312 loaded") {
 		t.Errorf("Issues panel missing loaded hint:\n%s", view)
+	}
+}
+
+func TestFilterPicker_TitleCountsResultingIssues(t *testing.T) {
+	t.Parallel()
+	a := newFilterPickerApp(t)
+	a.modal.SetSize(80, 24)
+
+	pressKey(a, "f")
+	if got := a.modal.Title(); got != "Filter issues · 3 of 3" {
+		t.Errorf("title = %q, want Filter issues · 3 of 3", got)
+	}
+
+	a.modal, _ = a.modal.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}})
+	if got := a.modal.Title(); got != "Filter issues · 2 of 3" {
+		t.Errorf("title after checking In Progress = %q, want Filter issues · 2 of 3", got)
 	}
 }

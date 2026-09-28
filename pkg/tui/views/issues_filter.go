@@ -110,12 +110,14 @@ func (m *IssuesList) IsPickerFiltered() bool { return len(m.pickerFilters[m.tab]
 func (m *IssuesList) ClearPickerFilter() { m.SetPickerFilter(nil) }
 
 func (m *IssuesList) matchesPickerFilter(issue jira.Issue) bool {
-	selected := m.pickerFilters[m.tab]
-	if len(selected) == 0 {
-		return true
-	}
+	return matchesSelection(issue, m.pickerFilters[m.tab], "")
+}
+
+// matchesSelection reports whether issue passes every active group of
+// selected, ignoring the group named skip.
+func matchesSelection(issue jira.Issue, selected map[string]bool, skip string) bool {
 	for _, g := range filterGroups {
-		if !groupActive(selected, g.key) {
+		if g.key == skip || !groupActive(selected, g.key) {
 			continue
 		}
 		if !selected[filterKey(g.key, issueFilterValue(issue, g.key))] {
@@ -135,24 +137,37 @@ func groupActive(selected map[string]bool, group string) bool {
 	return false
 }
 
-// FilterPickerItems lists each group's values found in the loaded issues with
-// their counts, plus selected values no loaded issue carries anymore.
-func (m *IssuesList) FilterPickerItems() []components.ModalItem {
-	selected := m.pickerFilters[m.tab]
+// FilterPickerItems lists each group's values found in the loaded issues, plus
+// selected values no loaded issue carries anymore. A value's count is the
+// number of issues that pass the local filter and the other groups' selections
+// and carry that value; unselected values without issues are disabled.
+func (m *IssuesList) FilterPickerItems(selected map[string]bool) []components.ModalItem {
+	q := strings.ToLower(m.filter)
+	var textMatches []jira.Issue
+	for _, issue := range m.allIssues {
+		if matchesText(issue, q) {
+			textMatches = append(textMatches, issue)
+		}
+	}
 	var items []components.ModalItem
 	for _, g := range filterGroups {
 		counts := make(map[string]int)
+		seen := make(map[string]bool)
 		var values []string
 		for _, issue := range m.allIssues {
-			v := issueFilterValue(issue, g.key)
-			if counts[v] == 0 {
+			if v := issueFilterValue(issue, g.key); !seen[v] {
+				seen[v] = true
 				values = append(values, v)
 			}
-			counts[v]++
+		}
+		for _, issue := range textMatches {
+			if matchesSelection(issue, selected, g.key) {
+				counts[issueFilterValue(issue, g.key)]++
+			}
 		}
 		prefix := g.key + ":"
 		for key := range selected {
-			if v, ok := strings.CutPrefix(key, prefix); ok && counts[v] == 0 {
+			if v, ok := strings.CutPrefix(key, prefix); ok && !seen[v] {
 				values = append(values, v)
 			}
 		}
@@ -166,13 +181,27 @@ func (m *IssuesList) FilterPickerItems() []components.ModalItem {
 		}
 		items = append(items, components.ModalItem{Label: g.label, Separator: true})
 		for _, v := range values {
+			id := filterKey(g.key, v)
 			items = append(items, components.ModalItem{
-				ID:    filterKey(g.key, v),
-				Label: fmt.Sprintf("%s (%d)", v, counts[v]),
+				ID:       id,
+				Label:    fmt.Sprintf("%s (%d)", v, counts[v]),
+				Disabled: counts[v] == 0 && !selected[id],
 			})
 		}
 	}
 	return items
+}
+
+// PickerResultCount returns how many loaded issues pass the local filter and
+// selected, out of all loaded issues.
+func (m *IssuesList) PickerResultCount(selected map[string]bool) (matching, loaded int) {
+	q := strings.ToLower(m.filter)
+	for _, issue := range m.allIssues {
+		if matchesText(issue, q) && matchesSelection(issue, selected, "") {
+			matching++
+		}
+	}
+	return matching, len(m.allIssues)
 }
 
 func (m *IssuesList) sortedStatusNames(names []string) []string {

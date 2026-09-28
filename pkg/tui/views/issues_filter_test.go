@@ -8,6 +8,7 @@ import (
 
 	"github.com/nikbrunner/lazyjira/v2/pkg/config"
 	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
 )
 
 func filterIssue(key, status, typ, prio string) jira.Issue {
@@ -138,15 +139,15 @@ func TestIssuesList_FilterPickerItemsKeepSelectedValuesWithoutIssues(t *testing.
 	m.SetIssues(filterTestIssues())
 	m.SetPickerFilter(map[string]bool{"status:QA": true})
 
-	items := m.FilterPickerItems()
+	items := m.FilterPickerItems(m.PickerFilter())
 	labels := make([]string, 0, len(items))
 	for _, item := range items {
 		labels = append(labels, item.Label)
 	}
 	got := strings.Join(labels, "|")
 	want := "Status|to do (1)|In Progress (2)|Done (1)|Blocked (1)|QA (0)|" +
-		"Type|Bug (3)|Story (2)|" +
-		"Priority|High (2)|Low (2)|None (1)"
+		"Type|Bug (0)|Story (0)|" +
+		"Priority|High (0)|Low (0)|None (0)"
 	if got != want {
 		t.Errorf("items = %q\nwant    %q", got, want)
 	}
@@ -227,5 +228,50 @@ func TestIssuesList_NewJQLSearchStartsWithoutPickerFilter(t *testing.T) {
 	m.SetIssues(filterTestIssues())
 	if m.IsPickerFiltered() {
 		t.Error("new JQL search kept the previous picker filter")
+	}
+}
+
+func pickerLabels(items []components.ModalItem) (labels, disabled string) {
+	var all, off []string
+	for _, item := range items {
+		if item.Separator {
+			continue
+		}
+		all = append(all, item.Label)
+		if item.Disabled {
+			off = append(off, item.ID)
+		}
+	}
+	return strings.Join(all, "|"), strings.Join(off, "|")
+}
+
+func TestIssuesList_FilterPickerCountsFacetAgainstOtherGroups(t *testing.T) {
+	t.Parallel()
+	m := makeIssuesListWithTabs(80, 12, "All")
+	m.SetIssues(filterTestIssues())
+
+	labels, disabled := pickerLabels(m.FilterPickerItems(map[string]bool{"type:Story": true, "status:Done": true}))
+	wantLabels := "Blocked (0)|Done (0)|In Progress (1)|to do (1)|" +
+		"Bug (1)|Story (0)|" +
+		"High (0)|Low (0)|None (0)"
+	if labels != wantLabels {
+		t.Errorf("labels = %q\nwant     %q", labels, wantLabels)
+	}
+	wantDisabled := "status:Blocked|priority:High|priority:Low|priority:None"
+	if disabled != wantDisabled {
+		t.Errorf("disabled = %q, want %q", disabled, wantDisabled)
+	}
+}
+
+func TestIssuesList_FilterPickerCountsRespectTextFilter(t *testing.T) {
+	t.Parallel()
+	m := makeIssuesListWithTabs(80, 12, "All")
+	m.SetIssues(filterTestIssues())
+	m.SetFilter("A-1")
+
+	labels, _ := pickerLabels(m.FilterPickerItems(nil))
+	want := "Blocked (0)|Done (1)|In Progress (0)|to do (0)|Bug (1)|Story (0)|High (1)|Low (0)|None (0)"
+	if labels != want {
+		t.Errorf("labels = %q\nwant     %q", labels, want)
 	}
 }

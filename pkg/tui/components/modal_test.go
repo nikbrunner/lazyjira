@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -156,5 +157,44 @@ func TestModal_Checklist(t *testing.T) {
 	}
 	if len(confirmed.Selected) != 2 {
 		t.Errorf("selected %d items, want 2", len(confirmed.Selected))
+	}
+}
+
+func TestModal_GroupedChecklistRelabelsAndBlocksDisabled(t *testing.T) {
+	t.Parallel()
+	relabel := func(selected map[string]bool) (string, []ModalItem) {
+		return fmt.Sprintf("Filter %d", len(selected)), []ModalItem{
+			{Label: "Group", Separator: true},
+			{ID: "a", Label: map[bool]string{true: "A on", false: "A off"}[selected["a"]]},
+			{ID: "b", Label: "B", Disabled: selected["a"]},
+		}
+	}
+	m := NewModal()
+	m.SetSize(80, 24)
+	m.ShowGroupedChecklist(nil, relabel)
+	if m.Title() != "Filter 0" {
+		t.Errorf("title = %q, want Filter 0", m.Title())
+	}
+
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}})
+	if m.items[1].Label != "A on" || !m.items[2].Disabled {
+		t.Fatalf("items after toggling a = %+v, want relabelled with b disabled", m.items)
+	}
+	if m.Title() != "Filter 1" {
+		t.Errorf("title after toggle = %q, want Filter 1", m.Title())
+	}
+	if m.cursor != 1 {
+		t.Errorf("cursor = %d, want it to stay on a", m.cursor)
+	}
+
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}})
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	got, ok := cmd().(ChecklistConfirmedMsg)
+	if !ok {
+		t.Fatal("enter should confirm the checklist")
+	}
+	if len(got.Selected) != 1 || got.Selected[0].ID != "a" {
+		t.Errorf("confirmed = %+v, want only a (b is disabled)", got.Selected)
 	}
 }

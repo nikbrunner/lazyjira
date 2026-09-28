@@ -429,8 +429,7 @@ func (a *App) handleExpandBlock(msg views.ExpandBlockMsg) (tea.Model, tea.Cmd) {
 }
 
 func (a *App) openFilterPicker() {
-	items := a.issuesList.FilterPickerItems()
-	if len(items) == 0 {
+	if len(a.issuesList.FilterPickerItems(nil)) == 0 {
 		return
 	}
 	a.onChecklist = func(selected []components.ModalItem) tea.Cmd {
@@ -445,5 +444,8 @@ func (a *App) openFilterPicker() {
 		}
 		return a.previewSelectedIssue()
 	}
-	a.modal.ShowGroupedChecklist("Filter issues", items, a.issuesList.PickerFilter())
+	a.modal.ShowGroupedChecklist(a.issuesList.PickerFilter(), func(selected map[string]bool) (string, []components.ModalItem) {
+		matching, loaded := a.issuesList.PickerResultCount(selected)
+		return fmt.Sprintf("Filter issues · %d of %d", matching, loaded), a.issuesList.FilterPickerItems(selected)
+	})
 }
