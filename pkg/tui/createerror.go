@@ -27,6 +27,16 @@ func formatCreateError(err error, projectKey string, subtask bool) string {
 	return fmt.Sprintf("Cannot create %s in %s: %s", noun, projectKey, detail)
 }
 
+// formatJQLError returns Jira's own messages for a failed JQL search, one per
+// line, or the raw error when Jira sent none.
+func formatJQLError(err error) string {
+	var apiErr *jira.APIError
+	if !errors.As(err, &apiErr) || len(apiErr.Messages) == 0 {
+		return err.Error()
+	}
+	return strings.Join(apiErr.Messages, "\n")
+}
+
 func lowerFirst(s string) string {
 	if s == "" {
 		return s

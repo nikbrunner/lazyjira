@@ -197,7 +197,7 @@ func fetchJQLSearch(client jira.ClientInterface, jql string, maxResults int) tea
 	return func() tea.Msg {
 		result, err := client.SearchIssues(context.Background(), jql, 0, maxResults)
 		if err != nil {
-			return jqlSearchErrorMsg{err: err.Error()}
+			return jqlSearchErrorMsg{err: formatJQLError(err)}
 		}
 		return jqlSearchResultMsg{issues: result.Issues, jql: jql, total: result.Total, hasMore: result.HasMore}
 	}

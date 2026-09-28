@@ -119,10 +119,30 @@ func (m *JQLModal) InputCursorPos() int { return m.input.CursorPos() }
 
 func (m *JQLModal) listHeight() int {
 	h := m.height - 8
-	if m.errorMsg != "" {
-		h--
+	if lines := m.errorLines(); len(lines) > 0 {
+		h -= len(lines) + 2
 	}
 	return max(h, 3)
+}
+
+// errorLines wraps the error to the modal's content width. It keeps at most
+// half the modal height, and leaves the list at least three rows, ending the
+// last kept line with an ellipsis.
+func (m *JQLModal) errorLines() []string {
+	if m.errorMsg == "" {
+		return nil
+	}
+	contentW := max(m.width-6, 1)
+	wrapped := lipgloss.NewStyle().Width(contentW).Render(m.errorMsg)
+	lines := strings.Split(wrapped, "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " ")
+	}
+	if limit := max(min(m.height/2, m.height-13), 1); len(lines) > limit {
+		lines = lines[:limit]
+		lines[limit-1] = TruncateEnd(lines[limit-1]+" …", contentW)
+	}
+	return lines
 }
 
 // Update handles key and mouse events and returns the updated modal and an optional command
@@ -383,10 +403,13 @@ func (m *JQLModal) View() string {
 	}
 	inputPanel := RenderPanelFull("JQL Query", "", inputContent, m.width-2, 1, m.focusInput, nil)
 
-	errorLine := ""
-	if m.errorMsg != "" {
-		errStyle := lipgloss.NewStyle().Foreground(theme.ColorRed).Bold(true)
-		errorLine = " " + errStyle.Render(m.errorMsg)
+	errorPanel := ""
+	if lines := m.errorLines(); len(lines) > 0 {
+		errStyle := lipgloss.NewStyle().Foreground(theme.ColorRed)
+		for i, line := range lines {
+			lines[i] = errStyle.Render(line)
+		}
+		errorPanel = RenderPanelWithColor("Error", "", strings.Join(lines, "\n"), m.width-2, len(lines), nil, theme.ColorRed)
 	}
 
 	listH := m.listHeight()
@@ -405,8 +428,8 @@ func (m *JQLModal) View() string {
 
 	var parts []string
 	parts = append(parts, inputPanel)
-	if errorLine != "" {
-		parts = append(parts, errorLine)
+	if errorPanel != "" {
+		parts = append(parts, errorPanel)
 	}
 	parts = append(parts, listPanel)
 	inner := strings.Join(parts, "\n")
