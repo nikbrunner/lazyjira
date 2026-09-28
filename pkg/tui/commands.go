@@ -59,7 +59,7 @@ func fetchIssuesByJQL(client jira.ClientInterface, jql string, tab, maxResults i
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return issuesLoadedMsg{issues: result.Issues, tab: tab}
+		return issuesLoadedMsg{issues: result.Issues, tab: tab, total: result.Total, hasMore: result.HasMore}
 	}
 }
 
@@ -182,8 +182,10 @@ func doTransition(client jira.ClientInterface, key, transitionID string) tea.Cmd
 
 // JQL search messages
 type jqlSearchResultMsg struct {
-	issues []jira.Issue
-	jql    string
+	issues  []jira.Issue
+	jql     string
+	total   int
+	hasMore bool
 }
 type jqlSearchErrorMsg struct{ err string }
 
@@ -197,7 +199,7 @@ func fetchJQLSearch(client jira.ClientInterface, jql string, maxResults int) tea
 		if err != nil {
 			return jqlSearchErrorMsg{err: err.Error()}
 		}
-		return jqlSearchResultMsg{issues: result.Issues, jql: jql}
+		return jqlSearchResultMsg{issues: result.Issues, jql: jql, total: result.Total, hasMore: result.HasMore}
 	}
 }
 

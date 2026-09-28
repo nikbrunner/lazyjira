@@ -26,6 +26,7 @@ type NavFrame struct {
 	ParentKey    string
 	OriginTabIdx int
 	Filter       string
+	PickerFilter map[string]bool
 }
 
 type NavStack struct {

@@ -199,7 +199,7 @@ func demoPageResults(filtered []*Issue, startAt, maxResults int) *SearchResult {
 	for i, iss := range filtered[startAt:end] {
 		issues[i] = *iss
 	}
-	return &SearchResult{Issues: issues, Total: total, MaxResults: maxResults, StartAt: startAt}
+	return &SearchResult{Issues: issues, Total: total, MaxResults: maxResults, StartAt: startAt, HasMore: end < total}
 }
 
 func (d *DemoClient) GetIssue(_ context.Context, issueKey string) (*Issue, error) {

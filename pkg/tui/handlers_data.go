@@ -20,6 +20,7 @@ func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
 	*a.logFlag = false
 	a.statusPanel.SetOnline(true)
 	a.issuesList.SetIssuesForTab(msg.tab, msg.issues)
+	a.issuesList.SetTabPageInfo(msg.tab, msg.total, msg.hasMore)
 
 	var cmds []tea.Cmd
 	if msg.tab == a.issuesList.GetTabIndex() {

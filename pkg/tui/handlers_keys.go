@@ -49,13 +49,7 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	if action == ActFocusLeft && a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.HasMarks() {
-		a.issuesList.ClearMarks()
-		return a, nil
-	}
-
-	if action == ActFocusLeft && a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.IsFiltered() {
-		a.issuesList.ClearFilter()
+	if action == ActFocusLeft && a.side == sideLeft && a.leftFocus == focusIssues && a.clearIssueListLayer() {
 		return a, nil
 	}
 
@@ -109,6 +103,11 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ActVisualSelect:
 		if a.side == sideLeft && a.leftFocus == focusIssues {
 			a.issuesList.ToggleVisual()
+		}
+		return a, nil
+	case ActFilterPicker:
+		if a.side == sideLeft && a.leftFocus == focusIssues {
+			a.openFilterPicker()
 		}
 		return a, nil
 	case ActURLPicker:
@@ -285,6 +284,22 @@ func (a *App) helpConfirmSearch() {
 			}
 		}
 	}
+}
+
+// clearIssueListLayer clears marks, then the text filter, then the picker
+// filter, one per call, and reports whether it cleared anything.
+func (a *App) clearIssueListLayer() bool {
+	switch {
+	case a.issuesList.HasMarks():
+		a.issuesList.ClearMarks()
+	case a.issuesList.IsFiltered():
+		a.issuesList.ClearFilter()
+	case a.issuesList.IsPickerFiltered():
+		a.issuesList.ClearPickerFilter()
+	default:
+		return false
+	}
+	return true
 }
 
 func (a *App) filteredHelpBindings() []Binding {

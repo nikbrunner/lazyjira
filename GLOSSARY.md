@@ -44,7 +44,9 @@
 | **Issue tabs pane** | The focusable vertical pane listing issue tabs beside the Issues panel. Focusing it leaves the active issue tab unchanged. | Issues panel, issue list |
 | **JQL query** | A Jira Query Language expression defining which issues Jira returns and their ordering. | Local filter |
 | **Local filter** | A text filter applied to issues already loaded for the active issue tab. | JQL query, search without qualification |
-| **Issue list** | The ordered collection of issues in the active issue tab after any local filter is applied. | Visible rows when referring to all matching issues |
+| **Picker filter** | A per-tab selection of statuses, issue types, and priorities that narrows the loaded issues. Values in one group are alternatives; groups combine with each other and with the local filter. | Local filter, JQL query |
+| **Status order** | The configured `statusOrder` list that groups issue lists by status while keeping JQL order within each status. | JQL ordering, sort without qualification |
+| **Issue list** | The ordered collection of issues in the active issue tab after status order and any local or picker filter are applied. | Visible rows when referring to all matching issues |
 | **Issue row** | The table-like line representing one issue through its configured columns. | Current line, cell |
 | **Marked issue** | An issue in the issue list picked for a bulk action with `space` or a `v` range, shown with a mark before its issue row. Selection refers to the cursor row. | Selected issue |
 | **Column** | An aligned vertical slot for one configured issue field, in `issueListFields` order. | Field when referring to layout |
@@ -73,7 +75,7 @@
 - The **Issue info pane** provides field editing and relationship navigation; the **Issue details pane** presents issue description, comments, and history.
 - The **Issue tabs pane** lists the **Issue tabs**; its active tab determines the **Issue list** shown in the **Issues panel**.
 - An **Issue tab** contains zero or more **Issues**; an **Issue** can appear in more than one tab.
-- A **Local filter** narrows the active tab's loaded issues into the current **Issue list**.
+- A **Local filter** and a **Picker filter** narrow the active tab's loaded issues into the current **Issue list**; **Status order** sets its order.
 - Each **Issue row** represents one **Issue** and contains one **Cell** per configured **Column**.
 - The **Column header row** and all **Issue rows** share column order and widths.
 - The **Viewport** contains a subset of the **Issue rows**; **Summary width** accounts for the full **Issue list**, including off-screen issues.

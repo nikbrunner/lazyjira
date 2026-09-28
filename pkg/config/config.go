@@ -82,6 +82,7 @@ type Config struct {
 	GUI              GUIConfig             `yaml:"gui"`
 	Keybinding       KeybindingConfig      `yaml:"keybinding"`
 	IssueTabs        []IssueTabConfig      `yaml:"issueTabs"`
+	StatusOrder      []string              `yaml:"statusOrder,omitempty"`
 	MaxResults       *int                  `yaml:"maxResults"`
 	Cache            CacheConfig           `yaml:"cache"`
 	Refresh          RefreshConfig         `yaml:"refresh"`
@@ -131,9 +132,15 @@ type BranchFormatCondition struct {
 }
 
 type IssueTabConfig struct {
-	Name       string `yaml:"name"`
-	JQL        string `yaml:"jql"`
-	MaxResults *int   `yaml:"maxResults"`
+	Name         string `yaml:"name"`
+	JQL          string `yaml:"jql"`
+	MaxResults   *int   `yaml:"maxResults"`
+	SortByStatus *bool  `yaml:"sortByStatus,omitempty"`
+}
+
+// SortsByStatus reports whether the tab applies statusOrder (default: true).
+func (t IssueTabConfig) SortsByStatus() bool {
+	return t.SortByStatus == nil || *t.SortByStatus
 }
 
 type FieldConfig struct {
@@ -195,6 +202,7 @@ type IssueKeys struct {
 	CreateSubtask    string `yaml:"createSubtask"`
 	VisualSelect     string `yaml:"visualSelect"`
 	ShowChildren     string `yaml:"showChildren"`
+	FilterPicker     string `yaml:"filterPicker"`
 }
 
 type ProjectKeys struct {

@@ -18,6 +18,8 @@ type ModalItem struct {
 	Internal  bool
 	Separator bool
 	Active    bool
+	// Disabled checklist items render dimmed and can be unchecked but not checked.
+	Disabled bool
 }
 
 // ModalSelectedMsg is sent when user picks an item
@@ -43,6 +45,7 @@ type Modal struct {
 	readOnly    bool
 	checklist   bool
 	selected    map[string]bool
+	relabel     func(selected map[string]bool) (string, []ModalItem)
 	offset      int
 	width       int
 	height      int
@@ -69,6 +72,7 @@ func (m *Modal) show(title string, items []ModalItem, readOnly bool) {
 	m.readOnly = readOnly
 	m.checklist = false
 	m.selected = nil
+	m.relabel = nil
 	m.filterInput.SetValue("")
 	m.searching = false
 	m.isError = false
@@ -111,6 +115,55 @@ func (m *Modal) ShowChecklist(title string, items []ModalItem, selected map[stri
 	m.checklist = true
 	m.selected = sel
 	m.sortChecklist()
+}
+
+// ShowGroupedChecklist opens a multi-select checklist that keeps the item
+// order, including separator rows as group headings. relabel builds the title
+// and items, and runs again after every toggle; it must return the same IDs in
+// the same order.
+func (m *Modal) ShowGroupedChecklist(selected map[string]bool, relabel func(map[string]bool) (string, []ModalItem)) {
+	sel := make(map[string]bool, len(selected))
+	for k, v := range selected {
+		if v {
+			sel[k] = true
+		}
+	}
+	title, items := relabel(sel)
+	m.show(title, items, false)
+	m.checklist = true
+	m.selected = sel
+	m.relabel = relabel
+}
+
+func (m *Modal) toggleChecklistItem(item ModalItem) {
+	if m.selected[item.ID] {
+		delete(m.selected, item.ID)
+	} else if !item.Disabled {
+		m.selected[item.ID] = true
+	}
+	if m.relabel == nil {
+		return
+	}
+	title, items := m.relabel(m.selected)
+	m.title = title
+	fresh := make(map[string]ModalItem)
+	for _, it := range items {
+		if !it.Separator {
+			fresh[it.ID] = it
+		}
+	}
+	update := func(items []ModalItem) []ModalItem {
+		out := make([]ModalItem, len(items))
+		for i, it := range items {
+			out[i] = it
+			if f, ok := fresh[it.ID]; ok && !it.Separator {
+				out[i] = f
+			}
+		}
+		return out
+	}
+	m.allItems = update(m.allItems)
+	m.items = update(m.items)
 }
 
 // sortChecklist sorts items with selected first then unselected preserving relative order
@@ -346,12 +399,7 @@ func (m *Modal) handleSpace() (Modal, tea.Cmd) {
 	}
 	if m.checklist {
 		if m.cursor >= 0 && m.cursor < len(m.items) && !m.items[m.cursor].Separator {
-			id := m.items[m.cursor].ID
-			if m.selected[id] {
-				delete(m.selected, id)
-			} else {
-				m.selected[id] = true
-			}
+			m.toggleChecklistItem(m.items[m.cursor])
 		}
 		return *m, nil
 	}
@@ -414,12 +462,7 @@ func (m *Modal) handleMouse(msg tea.MouseMsg) (Modal, tea.Cmd) {
 			if idx >= 0 && idx < len(m.items) && !m.items[idx].Separator {
 				m.cursor = idx
 				if m.checklist {
-					id := m.items[m.cursor].ID
-					if m.selected[id] {
-						delete(m.selected, id)
-					} else {
-						m.selected[id] = true
-					}
+					m.toggleChecklistItem(m.items[m.cursor])
 					return *m, nil
 				}
 				selected := m.items[m.cursor]
@@ -634,6 +677,8 @@ func (m *Modal) renderItems(titleStyle lipgloss.Style, contentW int) []string {
 				}
 			case sel:
 				lines = append(lines, style.Render(checkGreen.Render("✓")+" "+text))
+			case item.Disabled:
+				lines = append(lines, style.Render(sepStyle.Render("  "+text)))
 			default:
 				lines = append(lines, style.Render("  "+text))
 			}

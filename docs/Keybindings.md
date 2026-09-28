@@ -38,6 +38,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `space` | Mark or unmark the issue |
 | `>` | Open the issue's children in a temporary tab; `backspace` opens the parent and `esc` goes back |
 | `v` | Start a marked range at the cursor; press again to end it and keep the range marked |
+| `f` | Filter the loaded issues by status, issue type, and priority; `space` toggles a value, `enter` applies. Counts show the issues each value would leave, and values that would leave none are dimmed. Each tab keeps its own filter for the session |
 | `t` | Transition status |
 | `e` | Edit (summary, description, or focused field) |
 | `p` | Change priority |
@@ -55,7 +56,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `W` | Create a worktree using the `w` string for its branch and default directory name (issues, info, or detail panel) |
 | `s` | JQL search |
 | `x` | Close JQL tab |
-| `esc` | Clear marks, otherwise clear local filter |
+| `esc` | Clear marks, then the local filter, then the picker filter |
 
 ## Help popup
 

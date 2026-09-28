@@ -71,6 +71,34 @@ func TestClient_SearchIssues_CustomFieldsAppended(t *testing.T) {
 	}
 }
 
+func TestClient_SearchIssues_HasMore(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		opts ClientOpts
+		body string
+		want bool
+	}{
+		{"cloud next page token", cloudOpts(), `{"issues": [], "nextPageToken": "abc"}`, true},
+		{"cloud not last", cloudOpts(), `{"issues": [], "isLast": false}`, true},
+		{"cloud last page", cloudOpts(), `{"issues": [], "isLast": true}`, false},
+		{"server partial page", serverOpts(), `{"issues": [{"id": "1", "key": "OPS-1", "fields": {}}], "total": 3, "startAt": 0}`, true},
+		{"server complete", serverOpts(), singleIssueSearchJSON, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			client, _ := newRecordingClient(t, tc.opts, testkit.StubResponse{Status: http.StatusOK, Body: tc.body})
+			result, err := client.SearchIssues(t.Context(), "project = X", 0, 1)
+			if err != nil {
+				t.Fatalf("SearchIssues: %v", err)
+			}
+			testkit.AssertEqual(t, "HasMore", result.HasMore, tc.want)
+		})
+	}
+}
+
 func TestClient_GetMyIssues_FiresCurrentUserJQL(t *testing.T) {
 	t.Parallel()
 
