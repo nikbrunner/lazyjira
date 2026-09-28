@@ -63,7 +63,7 @@ func (a *App) mouseScroll(panel panelID, delta int) (tea.Model, tea.Cmd) {
 	case panelTabs:
 		a.side = sideLeft
 		a.leftFocus = focusIssueTabs
-		a.tabOffset = max(0, a.tabOffset+delta)
+		a.scrollIssueTabs(delta)
 		a.updateFocusState()
 	case panelIssues:
 		if a.side != sideLeft || a.leftFocus != focusIssues {
@@ -116,7 +116,7 @@ func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 		a.leftFocus = focusIssueTabs
 		a.updateFocusState()
 		if index, overflow := a.issueTabAtRow(relY); overflow != 0 {
-			a.tabOffset = max(0, a.tabOffset+overflow)
+			a.scrollIssueTabs(overflow)
 		} else if index >= 0 && index != a.issuesList.GetTabIndex() {
 			a.setIssueTabIndex(index)
 			return a, a.activateIssueCollection()

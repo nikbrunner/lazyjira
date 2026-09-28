@@ -12,6 +12,11 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
   - `f` opens a per-tab filter picker for status, issue type, and priority, and the panel title shows the active selection.
   - Filter picker counts update as values are toggled, and values that would leave no issues are dimmed and cannot be checked.
   - The filter picker title shows how many loaded issues the current selection leaves, e.g. `Filter issues · 4 of 50`.
+
+### Fixed
+
+- Workspace — nbr <nikolaus.brunner@protonmail.ch>
+  - Scrolling the Issue tabs pane by mouse wheel or overflow click stops at the last full window.
   - `esc` clears marks, then the local filter, then the picker filter.
   - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
 

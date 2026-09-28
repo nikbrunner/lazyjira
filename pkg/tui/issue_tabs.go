@@ -107,6 +107,15 @@ func (a *App) renderIssueTabs(width, height int) string {
 	return components.RenderPanel(title, strings.Join(rows, "\n"), width, innerHeight, focused)
 }
 
+// scrollIssueTabs moves the Issue tabs window by delta rows, stopping at the
+// last full window.
+func (a *App) scrollIssueTabs(delta int) {
+	innerHeight := max(0, a.geometry().tabs.height-2)
+	tabs := len(a.issuesList.Tabs())
+	lastOffset := max(0, tabs-issueTabVisibleCount(tabs, innerHeight))
+	a.tabOffset = min(max(0, a.tabOffset+delta), lastOffset)
+}
+
 func (a *App) issueTabAtRow(y int) (index, overflow int) {
 	layout := a.geometry()
 	innerHeight := max(0, layout.tabs.height-2)
