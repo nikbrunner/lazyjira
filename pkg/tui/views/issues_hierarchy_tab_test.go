@@ -205,3 +205,50 @@ func TestInvalidateTabCache_WithBothTabs_RemovesBoth(t *testing.T) {
 		t.Fatalf("JQL-Tab survived InvalidateTabCache")
 	}
 }
+
+func TestRemoveHierarchyTab_KeepsLaterJQLTab(t *testing.T) {
+	t.Parallel()
+	m := NewIssuesList()
+	m.SetTabs([]config.IssueTabConfig{{Name: "My"}})
+	m.AddHierarchyTab("Children", []jira.Issue{{Key: "CHILD-1"}})
+	m.AddJQLTab("project = FOO")
+	m.SetIssues([]jira.Issue{{Key: "FOO-1"}})
+	m.SetPickerFilter(map[string]bool{"status:None": true})
+
+	m.RemoveHierarchyTab()
+
+	if len(m.Tabs()) != 2 || !m.HasJQLTab() {
+		t.Fatalf("tabs = %+v, want My and JQL", m.Tabs())
+	}
+	m.SetTabIndex(1)
+	if !m.IsJQLTab() {
+		t.Fatal("tab 1 should be the JQL tab")
+	}
+	if issues := m.CurrentIssues(); len(issues) != 1 || issues[0].Key != "FOO-1" {
+		t.Errorf("JQL tab issues = %+v, want FOO-1", issues)
+	}
+	if !m.IsPickerFiltered() {
+		t.Error("JQL tab lost its picker filter")
+	}
+}
+
+func TestRemoveJQLTab_KeepsLaterHierarchyTab(t *testing.T) {
+	t.Parallel()
+	m := NewIssuesList()
+	m.SetTabs([]config.IssueTabConfig{{Name: "My"}})
+	m.AddJQLTab("project = FOO")
+	m.AddHierarchyTab("Children", []jira.Issue{{Key: "CHILD-1"}})
+
+	m.RemoveJQLTab()
+
+	if len(m.Tabs()) != 2 || !m.HasHierarchyTab() {
+		t.Fatalf("tabs = %+v, want My and Children", m.Tabs())
+	}
+	m.SetTabIndex(1)
+	if !m.IsHierarchyTab() {
+		t.Fatal("tab 1 should be the children tab")
+	}
+	if issues := m.CurrentIssues(); len(issues) != 1 || issues[0].Key != "CHILD-1" {
+		t.Errorf("children tab issues = %+v, want CHILD-1", issues)
+	}
+}

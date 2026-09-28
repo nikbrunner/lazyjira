@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -140,11 +141,7 @@ func (m *IssuesList) RemoveJQLTab() {
 	if m.jqlTabIdx < 0 {
 		return
 	}
-	m.tabs = m.tabs[:m.jqlTabIdx]
-	if m.tabCache != nil {
-		delete(m.tabCache, m.jqlTabIdx)
-	}
-	m.dropTabState(m.jqlTabIdx)
+	m.removeTab(m.jqlTabIdx)
 	m.jqlTabIdx = -1
 	m.jqlQuery = ""
 	m.tab = 0
@@ -210,16 +207,43 @@ func (m *IssuesList) RemoveHierarchyTab() {
 	if m.hierarchyTabIdx < 0 {
 		return
 	}
-	if m.tabCache != nil {
-		delete(m.tabCache, m.hierarchyTabIdx)
-	}
-	m.dropTabState(m.hierarchyTabIdx)
-	m.tabs = append(m.tabs[:m.hierarchyTabIdx], m.tabs[m.hierarchyTabIdx+1:]...)
+	m.removeTab(m.hierarchyTabIdx)
 	m.hierarchyTabIdx = -1
 	m.hierarchyTitle = ""
 	m.hierarchyStack = nil
 	m.tab = 0
 	m.loadFromCache()
+}
+
+// removeTab deletes the tab at idx and moves the per-tab state and transient
+// tab indices above it down by one.
+func (m *IssuesList) removeTab(idx int) {
+	m.tabs = slices.Concat(m.tabs[:idx], m.tabs[idx+1:])
+	m.tabCache = shiftTabKeys(m.tabCache, idx)
+	m.pickerFilters = shiftTabKeys(m.pickerFilters, idx)
+	m.pageInfo = shiftTabKeys(m.pageInfo, idx)
+	if m.jqlTabIdx > idx {
+		m.jqlTabIdx--
+	}
+	if m.hierarchyTabIdx > idx {
+		m.hierarchyTabIdx--
+	}
+}
+
+func shiftTabKeys[V any](state map[int]V, removed int) map[int]V {
+	if state == nil {
+		return nil
+	}
+	out := make(map[int]V, len(state))
+	for tab, v := range state {
+		switch {
+		case tab < removed:
+			out[tab] = v
+		case tab > removed:
+			out[tab-1] = v
+		}
+	}
+	return out
 }
 
 func (m *IssuesList) HasHierarchyTab() bool {

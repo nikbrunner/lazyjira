@@ -25,6 +25,7 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
   - Scrolling the Issue tabs pane by mouse wheel or overflow click stops at the last full window.
+  - Closing a JQL or children tab keeps the other one with its issues and filters.
 
 ---
 
