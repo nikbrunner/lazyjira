@@ -116,7 +116,9 @@ path. Press `Win+R`, enter `sysdm.cpl`, then open Advanced → Environment Varia
 the directory and open a new PowerShell window.
 
 Archives for macOS, Linux, and Windows are also attached to each
-[GitHub Release](https://github.com/nikbrunner/lazyjira/releases). Check the install with `lazyjira --version`.
+[GitHub Release](https://github.com/nikbrunner/lazyjira/releases). The binaries are not signed, so macOS blocks one
+downloaded in a browser; run `xattr -d com.apple.quarantine lazyjira` once to allow it. Check the install with
+`lazyjira --version`.
 
 ## Setup
 
@@ -127,6 +129,9 @@ Run `lazyjira`. On first launch a setup wizard asks for your Jira type, host, an
 - Jira Server / Data Center needs a Personal Access Token from Profile → Personal Access Tokens → Create token.
 
 For client certificates (mTLS), see [TLS](docs/Config.md#tls).
+
+lazyjira only talks to your Jira host. It sends no telemetry and does not check for updates. `auth.json` is readable
+only by your user. To look around without changing anything in Jira, start it with `lazyjira --dry-run`.
 
 ## Usage
 

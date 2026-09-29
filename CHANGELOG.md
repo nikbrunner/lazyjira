@@ -155,6 +155,7 @@ gui:
   - The VHS tapes use the current keys, record from the demo config at a single width, and store the GIFs in
     `docs/assets/recordings/`.
   - The release process re-records the GIFs.
+  - The README states that lazyjira only talks to your Jira host, and explains how to open an unsigned binary on macOS.
   - `docs/Config.md` lists the JQL history file as `jql_history`.
 
 ### Fixed
