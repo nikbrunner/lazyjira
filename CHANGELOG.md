@@ -11,6 +11,8 @@ This is the first release since the fork from [textfuel/lazyjira](https://github
 below is new in the fork: a rebuilt workspace, opening any issue by key, a filterable Issues panel, colors from your
 terminal, Git worktrees from an issue, and three ways to install.
 
+![lazyjira: browsing issues, switching issue tabs, and opening an issue in the maximized Issues panel](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.6.5/docs/assets/recordings/hero.gif)
+
 #### Install
 
 On macOS or Linux, the install script downloads the release, checks it against `checksums.txt`, and installs it to
@@ -32,12 +34,16 @@ anywhere. `Enter` on the Project selector opens a searchable Project picker.
 `+` maximizes Issues or Details. `Enter` on a maximized Issues panel opens the issue in maximized Details, and `esc` steps
 back to the list, then to the split layout.
 
+![Maximized Issues panel, maximized issue details, filter picker, comments, JQL search, and project picker](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.6.5/docs/assets/recordings/preview.gif)
+
 #### Open any issue by key
 
 `#` opens a prompt that starts with the active project key, such as `PLAT-`. Type the number and it suggests matching
 issues from Jira with their summaries. Delete the prefix to switch projects: `web` completes to `WEBSDK-`. The issue opens
 in maximized Issue details, and `esc` returns to where you were
 ([#20](https://github.com/nikbrunner/lazyjira/issues/20)).
+
+![Opening PLAT-3 by key with project and issue completion](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.6.5/docs/assets/recordings/issue-lookup.gif)
 
 #### Filter and group the Issues panel
 
