@@ -36,4 +36,4 @@ e2e/tapes/*.gif
 
 # Demo config
 !e2e/demo-config/config.yml
-e2e/demo-config/jql_history.txt
+e2e/demo-config/jql_history

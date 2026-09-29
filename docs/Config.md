@@ -671,4 +671,4 @@ Validation follows the configured `$SHELL` for POSIX `sh`, `bash`, `zsh`, or `mk
 |------|-------------|
 | `config.yml` | Main configuration |
 | `auth.json` | Credentials, created automatically with restricted permissions |
-| `jql_history.txt` | JQL search history, up to 50 entries |
+| `jql_history` | JQL search history, up to 50 entries |

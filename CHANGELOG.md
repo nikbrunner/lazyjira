@@ -205,6 +205,7 @@ Colors come from your terminal, and `gui.theme` is ignored with a warning. Move 
   - The VHS tapes use the current keys, record from the demo config at a single width, and store the screenshot and GIFs
     in `docs/assets/recordings/`.
   - A VHS tape records the README screenshot, and the release process re-records it with the GIFs.
+  - `docs/Config.md` lists the JQL history file as `jql_history`.
 
 ### Fixed
 
