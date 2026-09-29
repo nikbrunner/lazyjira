@@ -150,11 +150,11 @@ gui:
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>
   - The README covers installing with Go on macOS, Linux, and Windows.
   - `GLOSSARY.md` defines the workspace, issue list, and Git integration terms.
-  - The README describes the current workspace and features, opens with a short recording and a screenshot, and shows
+  - The README describes the current workspace and features, follows the introduction with a short recording, and shows
     captioned recordings of browsing, creating an issue, and opening an issue by key.
-  - The VHS tapes use the current keys, record from the demo config at a single width, and store the screenshot and GIFs
-    in `docs/assets/recordings/`.
-  - A VHS tape records the README screenshot, and the release process re-records it with the GIFs.
+  - The VHS tapes use the current keys, record from the demo config at a single width, and store the GIFs in
+    `docs/assets/recordings/`.
+  - The release process re-records the GIFs.
   - `docs/Config.md` lists the JQL history file as `jql_history`.
 
 ### Fixed

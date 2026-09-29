@@ -35,14 +35,14 @@ Read the proposed version from the release PR title. Curate its `CHANGELOG.md` s
 highlights by impact, the trimmed log below them, and the heading date set to the release day. The version in the heading
 must match the release PR.
 
-Re-record the README screenshot and demo GIFs so they show the release. This needs [VHS](https://github.com/charmbracelet/vhs)
+Re-record the README GIFs so they show the release. This needs [VHS](https://github.com/charmbracelet/vhs)
 (`brew install vhs`):
 
 ```sh
 make e2e-update
 ```
 
-Look at the screenshot and GIFs in `docs/assets/recordings/` before committing them. Then check and push everything to
+Look at the GIFs in `docs/assets/recordings/` before committing them. Then check and push everything to
 `main`:
 
 ```sh

@@ -6,20 +6,16 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 
-<p align="center">
-  <img src="docs/assets/recordings/hero.gif" width="100%" alt="lazyjira: browsing issues, switching issue tabs, and opening an issue in the maximized Issues panel">
-</p>
-
-<p align="center">
-  <img src="docs/assets/recordings/screenshot.png" width="100%" alt="lazyjira workspace with issue tabs, the Issues panel grouped by status, Issue info, and an issue description with a code block">
-</p>
-
 A keyboard-driven terminal UI for Jira, in the spirit of [lazygit](https://github.com/jesseduffield/lazygit). Browse issues
 through your own JQL tabs, read descriptions and comments, change status, priority, and assignee, and turn an issue into a
 Git branch or worktree without opening a browser.
 
 Based on the [original project](https://github.com/textfuel/lazyjira), created by textfuel and its contributors. The
 original MIT license and copyright notice are preserved in [LICENSE](LICENSE).
+
+<p align="center">
+  <img src="docs/assets/recordings/hero.gif" width="100%" alt="lazyjira: browsing issues, switching issue tabs, and opening an issue in the maximized Issues panel">
+</p>
 
 ## See it in action
 
