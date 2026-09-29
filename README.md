@@ -46,6 +46,7 @@ labels, and components are picked from lists. The new issue then opens with its 
   and shows the result in a temporary tab. `>` opens an issue's children the same way.
 - The Issues panel shows the columns you pick (key, type, status, priority, summary, assignee, updated age) and can group
   issues by your workflow's status order.
+- `#` opens any issue by its key. The prompt completes the project key, then suggests issues as you type the number.
 - `/` filters the loaded issues by text. `f` filters them by status, issue type, and priority, with counts that show what
   each choice leaves.
 - `space` and `v` mark issues, and `y` copies the marked rows as plain text.

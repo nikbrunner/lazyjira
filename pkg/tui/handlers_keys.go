@@ -53,8 +53,8 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return a, nil
 	}
 
-	// In the hierarchy tab, ActFocusLeft pops a NavFrame instead of
-	// shifting focus.
+	// ActFocusLeft closes an issue opened by key and, in the hierarchy tab,
+	// pops a NavFrame instead of shifting focus.
 	if action == ActFocusLeft {
 		if cmd, ok := a.goBack(); ok {
 			return a, cmd
@@ -443,6 +443,9 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 			cmds = append(cmds, fetchJQLAutocompleteData(a.client))
 		}
 		return a, tea.Batch(cmds...), true
+
+	case ActIssueLookup:
+		return a, a.openIssueLookup(), true
 	}
 	return nil, nil, false
 }

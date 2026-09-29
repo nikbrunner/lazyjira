@@ -81,6 +81,8 @@ func (s *DemoServer) handle(w http.ResponseWriter, r *http.Request) {
 	case strings.HasSuffix(path, "/changelog"):
 		key := extractKeyFromPath(path, "/changelog")
 		s.handleChangelog(w, key)
+	case path == "/issue/picker":
+		s.handleIssuePicker(w, r)
 	case strings.HasPrefix(path, "/issue/createmeta/"):
 		s.handleCreateMeta(w)
 	case path == "/issue":
@@ -352,6 +354,15 @@ func (s *DemoServer) handleAddComment(w http.ResponseWriter, r *http.Request, ke
 		return
 	}
 	writeJSON(w, commentToJSON(comment))
+}
+
+func (s *DemoServer) handleIssuePicker(w http.ResponseWriter, r *http.Request) {
+	suggestions, _ := s.data.SuggestIssues(context.Background(), r.URL.Query().Get("query"))
+	issues := make([]any, len(suggestions))
+	for i, suggestion := range suggestions {
+		issues[i] = map[string]any{"key": suggestion.Key, "summaryText": suggestion.Summary}
+	}
+	writeJSON(w, map[string]any{"sections": []any{map[string]any{"issues": issues}}})
 }
 
 func (s *DemoServer) handlePriorities(w http.ResponseWriter) {

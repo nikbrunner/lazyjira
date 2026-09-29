@@ -18,6 +18,7 @@ Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspa
 | `+` | Maximize or restore focused Issues or Details pane; `enter` in maximized Issues opens maximized Details, and `esc` steps back to maximized Issues, then to the split layout |
 | `enter` in Issue tabs | Focus Issues without changing collection |
 | `s` in Issue tabs | Open JQL search starting from the focused tab's query |
+| `#` | Open an issue by key. The prompt starts with the active project key, completes project keys and issue numbers, and opens the issue in maximized Issue details; `esc` returns to the previous layout |
 
 The Project selector opens a searchable picker with `enter` or a click. The Issue tabs pane is directly focusable; `enter` there focuses Issues.
 

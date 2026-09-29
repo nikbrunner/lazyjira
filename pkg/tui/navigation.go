@@ -49,7 +49,7 @@ func (a *App) showCachedIssue(key string) {
 
 func (a *App) previewSelectedIssue() tea.Cmd {
 	sel := a.issuesList.SelectedIssue()
-	if sel == nil {
+	if sel == nil || a.lookupReturn != nil {
 		return nil
 	}
 	a.previewEpoch++

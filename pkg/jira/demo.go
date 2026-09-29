@@ -590,6 +590,20 @@ func (d *DemoClient) GetUsers(_ context.Context, _ string) ([]User, error) {
 	}, nil
 }
 
+func (d *DemoClient) SuggestIssues(_ context.Context, query string) ([]IssueSuggestion, error) {
+	d.logRequest("GET", "/issue/picker?query="+query)
+	query = strings.ToLower(strings.TrimSpace(query))
+	var suggestions []IssueSuggestion
+	for _, project := range d.projects {
+		for _, iss := range d.issues[project.Key] {
+			if strings.HasPrefix(strings.ToLower(iss.Key), query) || strings.Contains(strings.ToLower(iss.Summary), query) {
+				suggestions = append(suggestions, IssueSuggestion{Key: iss.Key, Summary: iss.Summary})
+			}
+		}
+	}
+	return suggestions, nil
+}
+
 func (d *DemoClient) GetPriorities(_ context.Context) ([]Priority, error) {
 	d.logRequest("GET", "/priority")
 	return []Priority{

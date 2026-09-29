@@ -161,6 +161,7 @@ type FakeClient struct {
 	UpdateIssueFunc                   func(ctx context.Context, key string, fields map[string]any) error
 	RemoveIssueParentFunc             func(ctx context.Context, key string) error
 	GetPrioritiesFunc                 func(ctx context.Context) ([]jira.Priority, error)
+	SuggestIssuesFunc                 func(ctx context.Context, query string) ([]jira.IssueSuggestion, error)
 	CreateIssueFunc                   func(ctx context.Context, fields map[string]any) (*jira.Issue, error)
 	GetCreateMetaFunc                 func(ctx context.Context, projectKey, issueTypeID string) ([]jira.CreateMetaField, error)
 	GetCommentsFunc                   func(ctx context.Context, key string) ([]jira.Comment, error)
@@ -195,6 +196,7 @@ type FakeClient struct {
 	UpdateIssueCalls                   []UpdateIssueCall
 	RemoveIssueParentCalls             []RemoveIssueParentCall
 	GetPrioritiesCalls                 []context.Context
+	SuggestIssuesCalls                 []string
 	CreateIssueCalls                   []CreateIssueCall
 	GetCreateMetaCalls                 []GetCreateMetaCall
 	GetCommentsCalls                   []GetCommentsCall
@@ -345,6 +347,15 @@ func (f *FakeClient) RemoveIssueParent(ctx context.Context, key string) error {
 		return nil
 	}
 	return f.RemoveIssueParentFunc(ctx, key)
+}
+
+func (f *FakeClient) SuggestIssues(ctx context.Context, query string) ([]jira.IssueSuggestion, error) {
+	f.SuggestIssuesCalls = append(f.SuggestIssuesCalls, query)
+	if f.SuggestIssuesFunc == nil {
+		f.fatal("SuggestIssues")
+		return nil, nil
+	}
+	return f.SuggestIssuesFunc(ctx, query)
 }
 
 func (f *FakeClient) GetPriorities(ctx context.Context) ([]jira.Priority, error) {

@@ -183,6 +183,7 @@ type UniversalKeys struct {
 	FocusIssueTabs string `yaml:"focusIssueTabs"`
 	ToggleMaximize string `yaml:"toggleMaximize"`
 	JQLSearch      string `yaml:"jqlSearch"`
+	IssueLookup    string `yaml:"issueLookup"`
 }
 
 type IssueKeys struct {

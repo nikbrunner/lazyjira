@@ -86,6 +86,7 @@ keybinding:
         focusDetail: "4"
         toggleMaximize: "+"
         jqlSearch: s
+        issueLookup: "#"
     navigation:
         down: j
         up: k

@@ -29,6 +29,7 @@ type ClientInterface interface {
 	UpdateIssue(ctx context.Context, issueKey string, fields map[string]any) error
 	RemoveIssueParent(ctx context.Context, issueKey string) error
 	GetPriorities(ctx context.Context) ([]Priority, error)
+	SuggestIssues(ctx context.Context, query string) ([]IssueSuggestion, error)
 	CreateIssue(ctx context.Context, fields map[string]any) (*Issue, error)
 	GetCreateMeta(ctx context.Context, projectKey, issueTypeID string) ([]CreateMetaField, error)
 	GetComments(ctx context.Context, issueKey string) ([]Comment, error)
@@ -548,6 +549,35 @@ func (c *Client) GetPriorities(ctx context.Context) ([]Priority, error) {
 		return nil, fmt.Errorf("get priorities: %w", err)
 	}
 	return raw, nil
+}
+
+// SuggestIssues returns issues matching a partial key or summary from Jira's
+// issue picker, in the order Jira ranks them.
+func (c *Client) SuggestIssues(ctx context.Context, query string) ([]IssueSuggestion, error) {
+	var raw struct {
+		Sections []struct {
+			Issues []struct {
+				Key         string `json:"key"`
+				SummaryText string `json:"summaryText"`
+			} `json:"issues"`
+		} `json:"sections"`
+	}
+	path := "/issue/picker?showSubTasks=true&query=" + url.QueryEscape(query)
+	if err := c.do(ctx, http.MethodGet, path, nil, &raw); err != nil {
+		return nil, fmt.Errorf("suggest issues: %w", err)
+	}
+	var suggestions []IssueSuggestion
+	seen := map[string]bool{}
+	for _, section := range raw.Sections {
+		for _, issue := range section.Issues {
+			if issue.Key == "" || seen[issue.Key] {
+				continue
+			}
+			seen[issue.Key] = true
+			suggestions = append(suggestions, IssueSuggestion{Key: issue.Key, Summary: issue.SummaryText})
+		}
+	}
+	return suggestions, nil
 }
 
 func (c *Client) CreateIssue(ctx context.Context, fields map[string]any) (*Issue, error) {

@@ -97,6 +97,10 @@ gui:
   - The App status panel shows a colored connection indicator and cyan field labels.
   - `s` in the Issue tabs pane opens JQL search with the focused tab's query and the cursor before its `ORDER BY` clause
     ([#11](https://github.com/nikbrunner/lazyjira/issues/11)).
+- Issue lookup ([#20](https://github.com/nikbrunner/lazyjira/issues/20)) — nbr <nikolaus.brunner@protonmail.ch>
+  - `#` opens a prompt pre-filled with the active project key. It completes project keys, then suggests issues from
+    Jira's issue picker and the loaded issues as you type the number.
+  - The chosen issue opens in maximized Issue details, and `esc` returns to the previous layout.
 - Issues panel ([#7](https://github.com/nikbrunner/lazyjira/issues/7)) — nbr <nikolaus.brunner@protonmail.ch>
   - `statusOrder` groups issue lists by status, keeping JQL order within each status and in tabs with `sortByStatus: false`.
   - `f` opens a per-tab filter picker for status, issue type, and priority, and the panel title shows the active selection.

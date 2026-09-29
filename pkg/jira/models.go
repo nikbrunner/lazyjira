@@ -87,6 +87,12 @@ type Status struct {
 	CategoryKey string `json:"-"`
 }
 
+// IssueSuggestion is an issue offered while typing an issue key.
+type IssueSuggestion struct {
+	Key     string
+	Summary string
+}
+
 type Priority struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`

@@ -175,6 +175,8 @@ type App struct {
 	inputModal    components.InputModal
 	createForm    components.CreateForm
 	projectPicker components.ProjectPicker
+	issueLookup   components.IssueLookup
+	lookupReturn  *lookupReturn
 	overlays      components.OverlayStack
 
 	jqlFields []jira.AutocompleteField
@@ -418,6 +420,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 
 	app.overlays = components.OverlayStack{
 		&app.projectPicker,
+		&app.issueLookup,
 		&app.createForm,
 		&app.jqlModal,
 		&app.inputModal,
@@ -521,6 +524,15 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleProjectPickerSelected(msg)
 	case components.ProjectPickerCancelledMsg:
 		a.focusPane(focusProjects)
+		return a, nil
+	case components.IssueLookupQueryMsg:
+		return a, a.handleIssueLookupQuery(msg.Query)
+	case issueSuggestionsLoadedMsg:
+		a.handleIssueSuggestionsLoaded(msg)
+		return a, nil
+	case components.IssueLookupSelectedMsg:
+		return a, a.openLookupIssue(msg.Key)
+	case components.IssueLookupCancelledMsg:
 		return a, nil
 
 	case transitionDoneMsg:
@@ -1269,6 +1281,7 @@ func (a *App) updateFocusState() {
 			a.maximized = false
 		}
 	}
+	a.endIssueLookupIfLeft()
 	a.statusPanel.SetFocused(false)
 	a.issuesList.SetFocused(false)
 	a.infoPanel.SetFocused(false)

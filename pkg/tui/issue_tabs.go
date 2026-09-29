@@ -186,6 +186,9 @@ func (a *App) activateIssueCollection() tea.Cmd {
 }
 
 func (a *App) clearIssuePreview() {
+	if a.lookupReturn != nil {
+		return
+	}
 	a.previewEpoch++
 	a.previewKey = ""
 	a.detailView.SetIssue(nil)
