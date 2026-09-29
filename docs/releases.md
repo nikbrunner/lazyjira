@@ -12,7 +12,7 @@ sequenceDiagram
   participant Actions as GitHub Actions
   You->>main: Push Conventional Commits
   Actions->>main: release-please opens or updates the release PR
-  You->>main: Push the curated CHANGELOG.md section
+  You->>main: Push the curated CHANGELOG.md section and fresh recordings
   You->>Actions: Merge the release PR
   Actions->>Actions: release-please tags vX.Y.Z and creates the GitHub Release
   Actions->>Actions: GoReleaser builds binaries and replaces the notes with the curated section
@@ -28,25 +28,33 @@ version and `fix` the patch version. A `Release-As: X.Y.Z` footer in a commit bo
 `CHANGELOG.md` is written by hand. release-please never edits it (`skip-changelog` in
 [`.github/release-please-config.json`](../.github/release-please-config.json)).
 
-## Prepare the changelog
+## Prepare the release commit
 
 Read the proposed version from the release PR title. Curate its `CHANGELOG.md` section with
 [`lj-changelog`](../.agents/skills/lj-changelog/references/curated-release.md) in release mode:
 highlights by impact, the trimmed log below them, and the heading date set to the release day. The version in the heading
 must match the release PR.
 
-Check and push the curated section to `main`:
+Re-record the README screenshot and demo GIFs so they show the release. This needs [VHS](https://github.com/charmbracelet/vhs)
+(`brew install vhs`):
+
+```sh
+make e2e-update
+```
+
+Look at the screenshot and GIFs in `docs/assets/recordings/` before committing them. Then check and push everything to
+`main`:
 
 ```sh
 make lint-docs
 make check
-git add CHANGELOG.md
-git commit -m "docs: prepare the <version> changelog"
+git add CHANGELOG.md docs/assets/recordings/
+git commit -m "docs: prepare the <version> release"
 git push origin main
 ```
 
-release-please force-pushes its PR branch on every run, so commits added to that branch are lost. The curated section lives on
-`main`.
+release-please force-pushes its PR branch on every run, so commits added to that branch are lost. The curated section and the
+recordings live on `main`.
 
 ## Merge the release PR
 

@@ -23,6 +23,7 @@ cover.out
 
 # Generated tapes (source .tape.sh via e2e/tape.sh)
 e2e/tapes/*.tape
+e2e/tapes/*.gif
 
 # OS
 .DS_Store

@@ -3,23 +3,24 @@
 #
 # Usage in .tape files:
 #   Source e2e/tape.sh    (ignored by VHS, parsed by preprocessor)
-#   @start                → Output + Set Shell/Width/Height/FontSize/Theme + launch demo
+#   @start [SCALE]        → Set Shell/Width/Height/FontSize/Theme + launch demo with e2e/demo-config;
+#                           SCALE multiplies pixel size and font size, keeping the same columns and rows
 #   @down [N]             → Type "j" + Sleep (repeated N times, default 1)
 #   @up [N]               → Type "k" + Sleep
 #   @tab_next [N]         → Type "]" + Sleep
 #   @tab_prev [N]         → Type "[" + Sleep
-#   @panel N              → Type "N" + Sleep (focus panel 0-3)
-#   @open                 → Type "l" + Sleep (open issue in detail)
-#   @select               → Space + Sleep (select item)
+#   @panel N              → Type "N" + Sleep (focus pane 0-4)
+#   @open                 → Enter + Sleep (open issue in detail)
+#   @select               → Space + Sleep (mark issue, toggle picker value)
 #   @create               → Type "n" + Sleep (open create issue form)
 #   @transition           → Type "t" + Sleep + Enter + Sleep (pick first transition)
 #   @search TEXT          → Type "/" + Sleep + Type "TEXT" + Enter + Sleep
 #   @help                 → Type "?" + Sleep ... Escape + Sleep
 #   @expand               → Space + Sleep (expand block in detail)
 #   @close                → Escape + Sleep (close modal/overlay)
-#   @quit                 → Type "q" + Sleep
+#   @quit                 → Hide + Type "q" + Sleep
 #   @wait [MS]            → Sleep Nms (default 500)
-#   @switch_tab           → Tab + Sleep (switch left/right panel)
+#   @switch_tab           → Tab + Sleep (switch issue tab)
 #   @edit                 → Type "e" + Sleep (context-aware edit)
 #   @edit_type TEXT       → Type "e" + Sleep + type TEXT (50ms) + Enter + Sleep
 #   @toggle [N]           → Space + Sleep (toggle checklist item, repeated N times)
@@ -28,18 +29,14 @@
 #   @priority             → Type "p" + Sleep (open priority picker)
 #
 # Pipe mode:   ./e2e/tape.sh e2e/tapes/foo.tape.sh | vhs -
-# Env override: LAYOUT=vertical ./e2e/tape.sh file.tape.sh | vhs -
 # Subcommands:
-#   ./e2e/tape.sh generate e2e/tapes/foo.tape.sh     — write foo.tape + foo_vertical.tape
+#   ./e2e/tape.sh generate e2e/tapes/foo.tape.sh     — write foo.tape
 #   ./e2e/tape.sh generate-all                        — generate all e2e/tapes/*.tape.sh
 
 set -euo pipefail
 
 DEFAULT_SLEEP=200
 LONG_SLEEP=400
-
-# LAYOUT controls width in @start: horizontal (default) or vertical
-LAYOUT="${LAYOUT:-horizontal}"
 
 repeat() {
     local n="${1:-1}"
@@ -57,30 +54,24 @@ process_line() {
     line="${line%"${line##*[![:space:]]}"}" # rtrim
 
     case "$line" in
-        @start)
-            local width=1200
-            [[ "$LAYOUT" == "vertical" ]] && width=550
+        @start*)
+            local scale="${line#@start}"; scale="${scale// /}"; scale="${scale:-1}"
             echo 'Set Shell bash'
-            echo "Set Width $width"
-            echo 'Set Height 600'
-            echo 'Set FontSize 14'
+            echo "Set Width $((1400 * scale))"
+            echo "Set Height $((800 * scale))"
+            echo "Set FontSize $((14 * scale))"
+            echo 'Set FontFamily "TX-02"'
+            echo "Set Padding $((60 * scale))"
             echo 'Set TypingSpeed 0ms'
-            echo 'Set Theme "Catppuccin Mocha"'
+            echo 'Set PlaybackSpeed 0.8'
+            echo 'Set Theme "GitHub Dark"'
             echo ''
-            echo 'Type "./lazyjira --demo"'
+            echo 'Env EDITOR "vim -u NONE -N"'
+            echo 'Hide'
+            echo 'Type "rm -f e2e/demo-config/jql_history.txt && LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira --demo"'
             echo 'Enter'
             echo 'Sleep 2s'
-            ;;
-        Output\ *)
-            if [[ "$LAYOUT" == "vertical" ]]; then
-                # insert _vertical before the extension
-                local path="${line#Output }"
-                local base="${path%.*}"
-                local ext="${path##*.}"
-                echo "Output ${base}_vertical.${ext}"
-            else
-                echo "$line"
-            fi
+            echo 'Show'
             ;;
         @down*)
             local n="${line#@down}"; n="${n// /}"; n="${n:-1}"
@@ -103,7 +94,7 @@ process_line() {
             printf 'Type "%s"\nSleep %sms\n' "$p" "$DEFAULT_SLEEP"
             ;;
         @open)
-            printf 'Type "l"\nSleep %sms\n' "$LONG_SLEEP"
+            printf 'Enter\nSleep %sms\n' "$LONG_SLEEP"
             ;;
         @select)
             printf 'Space\nSleep %sms\n' "$LONG_SLEEP"
@@ -130,7 +121,7 @@ process_line() {
             printf 'Escape\nSleep %sms\n' "$DEFAULT_SLEEP"
             ;;
         @quit)
-            printf 'Sleep %sms\nType "q"\nSleep 300ms\n' "$DEFAULT_SLEEP"
+            printf 'Sleep %sms\nHide\nType "q"\nSleep 300ms\n' "$DEFAULT_SLEEP"
             ;;
         @wait*)
             local ms="${line#@wait}"; ms="${ms// /}"; ms="${ms:-500}"
@@ -191,11 +182,8 @@ generate_one() {
     dir="$(dirname "$src")"
     base="$(basename "$src" .tape.sh)"
 
-    LAYOUT=horizontal process_file "$src" > "$dir/$base.tape"
+    process_file "$src" > "$dir/$base.tape"
     echo "wrote $dir/$base.tape"
-
-    LAYOUT=vertical process_file "$src" > "$dir/${base}_vertical.tape"
-    echo "wrote $dir/${base}_vertical.tape"
 }
 
 # dispatch subcommands or default pipe mode

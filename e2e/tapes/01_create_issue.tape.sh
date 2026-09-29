@@ -1,39 +1,55 @@
-Output e2e/golden/01_create_issue.gif
+Output docs/assets/recordings/create-issue.gif
 
 @start
 
 # select Platform Services project
-@panel 4
-@down
-@select
-
-# switch to Assigned tab, cursor lands on PLAT-3
+@panel 0
+Enter
+Sleep 300ms
+Type "plat"
+@confirm
 @panel 2
-@tab_next
 
-# duplicate with ctrl+n
-Ctrl+n
-Sleep 400ms
+# switch to Assigned tab
+@switch_tab
+
+# create a new issue
+@create
 
 # type picker: select Bug
-@down
 Enter
 Sleep 600ms
 
-# create form opens with prefilled fields from PLAT-3
-# clear summary and type a new one
-Ctrl+a
-Ctrl+k
+# type the summary
 Set TypingSpeed 40ms
 Type "Login page crashes on expired token refresh"
 Set TypingSpeed 0ms
 Sleep 300ms
 
-# tab to description
+# write the description in $EDITOR
 Tab
-Sleep 200ms
+Sleep 300ms
+Type "e"
+Sleep 800ms
+Type "i"
+Set TypingSpeed 30ms
+Type "Steps to reproduce:"
+Enter
+Type "1. Sign in and leave the tab open for an hour"
+Enter
+Type "2. Click any link"
+Enter
+Enter
+Type "The page crashes instead of refreshing the token."
+Set TypingSpeed 0ms
+Sleep 600ms
+Escape
+Type ":wq"
+Sleep 300ms
+Enter
+Sleep 800ms
 
-# tab to fields
+# go to fields
 Tab
 Sleep 200ms
 
@@ -69,24 +85,16 @@ Sleep 200ms
 @down
 @wait 300
 
-# go back to summary
-Tab
-Sleep 300ms
-
-# check description
-Tab
-Sleep 200ms
-
-# back to fields
-Tab
-Sleep 300ms
-
 # submit
 Tab
 Sleep 200ms
 Enter
 Sleep 600ms
 
-# issue created, detail view shows new issue immediately
-@wait 500
+# issue created: open it to show the description
+@wait 800
+@up
+@down
+@open
+@wait 2000
 @quit
