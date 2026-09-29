@@ -462,6 +462,17 @@ func TestHighlightCode(t *testing.T) {
 		got := highlightCode("x := 1", "go")
 		testkit.AssertEqual(t, "content preserved", stripANSI(got), "x := 1")
 	})
+
+	t.Run("uses the terminal's 16 colors", func(t *testing.T) {
+		t.Parallel()
+		got := highlightCode("func main() { fmt.Println(\"hi\") }", "go")
+		if !strings.Contains(got, "\x1b[") {
+			t.Fatalf("expected ANSI styling, got %q", got)
+		}
+		if strings.Contains(got, "38;5;") || strings.Contains(got, "38;2;") {
+			t.Errorf("expected ANSI 16 colors only, got %q", got)
+		}
+	})
 }
 
 func TestExtractADFURLs_InputShapes(t *testing.T) {

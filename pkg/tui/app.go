@@ -401,6 +401,11 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 
 	app.initCustomCommands()
 
+	if warning := theme.IgnoredThemeWarning(cfg.GUI.Theme); warning != "" {
+		fmt.Fprintln(os.Stderr, "lazyjira:", warning)
+		app.statusPanel.SetError(warning)
+	}
+
 	if warning := quitReachableWarning(app.keymap, app.customCmds); warning != "" {
 		fmt.Fprintln(os.Stderr, "lazyjira:", warning)
 		app.statusPanel.SetError(warning)

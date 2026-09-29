@@ -517,7 +517,7 @@ func highlightCode(code, lang string) string {
 	lexer = chroma.Coalesce(lexer)
 
 	style := styles.Get("monokai")
-	formatter := formatters.Get("terminal256")
+	formatter := formatters.Get("terminal16")
 
 	tokens, err := lexer.Tokenise(nil, code)
 	if err != nil {

@@ -40,10 +40,9 @@ jira:
     serverType: cloud
 projects: []
 gui:
-    theme: default
-    themeColors: {}   # optional palette overrides (see Themes section)
-    themeDark: {}     # applied on dark presets only
-    themeLight: {}    # applied on light presets only
+    themeColors: {}   # optional palette overrides (see Colors section)
+    themeDark: {}     # applied on dark terminal backgrounds only
+    themeLight: {}    # applied on light terminal backgrounds only
     language: en
     sidePanelWidth: 22
     collapsedPanelHeight: 5
@@ -202,62 +201,45 @@ gui:
 
 The Project selector and App status panel share the top row. Issue tabs and Issues share the upper workspace row; Issue info and Issue details share the lower row. The command log and help bar stay along the bottom. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
 
-`theme` selects the color palette. Supported values: `default` (terminal ANSI colors), `auto`, [Catppuccin](https://github.com/catppuccin/catppuccin) presets (`catppuccin-latte`, `catppuccin-frappe`, `catppuccin-macchiato`, `catppuccin-mocha`). Omitting the `theme` key or setting it to `""` selects the `default` palette. Use `theme: auto` to opt into runtime detection: lazyjira inspects your terminal background and picks `catppuccin-mocha` (dark) or `catppuccin-latte` (light). An unknown theme name is an error. Hex-based themes require a terminal with truecolor support.
+### Colors
 
-```yaml
-gui:
-  theme: catppuccin-mocha
-```
+lazyjira takes its colors from your terminal. Everything uses the 16 ANSI colors and the terminal's default foreground and background, so the app follows whatever color scheme the terminal has. Syntax highlighting in code blocks maps onto the same 16 colors.
 
-### Themes
+Selection backgrounds are derived from the terminal background at startup: 8% lighter on dark backgrounds, or 8% darker on light backgrounds. If the terminal cannot report its background, detection uses `COLORFGBG` where available, otherwise black. Terminals without truecolor approximate the derived shade with their available palette.
 
-#### Built-in presets
+lazyjira ignores `gui.theme` and shows a warning in App status when it holds any value other than `default`.
 
-| Preset                 | Variant | Notes                                |
-|------------------------|---------|--------------------------------------|
-| `default`              | dark    | ANSI 16 palette — inherits your terminal colors |
-| `catppuccin-latte`     | light   | Catppuccin Latte                     |
-| `catppuccin-frappe`    | dark    | Catppuccin Frappé (warmest dark)     |
-| `catppuccin-macchiato` | dark    | Catppuccin Macchiato (medium)        |
-| `catppuccin-mocha`     | dark    | Catppuccin Mocha (deepest dark)      |
+#### Overriding colors
 
-#### Per-color overrides
+Three optional maps override individual colors:
 
-Three optional maps let you override individual palette entries on top of any preset:
+- `themeColors` applies everywhere.
+- `themeDark` applies when the terminal background is dark.
+- `themeLight` applies when the terminal background is light.
 
-- **`themeColors`**: applied to every preset.
-- **`themeDark`**: applied only when the active preset is a dark variant.
-- **`themeLight`**: applied only when the active preset is a light variant.
-
-The precedence is preset → `themeColors` → (`themeDark` or `themeLight`). Empty values and unknown keys are ignored, so configs stay forward-compatible.
-
-Supported keys:
+The precedence is the ANSI palette, then `themeColors`, then `themeDark` or `themeLight`. Empty values and unknown keys are ignored.
 
 | Key         | Role                                                  |
 |-------------|-------------------------------------------------------|
-| `green`     | Primary accent — titles, active borders, success     |
+| `green`     | Primary accent: titles, active borders, success       |
 | `blue`      | Secondary accent                                      |
 | `red`       | Errors, high priority                                 |
 | `yellow`    | Warnings, in-progress, medium priority                |
 | `cyan`      | Search mode indicators                                |
 | `magenta`   | JQL keywords                                          |
-| `orange`    | Names, metadata                                       |
-| `white`     | Foreground text — use a **dark** color on light themes |
+| `orange`    | Loading indicator                                     |
+| `white`     | Foreground text; use a dark color on light backgrounds |
 | `gray`      | Subtitles, hint bars                                  |
-| `highlight` | Selection / cursor background                         |
+| `highlight` | Selection and cursor background                       |
 
-Values are any lipgloss-accepted color: hex (`"#a6e3a1"`), ANSI 16 (`"4"`), or ANSI 256 (`"208"`).
-
-If a value is not a recognized color format, that key falls back to your terminal's default color and a warning is logged (visible with `--debug`).
+Values are hex (`"#9ccfd8"`), ANSI 16 (`"4"`), or ANSI 256 (`"208"`). Hex values require a terminal with truecolor support. If a value is not a recognized color, that key falls back to the terminal's default color and a warning is logged (visible with `--debug`).
 
 #### Example: Rose Pine
 
-Auto-detect between Main (dark) and Dawn (light). Palette from [Rose Pine](https://rosepinetheme.com) — All natural pine, faux fur and a bit of soho vibes for the classy minimalist.
+Main on dark backgrounds, Dawn on light ones. Palette from [Rose Pine](https://rosepinetheme.com).
 
 ```yaml
 gui:
-  theme: auto
-
   themeDark:
     white:     "#e0def4"   # Text
     gray:      "#6e6a86"   # Muted
@@ -282,20 +264,6 @@ gui:
     orange:    "#d7827e"
     highlight: "#dfdad9"
 ```
-
-#### Example: tweak a Catppuccin preset
-
-Keep Mocha but swap the accent to a softer green and brighten the selection background:
-
-```yaml
-gui:
-  theme: catppuccin-mocha
-  themeColors:
-    green:     "#94e2d5"
-    highlight: "#45475a"
-```
-
-Selection backgrounds are derived from the terminal background at startup: 8% lighter on dark backgrounds, or 8% darker on light backgrounds. This applies to lists and menus in every preset. Explicit `highlight` overrides take precedence. If the terminal cannot report its background, detection uses `COLORFGBG` where available, otherwise black. Terminals without truecolor approximate the derived shade with their available palette.
 
 `selectCreatedIssue` controls whether the app auto-selects a newly created issue in the list. If the issue does not match the current tab, the app switches to the All tab. Enabled by default.
 

@@ -9,7 +9,7 @@ import (
 )
 
 // authorPalette is sourced from the active theme's AuthorPalette.
-// SetTheme refreshes it on theme change.
+// Init refreshes it.
 var authorPalette = Default.AuthorPalette
 
 var (

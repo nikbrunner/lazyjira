@@ -140,6 +140,22 @@ In the Issues panel, `space` marks the issue, `enter` opens its detail, and `>` 
 In the Issue details pane, `ctrl+d` and `ctrl+u` scroll, and `H` `J` `K` `L` move focus. `sidePanelWidth` defaults to `22`,
 and `collapsedPanelHeight` has no effect.
 
+Colors come from your terminal, and `gui.theme` is ignored with a warning. Move custom colors to `themeColors`, or to
+`themeDark` and `themeLight`:
+
+```diff
+ gui:
+-  theme: catppuccin-mocha
++  themeColors:
++    green: "#a6e3a1"
+```
+
+### Breaking
+
+- Colors — nbr <nikolaus.brunner@protonmail.ch>
+  - **Breaking:** The Catppuccin presets and `theme: auto` are removed. The palette uses the terminal's 16 ANSI colors,
+    `gui.theme` is ignored with a warning in App status, and `themeDark` or `themeLight` apply by terminal background.
+
 ### Added
 
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
@@ -173,6 +189,8 @@ and `collapsedPanelHeight` has no effect.
 
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
   - The Issues row takes two-fifths of the workspace height and the Issue details row three-fifths.
+- Issue details pane — nbr <nikolaus.brunner@protonmail.ch>
+  - Code blocks highlight syntax with the terminal's 16 ANSI colors.
 - Issues panel — nbr <nikolaus.brunner@protonmail.ch>
   - Summaries use the terminal's default foreground.
   - `Enter` on a maximized Issues panel opens the issue in maximized Details. `Esc` returns to the maximized Issues panel, and

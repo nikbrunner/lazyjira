@@ -2,6 +2,8 @@ package theme
 
 import (
 	"io"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
@@ -34,159 +36,69 @@ func TestInitDerivesSelectionBackground(t *testing.T) {
 	lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(io.Discard))
 	t.Cleanup(func() {
 		lipgloss.SetDefaultRenderer(renderer)
-		_ = SetTheme("default")
+		Init(Options{})
 	})
-	for _, preset := range []string{"default", "catppuccin-mocha", "catppuccin-latte"} {
-		if err := Init(Options{Preset: preset}); err != nil {
-			t.Fatal(err)
+	Init(Options{})
+	if ColorHighlight != lipgloss.Color("#141414") {
+		t.Errorf("highlight = %q, want neutral fallback #141414", ColorHighlight)
+	}
+	if Default.SelectedItem.GetBackground() != lipgloss.Color("#141414") {
+		t.Error("selected row style does not use the derived highlight")
+	}
+}
+
+func TestInitUsesTerminalPalette(t *testing.T) {
+	Init(Options{})
+	want := map[string]lipgloss.Color{
+		"green": "2", "blue": "4", "red": "1", "yellow": "3", "cyan": "6",
+		"magenta": "5", "white": "7", "gray": "8", "orange": "11",
+	}
+	got := map[string]lipgloss.Color{
+		"green": ColorGreen, "blue": ColorBlue, "red": ColorRed, "yellow": ColorYellow, "cyan": ColorCyan,
+		"magenta": ColorMagenta, "white": ColorWhite, "gray": ColorGray, "orange": ColorOrange,
+	}
+	for key, color := range want {
+		if got[key] != color {
+			t.Errorf("%s = %q, want %q", key, got[key], color)
 		}
-		if ColorHighlight != lipgloss.Color("#141414") {
-			t.Errorf("%s highlight = %q, want neutral fallback #141414", preset, ColorHighlight)
+	}
+	for _, color := range append(authorPalette, got["orange"]) {
+		if n, err := strconv.Atoi(string(color)); err != nil || n < 0 || n > 15 {
+			t.Errorf("color %q is not an ANSI 16 color", color)
 		}
-		if Default.SelectedItem.GetBackground() != lipgloss.Color("#141414") {
-			t.Errorf("%s selected row style does not use the derived highlight", preset)
+	}
+}
+
+func TestIgnoredThemeWarning(t *testing.T) {
+	for _, name := range []string{"", "default", " Default "} {
+		if got := IgnoredThemeWarning(name); got != "" {
+			t.Errorf("IgnoredThemeWarning(%q) = %q, want no warning", name, got)
+		}
+	}
+	for _, name := range []string{"auto", "catppuccin-mocha"} {
+		got := IgnoredThemeWarning(name)
+		if !strings.Contains(got, name) || !strings.Contains(got, "themeColors") {
+			t.Errorf("IgnoredThemeWarning(%q) = %q, want the name and the themeColors hint", name, got)
 		}
 	}
 }
 
-func TestSetThemeDefault(t *testing.T) {
-	if err := SetTheme("default"); err != nil {
-		t.Fatalf("SetTheme(default): %v", err)
-	}
-	if ColorGreen != lipgloss.Color("2") {
-		t.Errorf("ColorGreen = %q, want %q", ColorGreen, "2")
-	}
-	if ColorBlue != lipgloss.Color("4") {
-		t.Errorf("ColorBlue = %q, want %q", ColorBlue, "4")
-	}
-}
-
-func TestSetThemeEmpty(t *testing.T) {
-	if err := SetTheme(""); err != nil {
-		t.Fatalf("SetTheme(''): %v", err)
-	}
-	if ColorGreen != lipgloss.Color("2") {
-		t.Errorf("ColorGreen = %q, want ANSI 2", ColorGreen)
-	}
-	if ColorBlue != lipgloss.Color("4") {
-		t.Errorf("ColorBlue = %q, want ANSI 4", ColorBlue)
-	}
-	_ = SetTheme("default")
-}
-
-func TestSetThemeAuto(t *testing.T) {
-	// "auto" picks a Catppuccin default based on terminal background. We
-	// can't predict which lands, but it must populate the palette and the
-	// chosen preset must be one of the registered defaults.
-	if err := SetTheme("auto"); err != nil {
-		t.Fatalf("SetTheme(auto): %v", err)
-	}
-	if Default.Colors.Green == "" {
-		t.Error("auto-detected palette has empty Green")
-	}
-	got := string(Default.Colors.Green)
-	if got != "#a6e3a1" && got != "#40a02b" {
-		t.Errorf("auto Green = %q, want mocha or latte default", got)
-	}
-	_ = SetTheme("default")
-}
-
-func TestSetThemeCatppuccinMocha(t *testing.T) {
-	if err := SetTheme("catppuccin-mocha"); err != nil {
-		t.Fatalf("SetTheme(catppuccin-mocha): %v", err)
-	}
-	if ColorGreen != lipgloss.Color("#a6e3a1") {
-		t.Errorf("ColorGreen = %q, want %q", ColorGreen, "#a6e3a1")
-	}
-	if ColorBlue != lipgloss.Color("#89b4fa") {
-		t.Errorf("ColorBlue = %q, want %q", ColorBlue, "#89b4fa")
-	}
-	if Default.Colors.Red != lipgloss.Color("#f38ba8") {
-		t.Errorf("Default.Colors.Red = %q, want %q", Default.Colors.Red, "#f38ba8")
-	}
-
-	_ = SetTheme("default")
-}
-
-func TestSetThemeAllFlavors(t *testing.T) {
-	flavors := []string{
-		"catppuccin-latte",
-		"catppuccin-frappe",
-		"catppuccin-macchiato",
-		"catppuccin-mocha",
-	}
-	for _, name := range flavors {
-		t.Run(name, func(t *testing.T) {
-			if err := SetTheme(name); err != nil {
-				t.Fatalf("SetTheme(%s): %v", name, err)
-			}
-			if Default.Colors.Green == "" {
-				t.Error("Colors.Green is empty")
-			}
-			if len(Default.AuthorPalette) != 12 {
-				t.Errorf("AuthorPalette has %d entries, want 12", len(Default.AuthorPalette))
-			}
-		})
-	}
-	_ = SetTheme("default")
-}
-
-func TestSetThemeUnknown(t *testing.T) {
-	err := SetTheme("nonexistent")
-	if err == nil {
-		t.Fatal("expected error for unknown theme")
-	}
-}
-
-func TestSetThemeSyncsColors(t *testing.T) {
-	_ = SetTheme("catppuccin-mocha")
-	if ColorGreen != Default.Colors.Green {
-		t.Errorf("ColorGreen not synced: %q != %q", ColorGreen, Default.Colors.Green)
-	}
-	if ColorBlue != Default.Colors.Blue {
-		t.Errorf("ColorBlue not synced: %q != %q", ColorBlue, Default.Colors.Blue)
-	}
-	if ColorOrange != Default.Colors.Orange {
-		t.Errorf("ColorOrange not synced: %q != %q", ColorOrange, Default.Colors.Orange)
-	}
-	if ColorMagenta != Default.Colors.Magenta {
-		t.Errorf("ColorMagenta not synced: %q != %q", ColorMagenta, Default.Colors.Magenta)
-	}
-	_ = SetTheme("default")
-}
-
-func TestSetThemeSyncsAuthorPalette(t *testing.T) {
-	_ = SetTheme("default")
-	defaultFirst := authorPalette[0]
-
-	_ = SetTheme("catppuccin-mocha")
-	if authorPalette[0] == defaultFirst {
-		t.Error("authorPalette did not switch when theme changed")
-	}
-	if len(authorPalette) != len(Default.AuthorPalette) {
-		t.Errorf("authorPalette length %d != Default.AuthorPalette length %d",
-			len(authorPalette), len(Default.AuthorPalette))
-	}
-	_ = SetTheme("default")
-}
-
-func TestSetThemeResetsAuthorCache(t *testing.T) {
-	_ = SetTheme("default")
+func TestInitResetsAuthorCache(t *testing.T) {
+	Init(Options{})
 	_ = AuthorStyle("Alice")
 	if len(authorCache) == 0 {
 		t.Fatal("author cache should have an entry")
 	}
 
-	_ = SetTheme("catppuccin-mocha")
+	Init(Options{Colors: map[string]string{"green": "#abcdef"}})
 	if len(authorCache) != 0 {
-		t.Error("author cache should be empty after theme switch")
+		t.Error("author cache should be empty after Init")
 	}
-	_ = SetTheme("default")
+	Init(Options{})
 }
 
 func TestInitAppliesSharedOverrides(t *testing.T) {
-	err := Init(Options{
-		Preset: "default",
+	Init(Options{
 		Colors: map[string]string{
 			"green":     "#abcdef",
 			"highlight": "#123456",
@@ -194,9 +106,6 @@ func TestInitAppliesSharedOverrides(t *testing.T) {
 			"red":       "", // empty value must be skipped
 		},
 	})
-	if err != nil {
-		t.Fatalf("Init: %v", err)
-	}
 	if Default.Colors.Green != lipgloss.Color("#abcdef") {
 		t.Errorf("Green = %q, want #abcdef", Default.Colors.Green)
 	}
@@ -206,70 +115,44 @@ func TestInitAppliesSharedOverrides(t *testing.T) {
 	if Default.Colors.Highlight != lipgloss.Color("#123456") {
 		t.Errorf("Highlight = %q, want #123456", Default.Colors.Highlight)
 	}
-	// Empty value must leave Red at the preset's value.
+	// Empty value must leave Red at the default.
 	if Default.Colors.Red != lipgloss.Color("1") {
-		t.Errorf("Red = %q, want preset default 1", Default.Colors.Red)
+		t.Errorf("Red = %q, want default 1", Default.Colors.Red)
 	}
-	_ = SetTheme("default")
+	Init(Options{})
 }
 
-func TestInitAppliesDarkOverridesOnlyOnDarkPreset(t *testing.T) {
-	// Mocha is a dark preset → ColorsDark applies, ColorsLight is ignored.
-	err := Init(Options{
-		Preset:      "catppuccin-mocha",
+func TestInitAppliesOverridesMatchingTerminalBackground(t *testing.T) {
+	t.Cleanup(func() {
+		lipgloss.SetHasDarkBackground(true)
+		Init(Options{})
+	})
+	opts := Options{
 		ColorsDark:  map[string]string{"green": "#111111"},
 		ColorsLight: map[string]string{"green": "#999999"},
-	})
-	if err != nil {
-		t.Fatalf("Init: %v", err)
 	}
+
+	lipgloss.SetHasDarkBackground(true)
+	Init(opts)
 	if Default.Colors.Green != lipgloss.Color("#111111") {
 		t.Errorf("dark override not applied: Green = %q", Default.Colors.Green)
 	}
 
-	// Latte is a light preset → ColorsLight applies instead.
-	err = Init(Options{
-		Preset:      "catppuccin-latte",
-		ColorsDark:  map[string]string{"green": "#111111"},
-		ColorsLight: map[string]string{"green": "#999999"},
-	})
-	if err != nil {
-		t.Fatalf("Init: %v", err)
-	}
+	lipgloss.SetHasDarkBackground(false)
+	Init(opts)
 	if Default.Colors.Green != lipgloss.Color("#999999") {
 		t.Errorf("light override not applied: Green = %q", Default.Colors.Green)
-	}
-	_ = SetTheme("default")
-}
-
-func TestFindPresetCaseInsensitive(t *testing.T) {
-	if FindPreset("Catppuccin-Mocha") == nil {
-		t.Error("FindPreset should be case-insensitive")
-	}
-	if FindPreset("does-not-exist") != nil {
-		t.Error("FindPreset should return nil for unknown names")
-	}
-}
-
-func TestPresetsListed(t *testing.T) {
-	got := Presets()
-	if len(got) < 5 {
-		t.Errorf("expected at least 5 presets, got %d", len(got))
 	}
 }
 
 func TestInitFallsBackOnInvalidColorValues(t *testing.T) {
-	err := Init(Options{
-		Preset: "default",
+	Init(Options{
 		Colors: map[string]string{
 			"green": "not-a-color",
 			"blue":  "#zzzzzz",
 			"red":   "totally bogus value",
 		},
 	})
-	if err != nil {
-		t.Fatalf("Init must accept malformed color values: %v", err)
-	}
 
 	// Each invalid value falls back to lipgloss.Color("-1"), the terminal
 	// default sentinel used elsewhere in the package (theme.go:39, 82).
@@ -295,14 +178,14 @@ func TestInitFallsBackOnInvalidColorValues(t *testing.T) {
 		t.Errorf("ColorRed not synced: %q, want %q", ColorRed, fallback)
 	}
 
-	// Other keys must keep their preset defaults.
+	// Other keys must keep their defaults.
 	if Default.Colors.Yellow != lipgloss.Color("3") {
-		t.Errorf("Yellow = %q, want preset default 3", Default.Colors.Yellow)
+		t.Errorf("Yellow = %q, want default 3", Default.Colors.Yellow)
 	}
 
 	// Rendering with the fallback color does not panic.
 	_ = Default.Title.Render("smoke test")
-	_ = SetTheme("default")
+	Init(Options{})
 }
 
 func TestValidColor(t *testing.T) {
@@ -342,21 +225,8 @@ func TestValidColor(t *testing.T) {
 	}
 }
 
-func TestPresetsReturnsCopy(t *testing.T) {
-	got := Presets()
-	if len(got) == 0 {
-		t.Fatal("Presets returned empty slice")
-	}
-	original := got[0].Name
-	got[0].Name = "mutated"
-	again := Presets()
-	if again[0].Name != original {
-		t.Errorf("Presets backing slice was mutated: got %q, want %q", again[0].Name, original)
-	}
-}
-
 func TestInitSelectsBorderShape(t *testing.T) {
-	t.Cleanup(func() { _ = SetTheme("default") })
+	t.Cleanup(func() { Init(Options{}) })
 	for _, tt := range []struct {
 		borders string
 		want    lipgloss.Border
@@ -365,9 +235,7 @@ func TestInitSelectsBorderShape(t *testing.T) {
 		{"rounded", lipgloss.RoundedBorder()},
 		{"sharp", lipgloss.NormalBorder()},
 	} {
-		if err := Init(Options{Preset: "default", Borders: tt.borders}); err != nil {
-			t.Fatal(err)
-		}
+		Init(Options{Borders: tt.borders})
 		if Default.Border != tt.want {
 			t.Errorf("borders %q: Border = %+v, want %+v", tt.borders, Default.Border, tt.want)
 		}

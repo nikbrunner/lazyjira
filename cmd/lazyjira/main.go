@@ -76,15 +76,12 @@ func run() error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	if err := theme.Init(theme.Options{
-		Preset:      cfg.GUI.Theme,
+	theme.Init(theme.Options{
 		Colors:      cfg.GUI.ThemeColors,
 		ColorsDark:  cfg.GUI.ThemeDark,
 		ColorsLight: cfg.GUI.ThemeLight,
 		Borders:     cfg.GUI.Borders,
-	}); err != nil {
-		return err
-	}
+	})
 
 	var client jira.ClientInterface
 	var authMethod tui.AuthMethod

@@ -4,7 +4,6 @@ go 1.25.8
 
 require (
 	github.com/alecthomas/chroma/v2 v2.27.0
-	github.com/catppuccin/go v0.3.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.11.7
