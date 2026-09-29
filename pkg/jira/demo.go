@@ -470,11 +470,12 @@ func (d *DemoClient) CreateIssue(_ context.Context, fields map[string]any) (*Iss
 		total += len(v)
 	}
 	iss := &Issue{
-		ID:      strconv.Itoa(1000 + total),
-		Key:     fmt.Sprintf("%s-%d", projectKey, 100+total),
-		Status:  &Status{ID: "1", Name: "To Do", CategoryKey: "new"},
-		Created: time.Now(),
-		Updated: time.Now(),
+		ID:       strconv.Itoa(1000 + total),
+		Key:      fmt.Sprintf("%s-%d", projectKey, 100+total),
+		Status:   &Status{ID: "1", Name: "To Do", CategoryKey: "new"},
+		Reporter: &User{AccountID: "u0", DisplayName: "Demo User", Email: "demo@lazyjira.dev", Active: true},
+		Created:  time.Now(),
+		Updated:  time.Now(),
 	}
 	if s, ok := fields["summary"].(string); ok {
 		iss.Summary = s

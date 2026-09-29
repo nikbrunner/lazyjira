@@ -93,8 +93,6 @@ Sleep 600ms
 
 # issue created: open it to show the description
 @wait 800
-@up
-@down
 @open
 @wait 2000
 @quit

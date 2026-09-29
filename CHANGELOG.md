@@ -157,7 +157,11 @@ gui:
   - Closing a JQL or children tab keeps the other one with its issues and filters.
   - Opening or closing a JQL tab scrolls the Issue tabs pane to the active tab.
   - The text cursor stays visible when it sits inside the text, including on spaces.
+- Issue details pane ([#16](https://github.com/nikbrunner/lazyjira/issues/16)) — nbr <nikolaus.brunner@protonmail.ch>
+  - After creating an issue, Issue details shows the new issue, as it does when lazyjira starts on a branch with an issue
+    key.
 - JQL search — nbr <nikolaus.brunner@protonmail.ch>
   - A failed JQL search shows Jira's error messages in a wrapped Error panel above the history.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>
   - Demo tabs apply `statusCategory != Done` and `issuetype = …` from their JQL.
+  - Issues created in the demo have Demo User as reporter.

@@ -46,6 +46,25 @@ func TestHandleIssuesLoaded(t *testing.T) {
 			t.Error("gitDetectedKey should clear once the issue is selected")
 		}
 	})
+
+	t.Run("git detected key moves the detail preview to the selected issue", func(t *testing.T) {
+		t.Parallel()
+		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+		app.projectKey = testProject
+		issues := []jira.Issue{{Key: testKey}, {Key: testKey2}}
+		_, _ = app.handleIssuesLoaded(issuesLoadedMsg{tab: 0, issues: issues})
+		app.gitDetectedKey = testKey2
+
+		_, _ = app.handleIssuesLoaded(issuesLoadedMsg{tab: 0, issues: issues})
+		_, _ = app.handleIssueDetailLoaded(issueDetailLoadedMsg{issue: &jira.Issue{Key: testKey2, Summary: "created"}})
+
+		if app.previewKey != testKey2 {
+			t.Errorf("previewKey = %q, want %q", app.previewKey, testKey2)
+		}
+		if app.detailView.IssueKey() != testKey2 {
+			t.Errorf("detail shows %q, want %q", app.detailView.IssueKey(), testKey2)
+		}
+	})
 }
 
 func TestHandleIssueUpdated(t *testing.T) {

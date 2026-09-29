@@ -54,7 +54,7 @@ func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
 		}
 		switch {
 		case a.issuesList.SelectByKey(detectedKey):
-			cmds = append(cmds, fetchIssueDetail(a.client, detectedKey))
+			cmds = append(cmds, a.previewSelectedIssue(), fetchIssueDetail(a.client, detectedKey))
 			a.gitDetectedKey = ""
 		case a.issuesList.GetTabIndex() != 0:
 			a.setIssueTabIndex(0)
