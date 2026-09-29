@@ -3,20 +3,67 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
-## `0.6.5` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.28
+## `0.6.5` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.29
 
 ### Highlights
 
 This is the first release since the fork from [textfuel/lazyjira](https://github.com/textfuel/lazyjira) `2.19.2`. Everything
-below is new in the fork: a rebuilt workspace, Git worktrees from an issue, shell-safe custom commands, a reworked Issues
-panel with multi-issue copy, and cached Jira data.
+below is new in the fork: a rebuilt workspace, opening any issue by key, a filterable Issues panel, colors from your
+terminal, Git worktrees from an issue, and three ways to install.
+
+#### Install
+
+On macOS or Linux, the install script downloads the release, checks it against `checksums.txt`, and installs it to
+`~/.local/bin`. mise and Go work too ([#5](https://github.com/nikbrunner/lazyjira/issues/5)):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nikbrunner/lazyjira/main/install.sh | sh
+mise use -g github:nikbrunner/lazyjira
+go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest
+```
 
 #### A fixed workspace
 
 The workspace keeps one layout regardless of focus. The Project selector and the App status panel share the top row, the
 Issue tabs pane sits beside the Issues panel, and the Issue info and Issue details panes share the row below. Jump to a pane
-with `0` to `4`, move between neighbours with `H` `J` `K` `L`, and press `+` to maximize Issues or Details. `Enter` on the
-Project selector opens a searchable Project picker. The Issue details pane shows the issue summary above its tabs.
+with `0` to `4`, move between neighbours with `H` `J` `K` `L`, and switch issue tabs with `Tab` and `Shift+Tab` from
+anywhere. `Enter` on the Project selector opens a searchable Project picker.
+
+`+` maximizes Issues or Details. `Enter` on a maximized Issues panel opens the issue in maximized Details, and `esc` steps
+back to the list, then to the split layout.
+
+#### Open any issue by key
+
+`#` opens a prompt that starts with the active project key, such as `PLAT-`. Type the number and it suggests matching
+issues from Jira with their summaries. Delete the prefix to switch projects: `web` completes to `WEBSDK-`. The issue opens
+in maximized Issue details, and `esc` returns to where you were
+([#20](https://github.com/nikbrunner/lazyjira/issues/20)).
+
+#### Filter and group the Issues panel
+
+`f` filters the loaded issues of a tab by status, issue type, and priority. Each value shows how many issues it would
+leave, and values that would leave none are dimmed. `statusOrder` groups every list by your workflow and keeps the JQL
+order within each status; set `sortByStatus: false` on a tab to keep pure JQL order
+([#7](https://github.com/nikbrunner/lazyjira/issues/7)):
+
+```yaml
+statusOrder: [To Do, In Progress, In Review, Done]
+```
+
+When Jira holds more results than a tab loaded, the footer says so, for example `50/312 loaded`. `>` opens an issue's
+children in a temporary tab ([#3](https://github.com/nikbrunner/lazyjira/issues/3)), and `s` in the Issue tabs pane starts a
+JQL search from the focused tab's query ([#11](https://github.com/nikbrunner/lazyjira/issues/11)).
+
+#### Colors from your terminal
+
+lazyjira uses your terminal's 16 ANSI colors, so it matches your color scheme from the first start, code blocks included.
+`themeColors` overrides single colors, and `themeDark` and `themeLight` apply by terminal background:
+
+```yaml
+gui:
+  themeColors:
+    green: "#a6e3a1"
+```
 
 #### Branches and worktrees from an issue
 
@@ -34,12 +81,6 @@ worktree:
 Relative locations resolve from the main checkout, so worktrees land beside it by default. Existing directories are never
 overwritten.
 
-#### Shell-safe custom commands
-
-Custom command placeholders are shell-escaped automatically and must stand as whole, unquoted arguments. `{{.X | shellraw}}`
-inserts a trusted value unescaped, and `$(...)` substitutions pass startup validation. A background command's last line of
-output shows in a toast for three seconds.
-
 #### Mark issues and copy their rows
 
 In the Issues panel, `space` marks single issues and `v` marks a range from the cursor. Press `v` again to close the range
@@ -56,6 +97,12 @@ sanitize:
 
 While issues are marked, these keys keep their built-in meaning even if a custom command uses the same key. Remap the range
 key with `keybinding.issues.visualSelect`.
+
+#### Shell-safe custom commands
+
+Custom command placeholders are shell-escaped automatically and must stand as whole, unquoted arguments. `{{.X | shellraw}}`
+inserts a trusted value unescaped, and `$(...)` substitutions pass startup validation. A background command's last line of
+output shows in a toast for three seconds.
 
 #### A clearer Issues panel
 
@@ -86,6 +133,8 @@ gui:
 
 #### Important fixes
 
+- After creating an issue, Issue details shows the new issue ([#16](https://github.com/nikbrunner/lazyjira/issues/16)).
+- A failed JQL search shows Jira's error messages above the search history.
 - The sprint picker follows Jira pagination across Scrum boards and lists every available sprint.
 - The selection highlight spans the full row, derived from the terminal background.
 - The active issue tab is marked as `[Name]`, and clicks land on the tab under the cursor.
@@ -93,29 +142,12 @@ gui:
 ### Added
 
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
-  - `Tab` and `Shift+Tab` switch issue tabs from the main workspace.
   - The App status panel shows a colored connection indicator and cyan field labels.
-  - `s` in the Issue tabs pane opens JQL search with the focused tab's query and the cursor before its `ORDER BY` clause
-    ([#11](https://github.com/nikbrunner/lazyjira/issues/11)).
-- Issue lookup ([#20](https://github.com/nikbrunner/lazyjira/issues/20)) — nbr <nikolaus.brunner@protonmail.ch>
-  - `#` opens a prompt pre-filled with the active project key. It completes project keys, then suggests issues from
-    Jira's issue picker and the loaded issues as you type the number.
-  - The chosen issue opens in maximized Issue details, and `esc` returns to the previous layout.
-- Issues panel ([#7](https://github.com/nikbrunner/lazyjira/issues/7)) — nbr <nikolaus.brunner@protonmail.ch>
-  - `statusOrder` groups issue lists by status, keeping JQL order within each status and in tabs with `sortByStatus: false`.
-  - `f` opens a per-tab filter picker for status, issue type, and priority, and the panel title shows the active selection.
-  - Filter picker counts update as values are toggled, and values that would leave no issues are dimmed and cannot be checked.
-  - The filter picker title shows how many loaded issues the current selection leaves, e.g. `Filter issues · 4 of 50`.
+- Issues panel — nbr <nikolaus.brunner@protonmail.ch>
+  - The filter picker title shows how many loaded issues the selection leaves, e.g. `Filter issues · 4 of 50`, and the
+    panel title shows the active filter.
   - `esc` clears marks, then the local filter, then the picker filter.
-  - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
   - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
-  - `>` opens the selected issue's children in a temporary tab ([#3](https://github.com/nikbrunner/lazyjira/issues/3)).
-- Installation — nbr <nikolaus.brunner@protonmail.ch>
-  - `go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest` installs the newest release, and `@v0.6.5` pins
-    one.
-  - `install.sh` installs the latest or a pinned release on macOS and Linux and verifies it against `checksums.txt`
-    ([#5](https://github.com/nikbrunner/lazyjira/issues/5)).
-  - `mise use -g github:nikbrunner/lazyjira` installs from the release archives.
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>
@@ -134,17 +166,10 @@ gui:
 
 ### Changed
 
-- Colors — nbr <nikolaus.brunner@protonmail.ch>
-  - The palette uses the terminal's 16 ANSI colors. `themeColors` overrides single colors, and `themeDark` or
-    `themeLight` apply by terminal background.
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
   - The Issues row takes two-fifths of the workspace height and the Issue details row three-fifths.
-- Issue details pane — nbr <nikolaus.brunner@protonmail.ch>
-  - Code blocks highlight syntax with the terminal's 16 ANSI colors.
 - Issues panel — nbr <nikolaus.brunner@protonmail.ch>
   - Summaries use the terminal's default foreground.
-  - `Enter` on a maximized Issues panel opens the issue in maximized Details. `Esc` returns to the maximized Issues panel, and
-    a second `Esc` restores the split layout.
 - Issue info pane — nbr <nikolaus.brunner@protonmail.ch>
   - Assignee and reporter use the regular text color.
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>
@@ -165,11 +190,6 @@ gui:
   - Closing a JQL or children tab keeps the other one with its issues and filters.
   - Opening or closing a JQL tab scrolls the Issue tabs pane to the active tab.
   - The text cursor stays visible when it sits inside the text, including on spaces.
-- Issue details pane ([#16](https://github.com/nikbrunner/lazyjira/issues/16)) — nbr <nikolaus.brunner@protonmail.ch>
-  - After creating an issue, Issue details shows the new issue, as it does when lazyjira starts on a branch with an issue
-    key.
-- JQL search — nbr <nikolaus.brunner@protonmail.ch>
-  - A failed JQL search shows Jira's error messages in a wrapped Error panel above the history.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>
   - Demo tabs apply `statusCategory != Done` and `issuetype = …` from their JQL.
   - Issues created in the demo have Demo User as reporter.
