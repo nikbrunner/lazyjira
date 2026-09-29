@@ -32,3 +32,7 @@ e2e/tapes/*.tape
 /graphify-out/.graphify_python
 /graphify-out/.graphify_root
 /handoffs/2026-09-24-custom-command-startup-regression.md
+
+# Demo config
+!e2e/demo-config/config.yml
+e2e/demo-config/jql_history.txt

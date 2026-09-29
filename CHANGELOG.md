@@ -157,6 +157,11 @@ and `collapsedPanelHeight` has no effect.
   - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
+- Demo mode — nbr <nikolaus.brunner@protonmail.ch>
+  - `e2e/demo-config/config.yml` gives the demo five issue tabs, seven columns, and a status order. Start it with
+    `LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira --demo`.
+  - SHOP-1 has a description with a heading, a list, and a code block.
+  - The SHOP project has 42 issues, enough to scroll a maximized Issues panel.
 - Agent skills — nbr <nikolaus.brunner@protonmail.ch>
   - `lj-changelog`, `lj-commit`, and `lj-release` cover changelog entries, commits, and
     releases.
@@ -187,3 +192,5 @@ and `collapsedPanelHeight` has no effect.
   - The text cursor stays visible when it sits inside the text, including on spaces.
 - JQL search — nbr <nikolaus.brunner@protonmail.ch>
   - A failed JQL search shows Jira's error messages in a wrapped Error panel above the history.
+- Demo mode — nbr <nikolaus.brunner@protonmail.ch>
+  - Demo tabs apply `statusCategory != Done` and `issuetype = …` from their JQL.

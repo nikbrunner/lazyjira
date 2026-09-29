@@ -102,6 +102,8 @@ var assigneeCurrentRe = regexp.MustCompile(`(?i)assignee\s*=\s*currentUser\(\)`)
 var statusEqRe = regexp.MustCompile(`(?i)status\s*=\s*"?([^"]+?)"?\s*(?:AND|OR|ORDER|$)`)
 var statusInRe = regexp.MustCompile(`(?i)status\s+in\s*\(([^)]+)\)`)
 var priorityEqRe = regexp.MustCompile(`(?i)priority\s*=\s*"?([^"]+?)"?\s*(?:AND|OR|ORDER|$)`)
+var issueTypeEqRe = regexp.MustCompile(`(?i)(?:issuetype|type)\s*=\s*"?([^"]+?)"?\s*(?:AND|OR|ORDER|$)`)
+var notDoneRe = regexp.MustCompile(`(?i)statusCategory\s*!=\s*"?Done"?`)
 
 func (d *DemoClient) SearchIssues(_ context.Context, jql string, startAt, maxResults int) (*SearchResult, error) {
 	d.logRequest("GET", "/search/jql?jql="+jql)
@@ -131,6 +133,16 @@ func demoFilterIssues(issues []*Issue, jql string) []*Issue {
 		var f []*Issue
 		for _, iss := range result {
 			if iss.Assignee != nil && iss.Assignee.Email == "demo@lazyjira.dev" {
+				f = append(f, iss)
+			}
+		}
+		result = f
+	}
+
+	if notDoneRe.MatchString(jql) {
+		var f []*Issue
+		for _, iss := range result {
+			if iss.Status == nil || iss.Status.CategoryKey != "done" {
 				f = append(f, iss)
 			}
 		}
@@ -167,6 +179,17 @@ func demoFilterIssues(issues []*Issue, jql string) []*Issue {
 		var f []*Issue
 		for _, iss := range result {
 			if iss.Priority != nil && strings.EqualFold(iss.Priority.Name, want) {
+				f = append(f, iss)
+			}
+		}
+		result = f
+	}
+
+	if m := issueTypeEqRe.FindStringSubmatch(jql); m != nil {
+		want := strings.TrimSpace(m[1])
+		var f []*Issue
+		for _, iss := range result {
+			if iss.IssueType != nil && strings.EqualFold(iss.IssueType.Name, want) {
 				f = append(f, iss)
 			}
 		}
@@ -677,8 +700,9 @@ func (d *DemoClient) initDemoData() {
 	shopIssues := []*Issue{
 		{
 			ID: "101", Key: "SHOP-1", Summary: "Implement shopping cart persistence",
-			Description: "Cart items should survive page reload and browser restart.\nUse localStorage for guest users, server-side for logged-in users.\nHandle merge conflicts when guest logs in with existing cart.",
-			Status:      inProgress, Priority: high, Assignee: demo, Reporter: alice,
+			Description:    "Cart items should survive page reload and browser restart.\nUse localStorage for guest users, server-side for logged-in users.\nHandle merge conflicts when guest logs in with existing cart.",
+			DescriptionADF: shop1ADF(),
+			Status:         inProgress, Priority: high, Assignee: demo, Reporter: alice,
 			IssueType: story, Sprint: sprint1,
 			Labels: []string{"frontend", "ux"}, Components: []Component{{ID: "c1", Name: "Cart"}},
 			Created: now.Add(-10 * day), Updated: now.Add(-1 * day),
@@ -942,10 +966,58 @@ func (d *DemoClient) initDemoData() {
 		},
 	}
 
-	// Register all issues
+	shopBacklog := []struct {
+		summary  string
+		typ      *IssueType
+		status   *Status
+		priority *Priority
+		assignee *User
+		ageDays  int
+	}{
+		{"Show delivery estimate on product page", story, todo, medium, carol, 2},
+		{"Guest checkout loses address on back navigation", bug, inProgress, high, demo, 1},
+		{"Add Apple Pay to checkout", story, todo, high, bob, 4},
+		{"Newsletter signup form ignores double opt-in", bug, todo, medium, nil, 6},
+		{"Migrate product images to CDN", task, inProgress, medium, dave, 3},
+		{"Recently viewed products carousel", story, todo, low, carol, 9},
+		{"Currency switcher rounds prices incorrectly", bug, inReview, critical, bob, 1},
+		{"Add product reviews moderation queue", story, todo, medium, alice, 7},
+		{"Upgrade payment SDK to v5", task, todo, high, demo, 5},
+		{"Out-of-stock badge shows for pre-order items", bug, todo, medium, eve, 8},
+		{"Gift card balance check page", story, todo, low, nil, 12},
+		{"Log slow database queries in checkout", task, inProgress, medium, dave, 2},
+		{"Size guide modal for apparel", story, todo, low, carol, 14},
+		{"Coupon field accepts expired codes", bug, inReview, high, demo, 2},
+		{"Add sitemap for product categories", task, todo, low, alice, 16},
+		{"Save cart for later", story, todo, medium, nil, 10},
+		{"Search suggestions flicker while typing", bug, todo, medium, carol, 5},
+		{"Export orders as CSV for accounting", story, todo, medium, eve, 11},
+		{"Rate limit password reset emails", task, todo, high, bob, 6},
+		{"Compare up to four products side by side", story, todo, low, alice, 18},
+		{"Order history pagination skips page two", bug, inProgress, medium, eve, 3},
+		{"Add structured data for product rich results", task, todo, low, nil, 20},
+		{"Free shipping progress bar in cart", story, todo, medium, carol, 7},
+		{"Tax calculation wrong for Austrian addresses", bug, todo, critical, demo, 1},
+		{"Clean up unused feature flags", task, todo, low, dave, 22},
+		{"Back-in-stock email notifications", story, todo, medium, eve, 13},
+		{"Checkout button disabled after failed payment", bug, inReview, high, bob, 2},
+		{"Localize order confirmation emails", story, todo, medium, alice, 15},
+		{"Retry failed webhook deliveries", task, todo, medium, dave, 9},
+		{"Product filter resets on pagination", bug, todo, medium, nil, 4},
+	}
 	for _, iss := range shopIssues {
 		d.addIssue("SHOP", iss)
 	}
+	for i, b := range shopBacklog {
+		n := 13 + i
+		d.addIssue("SHOP", &Issue{
+			ID: strconv.Itoa(100 + n), Key: "SHOP-" + strconv.Itoa(n), Summary: b.summary,
+			Status: b.status, Priority: b.priority, Assignee: b.assignee, Reporter: alice,
+			IssueType: b.typ,
+			Created:   now.Add(-time.Duration(b.ageDays+5) * day), Updated: now.Add(-time.Duration(b.ageDays) * day),
+		})
+	}
+
 	for _, iss := range platIssues {
 		d.addIssue("PLAT", iss)
 	}
@@ -1104,6 +1176,48 @@ func adfCodeBlock(lang, body string) map[string]any {
 		"type": "codeBlock", "attrs": map[string]any{"language": lang},
 		"content": []any{adfText(body)},
 	}
+}
+
+func shop1ADF() any {
+	heading := func(t string) map[string]any {
+		return map[string]any{"type": "heading", "attrs": map[string]any{"level": float64(2)}, "content": []any{adfText(t)}}
+	}
+	bullet := func(items ...map[string]any) map[string]any {
+		listItems := make([]any, len(items))
+		for i, item := range items {
+			listItems[i] = map[string]any{"type": "listItem", "content": []any{item}}
+		}
+		return map[string]any{"type": "bulletList", "content": listItems}
+	}
+	return adfDoc(
+		adfPara(
+			adfText("Cart items should survive a page reload and a browser restart. Guests keep their cart in "),
+			adfCode("localStorage"),
+			adfText(", signed-in users on the server."),
+		),
+		heading("Acceptance criteria"),
+		bullet(
+			adfPara(adfText("A guest cart survives closing the browser")),
+			adfPara(adfText("Signing in merges the guest cart into the account cart")),
+			adfPara(adfText("On conflicts, the "), adfBold("higher quantity"), adfText(" wins")),
+		),
+		heading("Merge"),
+		adfCodeBlock("ts", `function mergeCarts(guest: Cart, account: Cart): Cart {
+  const items = new Map(account.items.map((i) => [i.sku, i]));
+  for (const item of guest.items) {
+    const existing = items.get(item.sku);
+    items.set(item.sku, {
+      ...item,
+      quantity: Math.max(item.quantity, existing?.quantity ?? 0),
+    });
+  }
+  return { ...account, items: [...items.values()] };
+}`),
+		adfPara(
+			adfText("Design: "),
+			adfLink("Cart persistence flow", "https://example.com/design/cart-persistence"),
+		),
+	)
 }
 
 func plat3Comment1ADF() any {

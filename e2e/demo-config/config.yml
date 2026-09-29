@@ -1,0 +1,16 @@
+gui:
+  sidePanelWidth: 32
+  issueListFields: [key, type, status, priority, summary, assignee, updated]
+statusOrder: [In Progress, In Review, To Do, Done]
+issueTabs:
+  - name: All
+    jql: project = {{.ProjectKey}} AND statusCategory != Done ORDER BY updated DESC
+  - name: Assigned
+    jql: project = {{.ProjectKey}} AND assignee = currentUser() AND statusCategory != Done ORDER BY priority DESC
+  - name: In Review
+    jql: project = {{.ProjectKey}} AND status = "In Review" ORDER BY updated DESC
+  - name: Bugs
+    jql: project = {{.ProjectKey}} AND issuetype = Bug AND statusCategory != Done ORDER BY priority DESC
+  - name: Recently done
+    jql: project = {{.ProjectKey}} AND status = Done ORDER BY updated DESC
+    sortByStatus: false
