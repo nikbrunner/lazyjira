@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 func adfDoc(blocks ...any) map[string]any {

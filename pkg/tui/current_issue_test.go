@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/config"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/views"
+	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
 func setupPreviewedSub(t *testing.T, fake *jiratest.FakeClient, sub *jira.Issue) *App {

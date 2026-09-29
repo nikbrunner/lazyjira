@@ -3,8 +3,8 @@ package views
 import (
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
 )
 
 func TestProjectList_SetAndSelect(t *testing.T) {

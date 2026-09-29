@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 )
 
 func TestOlderSprintRequestCannotReplaceCurrentLoadingModal(t *testing.T) {

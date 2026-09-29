@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
+	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 // ScrollInfo provides data for rendering a scrollbar in the right border

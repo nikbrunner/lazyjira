@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
 )
 
 func TestNormalizeToWords(t *testing.T) {

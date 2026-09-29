@@ -10,11 +10,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/config"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/navstack"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
+	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
+	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 type IssuesLoadedMsg struct{ Issues []jira.Issue }

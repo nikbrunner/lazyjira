@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/config"
 )
 
 func TestJQLSearchResult_ScrollsIssueTabsToJQLTab(t *testing.T) {

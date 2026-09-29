@@ -12,8 +12,8 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 )
 
 func TestIssuesList_HeaderFollowsFields(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
 
 const fullIssueJSON = `{

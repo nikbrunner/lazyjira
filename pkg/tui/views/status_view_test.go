@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
 
 const testEmail = "user@example.com"

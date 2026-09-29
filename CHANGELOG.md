@@ -106,6 +106,9 @@ gui:
   - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
   - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
   - `>` opens the selected issue's children in a temporary tab ([#3](https://github.com/nikbrunner/lazyjira/issues/3)).
+- Installation — nbr <nikolaus.brunner@protonmail.ch>
+  - `go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest` installs the newest release, and `@v0.6.5` pins
+    one.
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>

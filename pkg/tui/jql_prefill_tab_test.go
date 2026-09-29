@@ -3,8 +3,8 @@ package tui
 import (
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/config"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
 )
 
 func TestJQLSearch_PrefillsFromFocusedIssueTab(t *testing.T) {

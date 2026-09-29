@@ -78,7 +78,7 @@ own config.
 Requires Go 1.25.8 or later.
 
 ```sh
-go install github.com/nikbrunner/lazyjira/v2/cmd/lazyjira@main
+go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest
 ```
 
 Go installs `lazyjira` in `GOBIN` if it is set, or in the `bin` folder under `GOPATH` otherwise. That directory has to be

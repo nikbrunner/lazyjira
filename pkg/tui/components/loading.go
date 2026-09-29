@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/theme"
+	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 const loadingIndicatorFrames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"

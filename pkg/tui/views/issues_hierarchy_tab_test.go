@@ -3,8 +3,8 @@ package views
 import (
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/config"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
 )
 
 func TestAddHierarchyTab_SetsTabAndFocus(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
 
 func TestCreateBranch_CreatesAndChecksOut(t *testing.T) {

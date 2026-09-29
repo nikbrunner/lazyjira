@@ -1,4 +1,4 @@
-module github.com/nikbrunner/lazyjira/v2
+module github.com/nikbrunner/lazyjira
 
 go 1.25.8
 

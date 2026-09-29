@@ -7,8 +7,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
 )
 
 func makeCommentsDetail(t *testing.T, bodies ...string) *DetailView {

@@ -3,7 +3,7 @@
 ## Project context
 
 - This is an independently maintained Jira terminal UI. The repository is `nikbrunner/lazyjira`; GitHub operations target that repository.
-- The Go module path is `github.com/nikbrunner/lazyjira/v2`.
+- The Go module path is `github.com/nikbrunner/lazyjira`.
 - Preserve the original MIT copyright notice in `LICENSE` and the README attribution.
 - Use `GLOSSARY.md` for domain terms. Keep it aligned when terminology changes.
 - Treat `handoffs/` as historical task context; check its assumptions against current code and Git state.

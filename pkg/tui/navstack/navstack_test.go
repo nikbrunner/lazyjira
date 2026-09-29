@@ -3,7 +3,7 @@ package navstack
 import (
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
 )
 
 func TestNavStack_NewStack_IsEmpty(t *testing.T) {

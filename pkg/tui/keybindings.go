@@ -3,9 +3,9 @@ package tui
 import (
 	"slices"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/config"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/components"
-	"github.com/nikbrunner/lazyjira/v2/pkg/tui/views"
+	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
 // Binding represents a single keybinding with context

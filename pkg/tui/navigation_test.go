@@ -3,9 +3,9 @@ package tui
 import (
 	"testing"
 
-	"github.com/nikbrunner/lazyjira/v2/pkg/internal/testkit"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira"
-	"github.com/nikbrunner/lazyjira/v2/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
+	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
 )
 
 func TestExtractIssueKey(t *testing.T) {
