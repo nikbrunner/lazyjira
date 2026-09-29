@@ -5,34 +5,6 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [Unreleased]
 
-### Added
-
-- Issues panel ([#7](https://github.com/nikbrunner/lazyjira/issues/7)) — nbr <nikolaus.brunner@protonmail.ch>
-  - `statusOrder` groups issue lists by status, keeping JQL order within each status and in tabs with `sortByStatus: false`.
-  - `f` opens a per-tab filter picker for status, issue type, and priority, and the panel title shows the active selection.
-  - Filter picker counts update as values are toggled, and values that would leave no issues are dimmed and cannot be checked.
-  - The filter picker title shows how many loaded issues the current selection leaves, e.g. `Filter issues · 4 of 50`.
-  - `esc` clears marks, then the local filter, then the picker filter.
-  - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
-  - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
-- Workspace ([#11](https://github.com/nikbrunner/lazyjira/issues/11)) — nbr <nikolaus.brunner@protonmail.ch>
-  - `s` in the Issue tabs pane opens JQL search with the focused tab's query and the cursor before its `ORDER BY` clause.
-
-### Changed
-
-- Workspace — nbr <nikolaus.brunner@protonmail.ch>
-  - The Issues row takes two-fifths of the workspace height and the Issue details row three-fifths.
-
-### Fixed
-
-- Workspace — nbr <nikolaus.brunner@protonmail.ch>
-  - Scrolling the Issue tabs pane by mouse wheel or overflow click stops at the last full window.
-  - Closing a JQL or children tab keeps the other one with its issues and filters.
-  - Opening or closing a JQL tab scrolls the Issue tabs pane to the active tab.
-  - The text cursor stays visible when it sits inside the text, including on spaces.
-- JQL search — nbr <nikolaus.brunner@protonmail.ch>
-  - A failed JQL search shows Jira's error messages in a wrapped Error panel above the history.
-
 ---
 
 ## `0.6.5` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.28
@@ -173,6 +145,16 @@ and `collapsedPanelHeight` has no effect.
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
   - `Tab` and `Shift+Tab` switch issue tabs from the main workspace.
   - The App status panel shows a colored connection indicator and cyan field labels.
+  - `s` in the Issue tabs pane opens JQL search with the focused tab's query and the cursor before its `ORDER BY` clause
+    ([#11](https://github.com/nikbrunner/lazyjira/issues/11)).
+- Issues panel ([#7](https://github.com/nikbrunner/lazyjira/issues/7)) — nbr <nikolaus.brunner@protonmail.ch>
+  - `statusOrder` groups issue lists by status, keeping JQL order within each status and in tabs with `sortByStatus: false`.
+  - `f` opens a per-tab filter picker for status, issue type, and priority, and the panel title shows the active selection.
+  - Filter picker counts update as values are toggled, and values that would leave no issues are dimmed and cannot be checked.
+  - The filter picker title shows how many loaded issues the current selection leaves, e.g. `Filter issues · 4 of 50`.
+  - `esc` clears marks, then the local filter, then the picker filter.
+  - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
+  - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Agent skills — nbr <nikolaus.brunner@protonmail.ch>
@@ -184,6 +166,8 @@ and `collapsedPanelHeight` has no effect.
 
 ### Changed
 
+- Workspace — nbr <nikolaus.brunner@protonmail.ch>
+  - The Issues row takes two-fifths of the workspace height and the Issue details row three-fifths.
 - Issues panel — nbr <nikolaus.brunner@protonmail.ch>
   - Summaries use the terminal's default foreground.
   - `Enter` on a maximized Issues panel opens the issue in maximized Details. `Esc` returns to the maximized Issues panel, and
@@ -193,3 +177,13 @@ and `collapsedPanelHeight` has no effect.
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>
   - The README covers installing with Go on macOS, Linux, and Windows.
   - `GLOSSARY.md` defines the workspace, issue list, and Git integration terms.
+
+### Fixed
+
+- Workspace — nbr <nikolaus.brunner@protonmail.ch>
+  - Scrolling the Issue tabs pane by mouse wheel or overflow click stops at the last full window.
+  - Closing a JQL or children tab keeps the other one with its issues and filters.
+  - Opening or closing a JQL tab scrolls the Issue tabs pane to the active tab.
+  - The text cursor stays visible when it sits inside the text, including on spaces.
+- JQL search — nbr <nikolaus.brunner@protonmail.ch>
+  - A failed JQL search shows Jira's error messages in a wrapped Error panel above the history.
