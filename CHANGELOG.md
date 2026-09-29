@@ -90,68 +90,6 @@ gui:
 - The selection highlight spans the full row, derived from the terminal background.
 - The active issue tab is marked as `[Name]`, and clicks land on the tab under the cursor.
 
-#### Upgrading from lazyjira 2.19.2
-
-The Nix flake and package are gone. Install from GitHub Releases, or with Go under the new module path:
-
-```sh
-go install github.com/nikbrunner/lazyjira/v2/cmd/lazyjira@main
-```
-
-The focus keys follow the new pane order. `focusStatus` is gone; rename it in your config and check the other focus keys:
-
-```diff
- keybinding:
-   universal:
--    focusDetail: "0"
--    focusStatus: "1"
--    focusProjects: "4"
-+    focusProjects: "0"
-+    focusIssueTabs: "1"
-+    focusDetail: "4"
-```
-
-`b` copies the branch name, and creating the branch moves to `B`:
-
-```diff
- keybinding:
-   issues:
--    createBranch: b
-+    copyBranchName: b
-+    createBranch: B
-```
-
-Branch format templates use lowercase variables, and `{{.Summary}}` is already a slug:
-
-```diff
--      template: "{{.Key}}-{{.Summary | slugify}}"
-+      template: "{{.Key}}-{{.Summary}}"
-```
-
-Quoted placeholders in custom commands fail validation. Remove the quotes around them; lazyjira escapes the value itself.
-
-In the Issues panel, `space` marks the issue, `enter` opens its detail, and `>` opens its children
-([#3](https://github.com/nikbrunner/lazyjira/issues/3)).
-
-In the Issue details pane, `ctrl+d` and `ctrl+u` scroll, and `H` `J` `K` `L` move focus. `sidePanelWidth` defaults to `22`,
-and `collapsedPanelHeight` has no effect.
-
-Colors come from your terminal, and `gui.theme` is ignored with a warning. Move custom colors to `themeColors`, or to
-`themeDark` and `themeLight`:
-
-```diff
- gui:
--  theme: catppuccin-mocha
-+  themeColors:
-+    green: "#a6e3a1"
-```
-
-### Breaking
-
-- Colors — nbr <nikolaus.brunner@protonmail.ch>
-  - **Breaking:** The Catppuccin presets and `theme: auto` are removed. The palette uses the terminal's 16 ANSI colors,
-    `gui.theme` is ignored with a warning in App status, and `themeDark` or `themeLight` apply by terminal background.
-
 ### Added
 
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
@@ -167,6 +105,7 @@ Colors come from your terminal, and `gui.theme` is ignored with a warning. Move 
   - `esc` clears marks, then the local filter, then the picker filter.
   - The footer shows a hint such as `50/312 loaded` when Jira holds more results than the tab loaded.
   - The help bar and `?` help list `f` filter, and `?` help lists `i` for the Issue info pane.
+  - `>` opens the selected issue's children in a temporary tab ([#3](https://github.com/nikbrunner/lazyjira/issues/3)).
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>
@@ -183,6 +122,9 @@ Colors come from your terminal, and `gui.theme` is ignored with a warning. Move 
 
 ### Changed
 
+- Colors — nbr <nikolaus.brunner@protonmail.ch>
+  - The palette uses the terminal's 16 ANSI colors. `themeColors` overrides single colors, and `themeDark` or
+    `themeLight` apply by terminal background.
 - Workspace — nbr <nikolaus.brunner@protonmail.ch>
   - The Issues row takes two-fifths of the workspace height and the Issue details row three-fifths.
 - Issue details pane — nbr <nikolaus.brunner@protonmail.ch>
