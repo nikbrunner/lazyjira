@@ -113,9 +113,11 @@ gui:
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>
   - `e2e/demo-config/config.yml` gives the demo five issue tabs, seven columns, and a status order. Start it with
-    `LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira --demo`.
+    `LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira-demo --demo`.
   - SHOP-1 has a description with a heading, a list, and a code block.
   - The SHOP project has 42 issues, enough to scroll a maximized Issues panel.
+  - `make build-demo` writes `lazyjira-demo`, so it never replaces the regular `lazyjira` build
+    ([#19](https://github.com/nikbrunner/lazyjira/issues/19)).
 - Agent skills — nbr <nikolaus.brunner@protonmail.ch>
   - `lj-changelog`, `lj-commit`, and `lj-release` cover changelog entries, commits, and
     releases.

@@ -39,7 +39,7 @@ To test without a Jira account:
 
 ```bash
 make build-demo
-./lazyjira --demo
+LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira-demo --demo
 ```
 
 ## Code style

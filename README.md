@@ -67,7 +67,7 @@ The demo runs against built-in fake data, so it needs no Jira account:
 git clone https://github.com/nikbrunner/lazyjira.git
 cd lazyjira
 make build-demo
-LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira --demo
+LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira-demo --demo
 ```
 
 `e2e/demo-config/config.yml` sets up the tabs and columns shown above. Without `LAZYJIRA_CONFIG_DIR`, the demo uses your

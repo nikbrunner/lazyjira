@@ -8,7 +8,7 @@ hooks:
 	mise exec lefthook -- lefthook install
 
 build-demo:
-	go build -tags demo -o lazyjira ./cmd/lazyjira
+	go build -tags demo -o lazyjira-demo ./cmd/lazyjira
 
 build-version:
 	go build -ldflags "-s -w -X main.version=$$(git rev-parse --short HEAD)" -o lazyjira ./cmd/lazyjira
@@ -30,7 +30,7 @@ test:
 	go test -race ./...
 
 clean:
-	rm -f lazyjira
+	rm -f lazyjira lazyjira-demo
 
 check: lint vet build test startup-smoke
 
@@ -59,7 +59,7 @@ fix: tidy lint-fix
 check-demo:
 	go tool golangci-lint run --build-tags demo ./...
 	go vet -tags demo ./...
-	go build -tags demo -o lazyjira ./cmd/lazyjira
+	go build -tags demo -o lazyjira-demo ./cmd/lazyjira
 
 preview: build-demo e2e-gen
 	@vhs -q e2e/tapes/00_preview.tape

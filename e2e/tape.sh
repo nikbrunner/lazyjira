@@ -68,7 +68,7 @@ process_line() {
             echo ''
             echo 'Env EDITOR "vim -u NONE -N"'
             echo 'Hide'
-            echo 'Type "rm -f e2e/demo-config/jql_history && LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira --demo"'
+            echo 'Type "rm -f e2e/demo-config/jql_history && LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira-demo --demo"'
             echo 'Enter'
             echo 'Sleep 2s'
             echo 'Show'
