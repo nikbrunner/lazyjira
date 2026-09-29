@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/lazygit.png" width="100%" alt="lazyjira banner">
+  <img src="docs/assets/recordings/hero.gif" width="100%" alt="lazyjira: browsing issues, switching issue tabs, and opening an issue in the maximized Issues panel">
 </p>
 
 <p align="center">
@@ -36,6 +36,13 @@ labels, and components are picked from lists. The new issue then opens with its 
 
 <p align="center">
   <img src="docs/assets/recordings/create-issue.gif" width="100%" alt="lazyjira demo: creating a bug with a description written in vim">
+</p>
+
+Opening an issue by key: `#` starts with the active project, `pl` and `Tab` switch to Platform Services, and `3` finds
+PLAT-3, which opens in maximized details until `esc` returns to the workspace.
+
+<p align="center">
+  <img src="docs/assets/recordings/issue-lookup.gif" width="100%" alt="lazyjira demo: opening PLAT-3 by key with project and issue completion">
 </p>
 
 ## Features

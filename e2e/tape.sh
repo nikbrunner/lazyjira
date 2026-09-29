@@ -50,7 +50,9 @@ process_line() {
     local line="$1"
 
     # Strip comments on @-lines
-    line="${line%%#*}"
+    if [[ "$line" == @* ]]; then
+        line="${line%%#*}"
+    fi
     line="${line%"${line##*[![:space:]]}"}" # rtrim
 
     case "$line" in
