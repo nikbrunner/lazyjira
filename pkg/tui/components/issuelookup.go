@@ -202,7 +202,7 @@ func (l *IssueLookup) View() string {
 	if !l.visible {
 		return ""
 	}
-	width := min(max(l.width*7/10, 30), 80)
+	width := min(max(l.width*85/100, 40), 140)
 	if l.width > 0 && width > l.width-4 {
 		width = max(l.width-4, 1)
 	}
@@ -227,7 +227,8 @@ func (l *IssueLookup) View() string {
 		if s.Label != "" {
 			label += strings.Repeat(" ", keyWidth-len(s.Key)+2) + s.Label
 		}
-		label = lipgloss.NewStyle().Width(innerWidth).MaxWidth(innerWidth).Render(label)
+		label = ansi.Truncate(label, innerWidth, "…")
+		label += strings.Repeat(" ", max(innerWidth-ansi.StringWidth(label), 0))
 		if i == l.cursor {
 			label = theme.Default.SelectedItem.Render(label)
 		}

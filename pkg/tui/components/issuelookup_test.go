@@ -1,9 +1,11 @@
 package components
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func lookupRunes(l IssueLookup, s string) (IssueLookup, tea.Cmd) {
@@ -101,5 +103,24 @@ func TestIssueLookupEscCancels(t *testing.T) {
 	l, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if _, ok := lookupMsg(t, cmd).(IssueLookupCancelledMsg); !ok || l.IsVisible() {
 		t.Fatal("esc should close the lookup and send IssueLookupCancelledMsg")
+	}
+}
+
+func TestIssueLookupTruncatesLongSummaries(t *testing.T) {
+	t.Parallel()
+	l := NewIssueLookup()
+	l.SetSize(100, 40)
+	l.Show("PLAT-1", lookupProjects)
+	long := strings.Repeat("very long summary ", 20)
+	l.SetIssueSuggestions("PLAT-1", []LookupSuggestion{{Key: "PLAT-1", Label: long}, {Key: "PLAT-12", Label: "short"}})
+
+	lines := strings.Split(l.View(), "\n")
+	if got, want := len(lines), 5; got != want {
+		t.Fatalf("view has %d lines, want %d (border, prompt, two suggestions, border):\n%s", got, want, l.View())
+	}
+	for _, line := range lines {
+		if w := ansi.StringWidth(line); w > 85 {
+			t.Errorf("line is %d cells wide, want at most 85: %q", w, ansi.Strip(line))
+		}
 	}
 }
