@@ -11,6 +11,7 @@ config.yml
 
 # Binary
 /lazyjira
+/dist/
 
 # IDE
 .idea/

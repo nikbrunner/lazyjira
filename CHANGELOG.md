@@ -109,6 +109,9 @@ gui:
 - Installation — nbr <nikolaus.brunner@protonmail.ch>
   - `go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest` installs the newest release, and `@v0.6.5` pins
     one.
+  - `install.sh` installs the latest or a pinned release on macOS and Linux and verifies it against `checksums.txt`
+    ([#5](https://github.com/nikbrunner/lazyjira/issues/5)).
+  - `mise use -g github:nikbrunner/lazyjira` installs from the release archives.
 - Configuration — nbr <nikolaus.brunner@protonmail.ch>
   - `auth.json` is written atomically, so an interrupted save keeps the previous credentials.
 - Demo mode — nbr <nikolaus.brunner@protonmail.ch>

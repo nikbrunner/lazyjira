@@ -24,16 +24,8 @@ archives:
         formats:
           - zip
 
-nfpms:
-  - package_name: lazyjira
-    maintainer: "nikbrunner <https://github.com/nikbrunner>"
-    homepage: "https://github.com/nikbrunner/lazyjira"
-    description: "Terminal UI for Jira"
-    license: MIT
-    formats:
-      - deb
-      - rpm
-      - apk
+checksum:
+  name_template: checksums.txt
 
 changelog:
   sort: asc

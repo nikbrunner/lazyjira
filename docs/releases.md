@@ -67,7 +67,7 @@ gh pr merge <number> --squash
 ```
 
 The merge starts [`release.yml`](../.github/workflows/release.yml). release-please tags `v<version>` and creates the GitHub
-Release. GoReleaser then builds the binaries and packages, attaches them, and replaces the release notes with the
+Release. GoReleaser then builds the archives and `checksums.txt`, attaches them, and replaces the release notes with the
 `CHANGELOG.md` section for that version. The job fails when the section is missing.
 
 ## Verify
@@ -77,4 +77,13 @@ gh run list --workflow release.yml --limit 1
 gh release view v<version>
 ```
 
-The release must list the archives for darwin, linux, and windows, and its notes must match the curated section.
+The release must list the archives for darwin, linux, and windows, and its notes must match the curated section. The release
+must also list `checksums.txt`.
+
+Install the release through each channel and check the version:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nikbrunner/lazyjira/main/install.sh | INSTALL_DIR="$(mktemp -d)" sh
+mise exec github:nikbrunner/lazyjira@latest -- lazyjira --version
+GOBIN="$(mktemp -d)" go install github.com/nikbrunner/lazyjira/cmd/lazyjira@v<version>
+```

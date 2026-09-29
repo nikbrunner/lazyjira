@@ -75,7 +75,22 @@ own config.
 
 ## Installation
 
-Requires Go 1.25.8 or later.
+On macOS or Linux, the install script downloads the latest release, checks it against the release checksums, and installs
+it to `~/.local/bin`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nikbrunner/lazyjira/main/install.sh | sh
+```
+
+`VERSION=v0.6.5` pins a release, and `INSTALL_DIR` picks another directory.
+
+With [mise](https://mise.jdx.dev):
+
+```sh
+mise use -g github:nikbrunner/lazyjira
+```
+
+With Go 1.25.8 or later:
 
 ```sh
 go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest
@@ -96,16 +111,8 @@ On Windows, run `go env GOBIN` in PowerShell. If it prints nothing, run `go env 
 path. Press `Win+R`, enter `sysdm.cpl`, then open Advanced → Environment Variables → your user `Path` → Edit → New. Add
 the directory and open a new PowerShell window.
 
-Check the install with `lazyjira --version`.
-
-To build from source:
-
-```sh
-git clone https://github.com/nikbrunner/lazyjira.git
-cd lazyjira
-make build
-./lazyjira
-```
+Archives for macOS, Linux, and Windows are also attached to each
+[GitHub Release](https://github.com/nikbrunner/lazyjira/releases). Check the install with `lazyjira --version`.
 
 ## Setup
 
