@@ -24,7 +24,7 @@ curated section becomes the GitHub Release notes.
 - A release heading puts the backticked version, eight `&nbsp;`, and the release date:
   ``## `0.7.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.28``. The release workflow finds the section by the
   backticked version at the start of that line.
-- While a release is prepared but unpublished, new entries go into its section and `## [Unreleased]` stays empty.
+- While a release is prepared but unpublished, new entries go into its section. `## [Unreleased]` exists only while it holds entries.
 - Every entry ends with ` — Name <email>` from the committer's Git config; a breaking entry starts with `**Breaking:**`.
 - Separate release sections with `---`, with a blank line on each side. The release notes end at the first `---`.
 - Run [`humanizer`](../humanizer/SKILL.md) in embedded mode on every entry and highlight before handing it over.

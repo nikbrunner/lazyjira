@@ -40,9 +40,8 @@ labels, and components are picked from lists. The new issue then opens with its 
 
 ## Features
 
-The workspace has five panes that keep their place: the Project selector, Issue tabs, Issues, Issue info, and Issue
-details. `0` to `4` jump to a pane, `H` `J` `K` `L` move to its neighbour, and `+` maximizes Issues or Details.
-
+- The workspace has five panes that keep their place: the Project selector, Issue tabs, Issues, Issue info, and Issue
+  details. `0` to `4` jump to a pane, `H` `J` `K` `L` move to its neighbour, and `+` maximizes Issues or Details.
 - Issue tabs are JQL queries from your config. `s` opens a JQL search with autocomplete, syntax highlighting, and history,
   and shows the result in a temporary tab. `>` opens an issue's children the same way.
 - The Issues panel shows the columns you pick (key, type, status, priority, summary, assignee, updated age) and can group
