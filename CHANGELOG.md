@@ -3,6 +3,28 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [Unreleased]
+
+### Breaking
+
+- Create issue form — nbr <nikolaus.brunner@protonmail.ch>
+  - **Breaking:** `ctrl+g` opens the Description in `$EDITOR`. `e` types a letter there.
+  - **Breaking:** `enter` in the Description starts a new line. `ctrl+s` creates the issue from any panel, and `enter`
+    still does from Summary and Fields.
+
+### Added
+
+- Create issue form — nbr <nikolaus.brunner@protonmail.ch>
+  - The Description is a text area in the form. Pasted text keeps its line breaks.
+
+### Changed
+
+- Create issue form — nbr <nikolaus.brunner@protonmail.ch>
+  - The form fills the workspace, with Fields in a left column beside Summary and Description. Terminals narrower than
+    68 columns stack the three panels.
+
+---
+
 ## `0.7.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.30
 
 ### Highlights

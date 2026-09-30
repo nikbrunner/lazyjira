@@ -146,7 +146,7 @@ func TestSprintRequestInvalidationClosesOnlyOwnedLoadingModal(t *testing.T) {
 	t.Run("create form cancellation closes owned modal", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.createForm = components.NewCreateForm(nil)
+		app.createForm = components.NewCreateForm()
 		app.createForm.ShowForm(nil, "Task", testProject)
 		app.startSprintFetch(sprintPickerTarget{createForm: true})
 		app.Update(components.CreateFormCancelMsg{})
@@ -158,7 +158,7 @@ func TestSprintRequestInvalidationClosesOnlyOwnedLoadingModal(t *testing.T) {
 	t.Run("metadata completion closes owned modal", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.createForm = components.NewCreateForm(nil)
+		app.createForm = components.NewCreateForm()
 		app.createForm.ShowForm(nil, "Task", testProject)
 		app.createCtx = createCtx{projectKey: testProject, issueTypeID: "1", issueTypeName: "Task"}
 		app.startSprintFetch(sprintPickerTarget{createForm: true})

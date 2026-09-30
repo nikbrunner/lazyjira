@@ -11,7 +11,7 @@ import (
 
 func TestCreateForm_ScrollFocusedSummary(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(80, 15)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.summaryCursor = 0
@@ -24,7 +24,7 @@ func TestCreateForm_ScrollFocusedSummary(t *testing.T) {
 
 func TestCreateForm_ScrollFocusedFields(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(80, 15)
 	fields := make([]CreateFormField, 0, 17)
 	fields = append(fields, CreateFormField{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText})
@@ -44,7 +44,7 @@ func TestCreateForm_ScrollFocusedFields(t *testing.T) {
 
 func TestCreateForm_RenderSummaryPlainNotFocused(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -58,7 +58,7 @@ func TestCreateForm_RenderSummaryPlainNotFocused(t *testing.T) {
 
 func TestCreateForm_SetFieldValue_SummaryField(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.SetFieldValue(0, "new summary", "new summary")
@@ -67,25 +67,23 @@ func TestCreateForm_SetFieldValue_SummaryField(t *testing.T) {
 
 func TestCreateForm_InterceptMouseClickOnSummaryPanel(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	testkit.AssertEqual(t, "focus is on description before click", form.FocusedPanel(), CreatePanelDescription)
-	formW := min(max(120*6/10, 40), 120-2)
-	formX := (120 - formW) / 2
 	form.Intercept(tea.MouseMsg{
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
-		X:      formX + 5,
-		Y:      16,
+		X:      60,
+		Y:      1,
 	})
 	testkit.AssertEqual(t, "click on summary row switches focus to summary", form.FocusedPanel(), CreatePanelSummary)
 }
 
 func TestCreateForm_EditCurrentField_EmptyFiltered(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -99,26 +97,9 @@ func TestCreateForm_EditCurrentField_EmptyFiltered(t *testing.T) {
 	testkit.AssertEqual(t, "nil cmd when no fields", cmd == nil, true)
 }
 
-func TestCreateForm_InterceptDescriptionQHides(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	form.SetSize(120, 40)
-	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	testkit.AssertEqual(t, "consumed", consumed, true)
-	testkit.AssertEqual(t, "hidden after q", form.IsVisible(), false)
-	if cmd == nil {
-		t.Fatal("expected cancel cmd from q")
-	}
-	if _, ok := cmd().(CreateFormCancelMsg); !ok {
-		t.Error("expected CreateFormCancelMsg from q")
-	}
-}
-
 func TestCreateForm_InterceptFieldsQHides(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -132,7 +113,7 @@ func TestCreateForm_InterceptFieldsQHides(t *testing.T) {
 
 func TestCreateForm_FilteredFields_WithFilter(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -151,7 +132,7 @@ func TestCreateForm_FilteredFields_WithFilter(t *testing.T) {
 
 func TestCreateForm_EnsureFieldVisible_ScrollsOffset(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(80, 12)
 	fields := make([]CreateFormField, 0, 22)
 	fields = append(fields, CreateFormField{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText})

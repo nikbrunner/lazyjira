@@ -9,15 +9,14 @@ import (
 )
 
 // pendingMention holds a write that was deferred because the user cache was
-// cold. Once the users arrive it is completed via the createDesc or applyEdit
-// path.
+// cold. Once the users arrive it is completed via the create-form submit or
+// applyEdit path.
 type pendingMention struct {
-	content     string
-	createDesc  bool    // true: create-form description field; false: applyEdit
-	fieldIndex  int     // createDesc only
-	convState   any     // createDesc only (applyEdit uses editContext.converterState)
-	editContext editCtx // applyEdit only
-	projectKey  string  // project whose users resolve this mention
+	content      string
+	createFields map[string]any // non-nil: create-form submit; nil: applyEdit
+	convState    any            // create only (applyEdit uses editContext.converterState)
+	editContext  editCtx        // applyEdit only
+	projectKey   string         // project whose users resolve this mention
 }
 
 // mentionUsersLoadedMsg carries the users fetched for a deferred mention write.
@@ -69,23 +68,27 @@ func (a *App) handleMentionUsersLoaded(msg mentionUsersLoadedMsg) (tea.Model, te
 	if pm.projectKey != "" && msg.err == nil && msg.cacheVersion == a.referenceCacheVersion {
 		a.usersCache.set(msg.projectKey, msg.users)
 	}
-	if pm.createDesc {
+	if pm.createFields != nil {
 		return a, a.completeCreateDesc(*pm, msg.users)
 	}
 	return a, a.completeApplyEdit(*pm, msg.users)
 }
 
-// completeCreateDesc resolves mentions with the now-available users, converts
-// to ADF and writes the create-form description field.
+// completeCreateDesc resolves mentions with the given users, converts the
+// description to ADF and creates the issue. A form cancelled while users were
+// loading drops the submit.
 func (a *App) completeCreateDesc(pm pendingMention, users []jira.User) tea.Cmd {
+	if !a.createForm.IsVisible() {
+		return nil
+	}
 	content := resolveMentions(pm.content, users)
 	adf, err := a.converter.FromMarkdown(content, pm.convState)
 	if err != nil {
-		a.statusPanel.SetError("convert description: " + err.Error())
+		a.createForm.SetError("convert description: " + err.Error())
 		return nil
 	}
-	a.createForm.SetFieldValue(pm.fieldIndex, adf, content)
-	return nil
+	pm.createFields[fldDescription] = adf
+	return createIssue(a.client, pm.createFields)
 }
 
 // completeApplyEdit resolves mentions with the now-available users, converts to

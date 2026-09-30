@@ -574,6 +574,7 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 
 	if src := a.createCtx.duplicateFrom; src != nil {
 		applyDuplicatePrefill(fields, src, a.isCloud)
+		a.prefillDescriptionMarkdown(fields)
 	}
 
 	a.invalidateSprintFetch()
@@ -587,6 +588,28 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 		return a, tea.Batch(cmds...)
 	}
 	return a, nil
+}
+
+// prefillDescriptionMarkdown turns an ADF description prefill into the
+// Markdown the form edits, keeping the converter state for submit.
+func (a *App) prefillDescriptionMarkdown(fields []components.CreateFormField) {
+	for i := range fields {
+		if fields[i].FieldID != fldDescription || fields[i].Value == nil {
+			continue
+		}
+		if _, isStr := fields[i].Value.(string); isStr {
+			return
+		}
+		md, state, err := a.converter.ToMarkdown(fields[i].Value)
+		if err != nil {
+			a.statusPanel.SetError("convert description: " + err.Error())
+			return
+		}
+		fields[i].Value = md
+		fields[i].DisplayValue = md
+		a.createCtx.descConvState = state
+		return
+	}
 }
 
 // applyDuplicatePrefill copies field values from a source issue to form fields

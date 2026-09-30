@@ -186,22 +186,3 @@ func TestTimeAgo(t *testing.T) {
 		})
 	}
 }
-
-func TestRenderDescriptionPreview(t *testing.T) {
-	t.Parallel()
-
-	t.Run("empty text returns nil", func(t *testing.T) {
-		t.Parallel()
-		if lines := RenderDescriptionPreview("", 40, false, BuiltinRenderer{}); lines != nil {
-			t.Errorf("expected nil, got %v", lines)
-		}
-	})
-
-	t.Run("server mode wraps and strips wiki", func(t *testing.T) {
-		t.Parallel()
-		lines := RenderDescriptionPreview("h1. Title text", 40, false, BuiltinRenderer{})
-		if len(lines) == 0 {
-			t.Fatal("expected rendered lines")
-		}
-	})
-}

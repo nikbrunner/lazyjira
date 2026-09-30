@@ -23,13 +23,13 @@ func makeTestFields() []CreateFormField {
 
 func TestCreateForm_NewCreateForm(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	testkit.AssertEqual(t, "initially invisible", form.IsVisible(), false)
 }
 
 func TestCreateForm_ShowForm_MakesVisible(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	testkit.AssertEqual(t, "visible after ShowForm", form.IsVisible(), true)
@@ -37,7 +37,7 @@ func TestCreateForm_ShowForm_MakesVisible(t *testing.T) {
 
 func TestCreateForm_PauseAndResume(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Pause()
 	testkit.AssertEqual(t, "paused", form.paused, true)
@@ -47,7 +47,7 @@ func TestCreateForm_PauseAndResume(t *testing.T) {
 
 func TestCreateForm_FocusedPanel(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	testkit.AssertEqual(t, "default panel is summary", form.FocusedPanel(), CreatePanelSummary)
@@ -55,7 +55,7 @@ func TestCreateForm_FocusedPanel(t *testing.T) {
 
 func TestCreateForm_Hide(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Hide()
@@ -64,7 +64,7 @@ func TestCreateForm_Hide(t *testing.T) {
 
 func TestCreateForm_SetFieldValue(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.SetFieldValue(2, "high", testItem1Label)
@@ -105,7 +105,7 @@ func TestCreateForm_IndexGuards(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			form := NewCreateForm(nil)
+			form := NewCreateForm()
 			form.SetSize(120, 40)
 			form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 			tc.run(&form)
@@ -115,7 +115,7 @@ func TestCreateForm_IndexGuards(t *testing.T) {
 
 func TestCreateForm_SetError(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.SetError("something failed")
@@ -125,7 +125,7 @@ func TestCreateForm_SetError(t *testing.T) {
 
 func TestCreateForm_SetLoading(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.SetLoading(true)
 	testkit.AssertEqual(t, "loading set", form.loading, true)
@@ -134,7 +134,7 @@ func TestCreateForm_SetLoading(t *testing.T) {
 
 func TestCreateForm_SetSize(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(100, 30)
 	testkit.AssertEqual(t, "width", form.width, 100)
 	testkit.AssertEqual(t, "height", form.height, 30)
@@ -142,7 +142,7 @@ func TestCreateForm_SetSize(t *testing.T) {
 
 func TestCreateForm_IsFiltering_FilterQuery_FilterBarView(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	testkit.AssertEqual(t, "not filtering initially", form.IsFiltering(), false)
@@ -155,27 +155,9 @@ func TestCreateForm_IsFiltering_FilterQuery_FilterBarView(t *testing.T) {
 	}
 }
 
-func TestCreateForm_SetDescRenderer(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	called := false
-	form.SetDescRenderer(func(text string, width int) []string {
-		called = true
-		return []string{text}
-	})
-	form.SetSize(120, 40)
-	fields := []CreateFormField{
-		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
-		{FieldID: "description", Name: "Description", Type: CFFieldMultiText, DisplayValue: "some desc"},
-	}
-	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Render("", 120, 40)
-	testkit.AssertEqual(t, "desc renderer called during render", called, true)
-}
-
 func TestCreateForm_InterceptTabCyclesPanels(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	testkit.AssertEqual(t, "starts on summary", form.FocusedPanel(), CreatePanelSummary)
@@ -189,7 +171,7 @@ func TestCreateForm_InterceptTabCyclesPanels(t *testing.T) {
 
 func TestCreateForm_InterceptShiftTabCyclesBackward(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyShiftTab})
@@ -198,7 +180,7 @@ func TestCreateForm_InterceptShiftTabCyclesBackward(t *testing.T) {
 
 func TestCreateForm_InterceptEscOnSummaryHides(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
@@ -214,7 +196,7 @@ func TestCreateForm_InterceptEscOnSummaryHides(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryBackspaceDeleteLeft(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	initialLen := len(form.summaryText)
@@ -224,7 +206,7 @@ func TestCreateForm_InterceptSummaryBackspaceDeleteLeft(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryDeleteForward(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.summaryCursor = 0
@@ -235,7 +217,7 @@ func TestCreateForm_InterceptSummaryDeleteForward(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryLeftRight(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	endPos := form.summaryCursor
@@ -247,7 +229,7 @@ func TestCreateForm_InterceptSummaryLeftRight(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryHomeEnd(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyHome})
@@ -258,7 +240,7 @@ func TestCreateForm_InterceptSummaryHomeEnd(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryCtrlAE(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlA})
@@ -269,7 +251,7 @@ func TestCreateForm_InterceptSummaryCtrlAE(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryCtrlUK(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlU})
@@ -282,7 +264,7 @@ func TestCreateForm_InterceptSummaryCtrlUK(t *testing.T) {
 
 func TestCreateForm_InterceptSummarySpace(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	initialLen := len(form.summaryText)
@@ -292,7 +274,7 @@ func TestCreateForm_InterceptSummarySpace(t *testing.T) {
 
 func TestCreateForm_InterceptSummaryRunes(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	initialLen := len(form.summaryText)
@@ -300,57 +282,9 @@ func TestCreateForm_InterceptSummaryRunes(t *testing.T) {
 	testkit.AssertEqual(t, "runes appended", len(form.summaryText), initialLen+2)
 }
 
-func TestCreateForm_InterceptDescriptionScrollJK(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	form.SetSize(80, 15)
-	fields := []CreateFormField{
-		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
-		{FieldID: "description", Name: "Description", Type: CFFieldMultiText, DisplayValue: strings.Repeat("long line\n", 30)},
-	}
-	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
-	testkit.AssertEqual(t, "desc offset increased", form.descOffset > 0, true)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
-	testkit.AssertEqual(t, "desc offset decreased", form.descOffset, 0)
-}
-
-func TestCreateForm_InterceptDescriptionGG(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	form.SetSize(80, 15)
-	fields := []CreateFormField{
-		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
-		{FieldID: "description", Name: "Description", Type: CFFieldMultiText, DisplayValue: strings.Repeat("line\n", 30)},
-	}
-	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
-	testkit.AssertEqual(t, "G scrolls to bottom", form.descOffset > 0, true)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
-	testkit.AssertEqual(t, "g scrolls to top", form.descOffset, 0)
-}
-
-func TestCreateForm_InterceptDescriptionCtrlDU(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	form.SetSize(80, 15)
-	fields := []CreateFormField{
-		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
-		{FieldID: "description", Name: "Description", Type: CFFieldMultiText, DisplayValue: strings.Repeat("x\n", 50)},
-	}
-	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(keyCtrlD)})
-	testkit.AssertEqual(t, "ctrl+d scrolls down", form.descOffset > 0, true)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(keyCtrlU)})
-	testkit.AssertEqual(t, "ctrl+u scrolls up", form.descOffset, 0)
-}
-
 func TestCreateForm_InterceptDescriptionEscHides(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -364,25 +298,9 @@ func TestCreateForm_InterceptDescriptionEscHides(t *testing.T) {
 	}
 }
 
-func TestCreateForm_InterceptDescriptionEEditExternal(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	form.SetSize(120, 40)
-	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
-	testkit.AssertEqual(t, "consumed", consumed, true)
-	if cmd == nil {
-		t.Fatal("expected external edit cmd")
-	}
-	if _, ok := cmd().(CreateFormEditExternalMsg); !ok {
-		t.Errorf("expected CreateFormEditExternalMsg, got %T", cmd())
-	}
-}
-
 func TestCreateForm_InterceptFieldsJK(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -402,7 +320,7 @@ func TestCreateForm_InterceptFieldsJK(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsGG(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -422,7 +340,7 @@ func TestCreateForm_InterceptFieldsGG(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsCtrlDU(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := make([]CreateFormField, 0, 22)
 	fields = append(fields, CreateFormField{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText})
@@ -442,7 +360,7 @@ func TestCreateForm_InterceptFieldsCtrlDU(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsSlashEnablesFilter(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -453,7 +371,7 @@ func TestCreateForm_InterceptFieldsSlashEnablesFilter(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsEscHides(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -467,7 +385,7 @@ func TestCreateForm_InterceptFieldsEscHides(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsEditSingleSelect(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -483,7 +401,7 @@ func TestCreateForm_InterceptFieldsEditSingleSelect(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsEditSingleText(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -504,7 +422,7 @@ func TestCreateForm_InterceptFieldsEditSingleText(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsEditMultiText(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -525,7 +443,7 @@ func TestCreateForm_InterceptFieldsEditMultiText(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsEditMultiSelect(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -546,7 +464,7 @@ func TestCreateForm_InterceptFieldsEditMultiSelect(t *testing.T) {
 
 func TestCreateForm_InterceptFieldsEnterSubmitsMissingRequired(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -562,7 +480,7 @@ func TestCreateForm_InterceptFieldsEnterSubmitsMissingRequired(t *testing.T) {
 
 func TestCreateForm_SubmitFormSucceeds(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText, DisplayValue: testSummaryText, Value: testSummaryText},
@@ -584,7 +502,7 @@ func TestCreateForm_SubmitFormSucceeds(t *testing.T) {
 
 func TestCreateForm_InterceptFilterEscRestores(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
@@ -597,7 +515,7 @@ func TestCreateForm_InterceptFilterEscRestores(t *testing.T) {
 
 func TestCreateForm_InterceptFilterEnterConfirms(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -616,7 +534,7 @@ func TestCreateForm_InterceptFilterEnterConfirms(t *testing.T) {
 
 func TestCreateForm_InterceptFilterJKNav(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	fields := []CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
@@ -636,7 +554,7 @@ func TestCreateForm_InterceptFilterJKNav(t *testing.T) {
 
 func TestCreateForm_InterceptPausedIgnoresKeys(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Pause()
@@ -646,7 +564,7 @@ func TestCreateForm_InterceptPausedIgnoresKeys(t *testing.T) {
 
 func TestCreateForm_InterceptLoadingEscCancels(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.loading = true
@@ -663,7 +581,7 @@ func TestCreateForm_InterceptLoadingEscCancels(t *testing.T) {
 
 func TestCreateForm_InterceptLoadingOtherKeyIgnored(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.loading = true
@@ -674,7 +592,7 @@ func TestCreateForm_InterceptLoadingOtherKeyIgnored(t *testing.T) {
 
 func TestCreateForm_RenderInvisibleReturnsBackground(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	bg := "background content"
 	out := form.Render(bg, 80, 24)
 	testkit.AssertEqual(t, "bg passthrough", out, bg)
@@ -682,7 +600,7 @@ func TestCreateForm_RenderInvisibleReturnsBackground(t *testing.T) {
 
 func TestCreateForm_RenderLoadingNoFieldsShowsSpinner(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(80, 24)
 	form.SetLoading(true)
 	bg := testkit.BlankCanvas(80, 24)
@@ -695,7 +613,7 @@ func TestCreateForm_RenderLoadingNoFieldsShowsSpinner(t *testing.T) {
 
 func TestCreateForm_RenderFormDraws(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	bg := testkit.BlankCanvas(120, 40)
@@ -708,7 +626,7 @@ func TestCreateForm_RenderFormDraws(t *testing.T) {
 
 func TestCreateForm_RenderWithError(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.SetError("1 required field(s) empty")
@@ -722,7 +640,7 @@ func TestCreateForm_RenderWithError(t *testing.T) {
 
 func TestCreateForm_SubmitNamesEmptyRequiredFields(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm([]CreateFormField{
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText, Required: true, DisplayValue: "filled"},
@@ -738,52 +656,6 @@ func TestCreateForm_SubmitNamesEmptyRequiredFields(t *testing.T) {
 	if !strings.Contains(form.errorMsg, "Priority") || !strings.Contains(form.errorMsg, "Components") {
 		t.Errorf("error should name the empty required fields, got %q", form.errorMsg)
 	}
-}
-
-func TestCreateForm_InterceptMouseWheelScrolls(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(nil)
-	form.SetSize(80, 15)
-	fields := []CreateFormField{
-		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText, DisplayValue: testSummaryText},
-		{FieldID: "description", Name: "Description", Type: CFFieldMultiText, DisplayValue: strings.Repeat("line\n", 30)},
-		{FieldID: testFieldID, Name: testFieldName, Type: CFFieldSingleSelect},
-	}
-	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	testkit.AssertEqual(t, "on description panel", form.FocusedPanel(), CreatePanelDescription)
-	_, consumed := form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
-	testkit.AssertEqual(t, "wheel down consumed", consumed, true)
-	testkit.AssertEqual(t, "desc offset increased after wheel down", form.descOffset > 0, true)
-	offsetAfterDown := form.descOffset
-	_, consumed = form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
-	testkit.AssertEqual(t, "wheel up consumed", consumed, true)
-	testkit.AssertEqual(t, "desc offset decreased after wheel up", form.descOffset < offsetAfterDown, true)
-}
-
-func TestCreateForm_WrapTextLines(t *testing.T) {
-	t.Parallel()
-	lines := wrapTextLines("hello world", 5)
-	if len(lines) == 0 {
-		t.Error("expected non-empty lines")
-	}
-	for _, line := range lines {
-		if lipgloss.Width(line) > 5 {
-			t.Errorf("line %q exceeds maxWidth 5 display columns", line)
-		}
-	}
-}
-
-func TestCreateForm_WrapTextLinesEmpty(t *testing.T) {
-	t.Parallel()
-	lines := wrapTextLines("", 10)
-	testkit.AssertEqual(t, "empty string returns one line", len(lines), 1)
-}
-
-func TestCreateForm_WrapTextLinesZeroWidth(t *testing.T) {
-	t.Parallel()
-	lines := wrapTextLines("hello", 0)
-	testkit.AssertEqual(t, "zero width returns original", lines[0], "hello")
 }
 
 func TestCreateForm_NoneStyle(t *testing.T) {
@@ -832,22 +704,219 @@ func TestCreateForm_StyleFieldValue_DefaultField(t *testing.T) {
 	testkit.AssertEqual(t, "default field returns value", out, "backend")
 }
 
-func TestCreateForm_DescRenderer_ADF(t *testing.T) {
-	t.Parallel()
-	form := NewCreateForm(func(adf any, width int) []string {
-		return []string{"adf rendered"}
-	})
+func showDescFocused(t *testing.T, desc string) *CreateForm {
+	t.Helper()
+	form := NewCreateForm()
 	form.SetSize(120, 40)
-	fields := []CreateFormField{
-		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText},
-		{FieldID: "description", Name: "Description", Type: CFFieldMultiText, DisplayValue: "plain", Value: map[string]any{"type": "doc"}},
-	}
+	fields := makeTestFields()
+	fields[1].DisplayValue = desc
 	form.ShowForm(fields, testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	bg := testkit.BlankCanvas(120, 40)
-	out := form.Render(bg, 120, 40)
-	plain := stripANSI(out)
-	if !strings.Contains(plain, "adf rendered") {
-		t.Errorf("expected ADF rendered content in output, got %q", plain)
+	testkit.AssertEqual(t, "on description panel", form.FocusedPanel(), CreatePanelDescription)
+	return &form
+}
+
+func assertNotSubmitOrCancel(t *testing.T, cmd tea.Cmd) {
+	t.Helper()
+	if cmd == nil {
+		return
 	}
+	switch msg := cmd().(type) {
+	case CreateFormSubmitMsg, CreateFormCancelMsg, CreateFormEditExternalMsg:
+		t.Errorf("unexpected %T", msg)
+	}
+}
+
+func TestCreateForm_DescriptionTypesCommandLetters(t *testing.T) {
+	t.Parallel()
+	form := showDescFocused(t, "")
+	for _, r := range "eqjkgG" {
+		cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		testkit.AssertEqual(t, "consumed", consumed, true)
+		assertNotSubmitOrCancel(t, cmd)
+	}
+	testkit.AssertEqual(t, "letters typed", form.DescriptionText(), "eqjkgG")
+	testkit.AssertEqual(t, "form still visible", form.IsVisible(), true)
+}
+
+func TestCreateForm_DescriptionEnterInsertsNewline(t *testing.T) {
+	t.Parallel()
+	form := showDescFocused(t, "")
+	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")})
+	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
+	assertNotSubmitOrCancel(t, cmd)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("b")})
+	testkit.AssertEqual(t, "newline inserted", form.DescriptionText(), "a\nb")
+}
+
+func TestCreateForm_DescriptionPasteKeepsNewlines(t *testing.T) {
+	t.Parallel()
+	form := showDescFocused(t, "")
+	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("line 1\nline 2"), Paste: true})
+	testkit.AssertEqual(t, "pasted text", form.DescriptionText(), "line 1\nline 2")
+}
+
+func TestCreateForm_DescriptionCtrlGEmitsEditExternal(t *testing.T) {
+	t.Parallel()
+	form := showDescFocused(t, "draft")
+	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlG})
+	testkit.AssertEqual(t, "consumed", consumed, true)
+	if cmd == nil {
+		t.Fatal("expected external edit cmd")
+	}
+	msg, ok := cmd().(CreateFormEditExternalMsg)
+	if !ok {
+		t.Fatalf("expected CreateFormEditExternalMsg, got %T", cmd())
+	}
+	testkit.AssertEqual(t, "field index is description", msg.FieldIndex, 1)
+
+	form.SetDescriptionText("# Edited\n\nbody")
+	testkit.AssertEqual(t, "editor text back in textarea", form.DescriptionText(), "# Edited\n\nbody")
+}
+
+func TestCreateForm_CtrlSSubmitsFromEveryPanel(t *testing.T) {
+	t.Parallel()
+	for tabs, panel := range []CreatePanel{CreatePanelSummary, CreatePanelDescription, CreatePanelFields} {
+		form := NewCreateForm()
+		form.SetSize(120, 40)
+		form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+		form.SetDescriptionText("  **raw** markdown\n")
+		for range tabs {
+			form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+		}
+		testkit.AssertEqual(t, "focused panel", form.FocusedPanel(), panel)
+		cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
+		if cmd == nil {
+			t.Fatalf("panel %d: expected submit cmd", panel)
+		}
+		msg, ok := cmd().(CreateFormSubmitMsg)
+		if !ok {
+			t.Fatalf("panel %d: expected CreateFormSubmitMsg, got %T", panel, cmd())
+		}
+		testkit.AssertEqual(t, "raw trimmed description", msg.Fields["description"], any("**raw** markdown"))
+	}
+}
+
+func TestCreateForm_SubmitOmitsEmptyDescription(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.SetSize(120, 40)
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.SetDescriptionText("  \n ")
+	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
+	msg, ok := cmd().(CreateFormSubmitMsg)
+	if !ok {
+		t.Fatalf("expected CreateFormSubmitMsg, got %T", cmd())
+	}
+	if _, has := msg.Fields["description"]; has {
+		t.Errorf("blank description should not be submitted, got %v", msg.Fields["description"])
+	}
+}
+
+func TestCreateForm_InterceptMouseWheelMovesDescriptionCursor(t *testing.T) {
+	t.Parallel()
+	form := showDescFocused(t, strings.Repeat("line\n", 30))
+	start := form.desc.Line()
+	_, consumed := form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
+	testkit.AssertEqual(t, "wheel up consumed", consumed, true)
+	testkit.AssertEqual(t, "cursor moved up", form.desc.Line(), start-3)
+	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
+	testkit.AssertEqual(t, "cursor moved back down", form.desc.Line(), start)
+}
+
+func TestCreateForm_LayoutSplitsWideScreens(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	cases := []struct {
+		w, h                  int
+		fields, summary, desc formRect
+	}{
+		{80, 21, formRect{0, 0, 28, 20}, formRect{28, 0, 52, 3}, formRect{28, 3, 52, 17}},
+		{200, 50, formRect{0, 0, 48, 49}, formRect{48, 0, 152, 3}, formRect{48, 3, 152, 46}},
+	}
+	for _, tc := range cases {
+		l := form.layout(tc.w, tc.h)
+		testkit.AssertEqual(t, "split", l.split, true)
+		testkit.AssertEqual(t, "fields", l.fields, tc.fields)
+		testkit.AssertEqual(t, "summary", l.summary, tc.summary)
+		testkit.AssertEqual(t, "desc", l.desc, tc.desc)
+	}
+}
+
+func TestCreateForm_LayoutStacksNarrowScreens(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	l := form.layout(60, 21)
+	testkit.AssertEqual(t, "stacked", l.split, false)
+	testkit.AssertEqual(t, "summary", l.summary, formRect{0, 0, 60, 3})
+	testkit.AssertEqual(t, "desc", l.desc, formRect{0, 3, 60, 14})
+	testkit.AssertEqual(t, "fields", l.fields, formRect{0, 17, 60, 3})
+}
+
+func TestCreateForm_RenderFillsScreenAtEverySize(t *testing.T) {
+	t.Parallel()
+	for _, size := range []struct{ w, h int }{{80, 21}, {60, 21}, {200, 50}} {
+		for _, errMsg := range []string{"", "Required field(s) empty: Summary"} {
+			form := NewCreateForm()
+			form.SetSize(size.w, size.h)
+			form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+			form.SetDescriptionText("日本語のテキスト " + strings.Repeat("wide 表 ", 20) + "\nsecond line")
+			form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+			if errMsg != "" {
+				form.SetError(errMsg)
+			}
+			out := form.Render(testkit.BlankCanvas(size.w, size.h), size.w, size.h)
+			lines := strings.Split(out, "\n")
+			testkit.AssertEqual(t, "line count", len(lines), size.h)
+			for i, line := range lines {
+				if got := lipgloss.Width(line); got != size.w {
+					t.Errorf("%dx%d err=%t line %d: width %d, want %d: %q", size.w, size.h, errMsg != "", i, got, size.w, stripANSI(line))
+				}
+			}
+		}
+	}
+}
+
+func TestCreateForm_RenderPlacesPanels80x21(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.SetSize(80, 21)
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.SetDescriptionText("hello desc")
+	out := stripANSI(form.Render(testkit.BlankCanvas(80, 21), 80, 21))
+	lines := strings.Split(out, "\n")
+
+	titleCol := func(line, title string) int {
+		before, _, found := strings.Cut(line, title)
+		if !found {
+			t.Fatalf("%q not in %q", title, line)
+		}
+		return lipgloss.Width(before)
+	}
+	testkit.AssertEqual(t, "Fields title column", titleCol(lines[0], "Fields"), 2)
+	testkit.AssertEqual(t, "Summary title column", titleCol(lines[0], "*Summary"), 30)
+	testkit.AssertEqual(t, "Description title column", titleCol(lines[3], "Description"), 30)
+	if !strings.Contains(lines[4], "│ hello desc") {
+		t.Errorf("description text should start inside the Description panel: %q", lines[4])
+	}
+}
+
+func TestCreateForm_ClickFocusesPanelUnderPointer(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.SetSize(80, 21)
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	click := func(x, y int) {
+		form.Intercept(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: x, Y: y})
+	}
+	click(50, 10)
+	testkit.AssertEqual(t, "click in description", form.FocusedPanel(), CreatePanelDescription)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	testkit.AssertEqual(t, "typing after click reaches textarea", form.DescriptionText(), "x")
+	click(5, 1)
+	testkit.AssertEqual(t, "click in fields", form.FocusedPanel(), CreatePanelFields)
+	testkit.AssertEqual(t, "first field row selected", form.fieldCursor, 0)
+	click(50, 1)
+	testkit.AssertEqual(t, "click in summary", form.FocusedPanel(), CreatePanelSummary)
 }

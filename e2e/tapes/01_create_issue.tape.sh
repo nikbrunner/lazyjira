@@ -29,7 +29,7 @@ Sleep 300ms
 # write the description in $EDITOR
 Tab
 Sleep 300ms
-Type "e"
+Ctrl+G
 Sleep 800ms
 Type "i"
 Set TypingSpeed 30ms

@@ -523,7 +523,7 @@ Any other value causes lazyjira to exit on startup with an error naming the inva
 
 ## ADF preview rendering (`renderer`)
 
-Controls how ADF documents are rendered to styled terminal lines in the description preview (create form and detail view).
+Controls how ADF documents are rendered to styled terminal lines in the Issue details pane.
 
 ```yaml
 renderer: glamour

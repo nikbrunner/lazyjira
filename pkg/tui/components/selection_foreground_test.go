@@ -18,7 +18,7 @@ func TestInputModal_SelectedHintUsesTerminalForeground(t *testing.T) {
 
 func TestCreateForm_SelectedFieldUsesTerminalForeground(t *testing.T) {
 	t.Parallel()
-	form := NewCreateForm(nil)
+	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.focusedPanel = CreatePanelFields

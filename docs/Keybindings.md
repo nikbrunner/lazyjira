@@ -73,6 +73,21 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `esc` | Clear filter or close |
 | `q` / `?` | Close |
 
+## Create issue form
+
+The form shows Fields beside Summary and Description, or stacks them on narrow terminals. Its keys are fixed.
+
+| Key | Action |
+|-----|--------|
+| `tab` / `shift+tab` | Next / previous panel |
+| `ctrl+s` | Create the issue from any panel |
+| `enter` | Create the issue from Summary or Fields; start a new line in Description |
+| `ctrl+g` | Open the Description in `$EDITOR`; the saved text returns to the form |
+| `e` / `space` | Edit the selected field (Fields) |
+| `/` | Filter fields (Fields) |
+| `q` | Cancel (Fields) |
+| `esc` | Cancel |
+
 ## General
 
 | Key | Action |

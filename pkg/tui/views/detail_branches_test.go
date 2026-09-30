@@ -446,19 +446,3 @@ func TestWrapText_WideRuneNarrowWidth(t *testing.T) {
 	lines := wrapText("你你", 1)
 	testkit.AssertSliceEqual(t, "one rune per line", lines, []string{"你", "你"})
 }
-
-func TestRenderDescriptionPreview_CloudUsesADF(t *testing.T) {
-	t.Parallel()
-	lines := RenderDescriptionPreview("# Title\n\nbody text", 40, true, BuiltinRenderer{})
-	joined := stripANSI(strings.Join(lines, "\n"))
-	if !strings.Contains(joined, "Title") || !strings.Contains(joined, "body text") {
-		t.Errorf("cloud preview = %q, want rendered markdown", joined)
-	}
-}
-
-func TestRenderDescriptionPreview_ZeroWidthNil(t *testing.T) {
-	t.Parallel()
-	if lines := RenderDescriptionPreview("text", 0, true, BuiltinRenderer{}); lines != nil {
-		t.Errorf("zero width = %v, want nil", lines)
-	}
-}

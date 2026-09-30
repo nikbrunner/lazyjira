@@ -137,7 +137,7 @@ func TestHandleCreateFormTypeSelected(t *testing.T) {
 			return nil, nil
 		}
 		app := newAppWithFake(t, fake)
-		app.createForm = components.NewCreateForm(nil)
+		app.createForm = components.NewCreateForm()
 		app.createCtx = createCtx{projectKey: testProject}
 
 		_, cmd := app.handleCreateFormTypeSelected(components.CreateFormTypeSelectedMsg{TypeID: "10001", TypeName: "Story"})
@@ -153,7 +153,7 @@ func TestHandleCreateFormTypeSelected(t *testing.T) {
 	t.Run("cached type builds form directly", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.createForm = components.NewCreateForm(nil)
+		app.createForm = components.NewCreateForm()
 		app.usersCache.set(testProject, []jira.User{})
 		app.createCtx = createCtx{projectKey: testProject}
 		app.createMetaCache.set(testProject+":10001", []jira.CreateMetaField{
@@ -171,7 +171,7 @@ func TestHandleCreateFormTypeSelected(t *testing.T) {
 func TestHandleCreateMetaLoaded(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-	app.createForm = components.NewCreateForm(nil)
+	app.createForm = components.NewCreateForm()
 	app.usersCache.set(testProject, []jira.User{})
 	app.createCtx = createCtx{projectKey: testProject, issueTypeID: "10001", issueTypeName: "Story"}
 
@@ -190,7 +190,7 @@ func TestHandleCreateMetaLoaded(t *testing.T) {
 func TestHandleCreateMetaLoaded_DuplicatePrefill(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-	app.createForm = components.NewCreateForm(nil)
+	app.createForm = components.NewCreateForm()
 	app.usersCache.set(testProject, []jira.User{})
 	app.createCtx = createCtx{
 		projectKey:    testProject,

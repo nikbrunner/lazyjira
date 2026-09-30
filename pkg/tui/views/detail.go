@@ -1386,24 +1386,6 @@ func wikiToPlain(s string) string {
 	return s
 }
 
-// RenderDescriptionPreview renders description text for preview in create form
-// Cloud converts markdown to ADF then renders richly
-// Server strips wiki markup and colors URLs
-func RenderDescriptionPreview(text string, width int, isCloud bool, renderer ADFRenderer) []string {
-	if text == "" || width <= 0 {
-		return nil
-	}
-	if isCloud {
-		adf := MarkdownToADF(text)
-		if lines := renderer.Render(adf, width); len(lines) > 0 {
-			return lines
-		}
-	}
-	plain := wikiToPlain(text)
-	wrapped := wrapText(plain, width)
-	return colorURLsWrapped(wrapped)
-}
-
 func timeAgo(t time.Time) string {
 	d := time.Since(t)
 	switch {

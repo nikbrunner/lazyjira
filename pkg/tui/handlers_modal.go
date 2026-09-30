@@ -72,10 +72,8 @@ func (a *App) handleEditorFinished(msg editorFinishedMsg) (tea.Model, tea.Cmd) {
 	cmds := []tea.Cmd{tea.EnableMouseCellMotion}
 	content, changed, err := readAndCheckEditor(msg)
 
-	// create form description: skip diff view, update field directly
+	// create form description: skip diff view, put the raw text back
 	if a.editContext.kind == editCreateDesc {
-		idx := a.editContext.fieldIndex
-		convState := a.editContext.converterState
 		a.editContext = editCtx{}
 		cleanupEditor(msg.tempPath)
 		a.editTempPath = ""
@@ -83,28 +81,8 @@ func (a *App) handleEditorFinished(msg editorFinishedMsg) (tea.Model, tea.Cmd) {
 			a.statusPanel.SetError(err.Error())
 			return a, tea.Batch(cmds...)
 		}
-		content = strings.TrimSpace(content)
-		if changed && content != "" {
-			if a.isCloud && hasMentionCandidate(content) {
-				pm := pendingMention{content: content, createDesc: true, fieldIndex: idx, convState: convState, projectKey: a.projectKey}
-				users, ok := a.projectUsers(a.projectKey)
-				if !ok {
-					a.pendingMention = &pm
-					return a, tea.Batch(append(cmds, fetchUsersForMention(a.client, a.projectKey, a.referenceCacheVersion))...)
-				}
-				cmds = append(cmds, a.completeCreateDesc(pm, users))
-				return a, tea.Batch(cmds...)
-			}
-			val := any(content)
-			if a.isCloud {
-				adf, convErr := a.converter.FromMarkdown(content, convState)
-				if convErr != nil {
-					a.statusPanel.SetError("convert description: " + convErr.Error())
-					return a, tea.Batch(cmds...)
-				}
-				val = adf
-			}
-			a.createForm.SetFieldValue(idx, val, content)
+		if changed {
+			a.createForm.SetDescriptionText(content)
 		}
 		return a, tea.Batch(cmds...)
 	}
@@ -212,29 +190,13 @@ func (a *App) handleCreateFormEditText(msg components.CreateFormEditTextMsg) (te
 	return a, nil
 }
 
-// handleCreateFormEditExternal opens $EDITOR for description
+// handleCreateFormEditExternal opens $EDITOR on the description textarea text
 func (a *App) handleCreateFormEditExternal(msg components.CreateFormEditExternalMsg) (tea.Model, tea.Cmd) {
-	field := a.createForm.FieldAt(msg.FieldIndex)
-	if field == nil {
+	if a.createForm.FieldAt(msg.FieldIndex) == nil {
 		return a, nil
 	}
-	a.editContext = editCtx{kind: editCreateDesc, fieldIndex: msg.FieldIndex}
-	content := ""
-	if field.Value != nil {
-		if _, isStr := field.Value.(string); !isStr {
-			md, state, err := a.converter.ToMarkdown(field.Value)
-			if err != nil {
-				a.statusPanel.SetError("convert description: " + err.Error())
-				return a, nil
-			}
-			content = md
-			a.editContext.converterState = state
-		}
-	}
-	if content == "" && field.DisplayValue != "" {
-		content = field.DisplayValue
-	}
-	return a, launchEditor(content, ".md")
+	a.editContext = editCtx{kind: editCreateDesc}
+	return a, launchEditor(a.createForm.DescriptionText(), ".md")
 }
 
 // handleCreateFormPicker opens selection modal for a create form field
@@ -405,6 +367,18 @@ func (a *App) handleCreateFormUserChecklist(field *components.CreateFormField, i
 	return a, fetchUsers(a.client, a.projectKey, createUsersSentinel, a.referenceCacheVersion)
 }
 
+// handleCreateFormCancel drops the create context, including a submit still
+// waiting for mention users.
+func (a *App) handleCreateFormCancel() (tea.Model, tea.Cmd) {
+	a.invalidateSprintFetch()
+	a.createCtx = createCtx{}
+	if a.pendingMention != nil && a.pendingMention.createFields != nil {
+		a.pendingMention = nil
+	}
+	a.onSelect = nil
+	return a, nil
+}
+
 // handleCreateFormSubmit sends create issue request
 func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Model, tea.Cmd) {
 	msg.Fields["project"] = map[string]string{"key": a.createCtx.projectKey}
@@ -414,7 +388,21 @@ func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Mo
 	}
 	a.createForm.SetLoading(true)
 	*a.logFlag = true
-	return a, createIssue(a.client, msg.Fields)
+
+	desc, ok := msg.Fields[fldDescription].(string)
+	if !ok || !a.isCloud {
+		return a, createIssue(a.client, msg.Fields)
+	}
+	pm := pendingMention{content: desc, createFields: msg.Fields, convState: a.createCtx.descConvState, projectKey: a.projectKey}
+	if !hasMentionCandidate(desc) {
+		return a, a.completeCreateDesc(pm, nil)
+	}
+	users, ok := a.projectUsers(a.projectKey)
+	if !ok {
+		a.pendingMention = &pm
+		return a, fetchUsersForMention(a.client, a.projectKey, a.referenceCacheVersion)
+	}
+	return a, a.completeCreateDesc(pm, users)
 }
 
 // handleExpandBlock shows expanded content in a read-only modal.

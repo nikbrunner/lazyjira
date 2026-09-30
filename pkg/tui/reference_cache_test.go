@@ -65,7 +65,7 @@ func TestReferenceRefreshRejectsPreRefreshUserAndMetadataResponses(t *testing.T)
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.projectKey = testProject
-	app.createForm = components.NewCreateForm(nil)
+	app.createForm = components.NewCreateForm()
 	app.createCtx = createCtx{projectKey: testProject, issueTypeID: "1", issueTypeName: "Task"}
 	oldVersion := app.referenceCacheVersion
 	app.invalidateReferenceCaches()
@@ -106,7 +106,7 @@ func TestUserAndCreateMetadataCacheCallersHonorTTL(t *testing.T) {
 	app := newAppWithFake(t, fake)
 	app.projectKey = testProject
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
-	app.createForm = components.NewCreateForm(nil)
+	app.createForm = components.NewCreateForm()
 
 	now := time.Date(2026, 9, 25, 10, 0, 0, 0, time.UTC)
 	app.usersCache.now = func() time.Time { return now }

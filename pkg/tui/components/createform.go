@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/cursor"
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -66,13 +68,7 @@ type CreateFormChecklistMsg struct {
 type CreateFormSubmitMsg struct{ Fields map[string]any }
 type CreateFormCancelMsg struct{}
 
-// DescRenderFunc renders description text to styled terminal lines for preview
-type DescRenderFunc func(text string, width int) []string
-
-// DescADFRenderFunc renders raw ADF data to styled terminal lines for preview
-type DescADFRenderFunc func(adf any, width int) []string
-
-// CreateForm is a 3-panel accordion overlay for issue creation
+// CreateForm is a 3-panel overlay for issue creation
 type CreateForm struct {
 	visible bool
 	width   int
@@ -88,10 +84,9 @@ type CreateForm struct {
 	summaryCursor int
 	summaryIdx    int
 
-	descIdx         int
-	descOffset      int
-	descRenderer    DescRenderFunc
-	descADFRenderer DescADFRenderFunc
+	descIdx int
+	// desc is nil until ShowForm; Hide drops it with the rest of the form state.
+	desc *textarea.Model
 
 	fieldIndices  []int
 	fieldCursor   int
@@ -105,10 +100,28 @@ type CreateForm struct {
 	filtering   bool
 }
 
-// NewCreateForm constructs a CreateForm. descADFRenderer renders raw ADF
-// description values; pass nil to disable ADF preview.
-func NewCreateForm(descADFRenderer DescADFRenderFunc) CreateForm {
-	return CreateForm{summaryIdx: -1, descIdx: -1, descADFRenderer: descADFRenderer}
+// NewCreateForm constructs a hidden CreateForm.
+func NewCreateForm() CreateForm {
+	return CreateForm{summaryIdx: -1, descIdx: -1}
+}
+
+func newDescArea() textarea.Model {
+	ta := textarea.New()
+	ta.Prompt = " "
+	ta.ShowLineNumbers = false
+	ta.CharLimit = 0
+	ta.MaxHeight = 0
+	// ctrl+v would emit textarea's private paste message, which never reaches
+	// the form; terminal paste arrives as a KeyMsg instead.
+	ta.KeyMap.Paste.SetEnabled(false)
+	ta.Cursor.SetMode(cursor.CursorStatic)
+	ta.Cursor.Style = lipgloss.NewStyle().Foreground(theme.ColorCyan)
+	style, _ := textarea.DefaultStyles()
+	style.CursorLine = lipgloss.NewStyle()
+	ta.FocusedStyle = style
+	ta.BlurredStyle = style
+	ta.Blur()
+	return ta
 }
 
 // Pause stops intercepting keys so sub-overlays can receive input
@@ -129,8 +142,20 @@ func (f *CreateForm) FilterQuery() string { return f.filterInput.Value() }
 // FilterBarView renders the filter bar with cursor positioning
 func (f *CreateForm) FilterBarView() string { return RenderFilterBarInput(&f.filterInput) }
 
-// SetDescRenderer sets an optional rich renderer for description preview
-func (f *CreateForm) SetDescRenderer(r DescRenderFunc) { f.descRenderer = r }
+// DescriptionText returns the raw Markdown in the Description textarea.
+func (f *CreateForm) DescriptionText() string {
+	if f.desc == nil {
+		return ""
+	}
+	return f.desc.Value()
+}
+
+// SetDescriptionText replaces the Description textarea content.
+func (f *CreateForm) SetDescriptionText(text string) {
+	if f.desc != nil {
+		f.desc.SetValue(text)
+	}
+}
 
 func (f *CreateForm) ShowForm(fields []CreateFormField, issueTypeName, projectKey string) {
 	f.visible = true
@@ -142,12 +167,12 @@ func (f *CreateForm) ShowForm(fields []CreateFormField, issueTypeName, projectKe
 	f.fieldIndices = nil
 	f.fieldCursor = 0
 	f.fieldOffset = 0
-	f.descOffset = 0
 	f.errorMsg = ""
 	f.loading = false
 	f.filterInput.SetValue("")
 	f.filtering = false
-	f.focusedPanel = CreatePanelSummary
+	desc := newDescArea()
+	f.desc = &desc
 
 	for i, fld := range fields {
 		switch fld.FieldID {
@@ -157,9 +182,24 @@ func (f *CreateForm) ShowForm(fields []CreateFormField, issueTypeName, projectKe
 			f.summaryCursor = len(f.summaryText)
 		case "description":
 			f.descIdx = i
+			f.desc.SetValue(fld.DisplayValue)
 		default:
 			f.fieldIndices = append(f.fieldIndices, i)
 		}
+	}
+	f.setFocus(CreatePanelSummary)
+	f.sizeDesc(f.width, f.height)
+}
+
+func (f *CreateForm) setFocus(p CreatePanel) {
+	f.focusedPanel = p
+	if f.desc == nil {
+		return
+	}
+	if p == CreatePanelDescription {
+		f.desc.Focus()
+	} else {
+		f.desc.Blur()
 	}
 }
 
@@ -168,6 +208,7 @@ func (f *CreateForm) Hide() {
 	f.allFields = nil
 	f.fieldIndices = nil
 	f.summaryText = nil
+	f.desc = nil
 	f.errorMsg = ""
 	f.loading = false
 	f.filterInput.SetValue("")
@@ -215,6 +256,7 @@ func (f *CreateForm) IsVisible() bool { return f.visible }
 func (f *CreateForm) SetSize(w, h int) {
 	f.width = w
 	f.height = h
+	f.sizeDesc(w, h)
 }
 
 // Intercept handles keyboard and mouse input for the 3-panel form
@@ -244,11 +286,13 @@ func (f *CreateForm) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 
 	switch km.Type { //nolint:exhaustive
 	case tea.KeyTab:
-		f.focusedPanel = CreatePanel((int(f.focusedPanel) + 1) % createPanelCount)
+		f.setFocus(CreatePanel((int(f.focusedPanel) + 1) % createPanelCount))
 		return nil, true
 	case tea.KeyShiftTab:
-		f.focusedPanel = CreatePanel((int(f.focusedPanel) + createPanelCount - 1) % createPanelCount)
+		f.setFocus(CreatePanel((int(f.focusedPanel) + createPanelCount - 1) % createPanelCount))
 		return nil, true
+	case tea.KeyCtrlS:
+		return f.submitForm()
 	}
 
 	switch f.focusedPanel {
@@ -278,35 +322,16 @@ func (f *CreateForm) interceptMouse(mm tea.MouseMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
-	availH := f.height - 1
-	if f.errorMsg != "" {
-		availH--
-	}
-	summaryH, descH, fieldsH := f.layoutSubPanels(availH)
-	formW := min(max(f.width*6/10, 40), f.width-2)
-	totalH := summaryH + descH + fieldsH
-	if f.errorMsg != "" {
-		totalH++
-	}
-	formX := (f.width - formW) / 2
-	formY := (f.height - totalH) / 2
-
-	relX := mm.X - formX
-	relY := mm.Y - formY
-
-	if relX < 0 || relX >= formW || relY < 0 || relY >= totalH {
-		return nil, true
-	}
-
+	l := f.layout(f.width, f.height)
 	switch {
-	case relY < summaryH:
-		f.focusedPanel = CreatePanelSummary
-	case relY < summaryH+descH:
-		f.focusedPanel = CreatePanelDescription
-	case relY < summaryH+descH+fieldsH:
-		f.focusedPanel = CreatePanelFields
-		rowInPanel := relY - summaryH - descH - 1
-		innerH := max(fieldsH-2, 1)
+	case l.summary.contains(mm.X, mm.Y):
+		f.setFocus(CreatePanelSummary)
+	case l.desc.contains(mm.X, mm.Y):
+		f.setFocus(CreatePanelDescription)
+	case l.fields.contains(mm.X, mm.Y):
+		f.setFocus(CreatePanelFields)
+		rowInPanel := mm.Y - l.fields.y - 1
+		innerH := max(l.fields.h-2, 1)
 		if rowInPanel >= 0 && rowInPanel < innerH {
 			filtered := f.filteredFields()
 			idx := f.fieldOffset + rowInPanel
@@ -349,74 +374,20 @@ func (f *CreateForm) scrollFocused(delta int) {
 	}
 }
 
+// scrollDesc moves the textarea cursor by delta lines through Update, which is
+// what makes the textarea scroll its view to follow the cursor.
 func (f *CreateForm) scrollDesc(delta int) {
-	totalLines := f.descLineCount()
-	innerH := f.descInnerH()
-	maxOff := max(totalLines-innerH, 0)
-	f.descOffset += delta
-	if f.descOffset < 0 {
-		f.descOffset = 0
+	if f.desc == nil {
+		return
 	}
-	if f.descOffset > maxOff {
-		f.descOffset = maxOff
+	step := tea.KeyMsg{Type: tea.KeyDown}
+	if delta < 0 {
+		step = tea.KeyMsg{Type: tea.KeyUp}
+		delta = -delta
 	}
-}
-
-func (f *CreateForm) descLineCount() int {
-	text := ""
-	if f.descIdx >= 0 {
-		text = f.allFields[f.descIdx].DisplayValue
+	for range delta {
+		*f.desc, _ = f.desc.Update(step)
 	}
-	formW := min(max(f.width*6/10, 40), f.width-2)
-	innerW := max(formW-2, 1)
-	return len(f.renderDescLines(text, innerW))
-}
-
-// renderDescLines converts description text to display lines using the rich
-// renderer if set, falling back to plain text wrapping
-func (f *CreateForm) renderDescLines(text string, innerW int) []string {
-	if text == "" {
-		return []string{""}
-	}
-	// try ADF renderer with raw Value if available and not a plain string
-	if f.descADFRenderer != nil && f.descIdx >= 0 {
-		if val := f.allFields[f.descIdx].Value; val != nil {
-			if _, isStr := val.(string); !isStr {
-				if lines := f.descADFRenderer(val, innerW-1); len(lines) > 0 {
-					result := make([]string, len(lines))
-					for i, l := range lines {
-						result[i] = " " + l
-					}
-					return result
-				}
-			}
-		}
-	}
-	if f.descRenderer != nil {
-		if lines := f.descRenderer(text, innerW-1); len(lines) > 0 {
-			// add leading space to each line
-			result := make([]string, len(lines))
-			for i, l := range lines {
-				result[i] = " " + l
-			}
-			return result
-		}
-	}
-	// fallback: plain text wrapping
-	var lines []string
-	for _, l := range wrapTextLines(text, innerW-1) {
-		lines = append(lines, " "+l)
-	}
-	return lines
-}
-
-func (f *CreateForm) descInnerH() int {
-	availH := f.height - 1
-	if f.errorMsg != "" {
-		availH--
-	}
-	_, descH, _ := f.layoutSubPanels(availH)
-	return max(descH-2, 1)
 }
 
 func (f *CreateForm) interceptFilter(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -501,31 +472,23 @@ func (f *CreateForm) insertSummaryRunes(runes []rune) {
 }
 
 func (f *CreateForm) interceptDescription(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.String() {
-	case keyEnter:
-		return f.submitForm()
-	case keyEsc, "q":
+	switch msg.Type { //nolint:exhaustive
+	case tea.KeyEsc:
 		f.Hide()
 		return func() tea.Msg { return CreateFormCancelMsg{} }, true
-	case "e":
+	case tea.KeyCtrlG:
 		if f.descIdx >= 0 {
 			idx := f.descIdx
 			return func() tea.Msg { return CreateFormEditExternalMsg{FieldIndex: idx} }, true
 		}
-	case "j", keyDown, KeyCtrlJ:
-		f.scrollDesc(1)
-	case "k", "up", KeyCtrlK:
-		f.scrollDesc(-1)
-	case "g":
-		f.descOffset = 0
-	case "G":
-		f.scrollDesc(f.descLineCount())
-	case keyCtrlD:
-		f.scrollDesc(f.descInnerH() / 2)
-	case keyCtrlU:
-		f.scrollDesc(-f.descInnerH() / 2)
+		return nil, true
 	}
-	return nil, true
+	if f.desc == nil {
+		return nil, true
+	}
+	var cmd tea.Cmd
+	*f.desc, cmd = f.desc.Update(msg)
+	return cmd, true
 }
 
 func (f *CreateForm) interceptFields(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -582,12 +545,7 @@ func (f *CreateForm) ensureFieldVisible() {
 }
 
 func (f *CreateForm) fieldsInnerH() int {
-	availH := f.height - 1
-	if f.errorMsg != "" {
-		availH--
-	}
-	_, _, fieldsH := f.layoutSubPanels(availH)
-	return max(fieldsH-2, 1)
+	return max(f.layout(f.width, f.height).fields.h-2, 1)
 }
 
 func (f *CreateForm) filteredFields() []int {
@@ -662,6 +620,14 @@ func (f *CreateForm) submitForm() (tea.Cmd, bool) {
 		f.allFields[f.summaryIdx].Value = text
 		f.allFields[f.summaryIdx].DisplayValue = text
 	}
+	if f.descIdx >= 0 && f.desc != nil {
+		text := strings.TrimSpace(f.desc.Value())
+		f.allFields[f.descIdx].DisplayValue = text
+		f.allFields[f.descIdx].Value = nil
+		if text != "" {
+			f.allFields[f.descIdx].Value = text
+		}
+	}
 
 	// validate required fields
 	hasErrors := false
@@ -697,68 +663,63 @@ func (f *CreateForm) submitForm() (tea.Cmd, bool) {
 
 // Layout
 
-const panelMinH = 3 // 1 content line + 2 borders
+const (
+	panelMinH     = 3 // 1 content line + 2 borders
+	fieldsColMinW = 28
+	fieldsColMaxW = 48
+	descColMinW   = 40
+)
 
-func (f *CreateForm) layoutSubPanels(availH int) (summaryH, descH, fieldsH int) {
-	formW := min(max(f.width*6/10, 40), f.width-2)
-	innerW := max(formW-2, 1)
+type formRect struct{ x, y, w, h int }
 
-	// summary always sized to its wrapped content
-	summaryLines := f.summaryWrapCount(innerW)
-	summaryH = max(summaryLines+2, panelMinH)
-
-	fieldCount := len(f.filteredFields())
-	fieldsNat := max(fieldCount+2, panelMinH)
-
-	descLines := 1
-	if f.descIdx >= 0 && f.allFields[f.descIdx].DisplayValue != "" {
-		descLines = strings.Count(f.allFields[f.descIdx].DisplayValue, "\n") + 1
-	}
-	descNat := max(descLines+2, panelMinH)
-
-	// cap summary so desc+fields get at least panelMinH each
-	if summaryH > availH-2*panelMinH {
-		summaryH = max(availH-2*panelMinH, panelMinH)
-	}
-	remaining := availH - summaryH
-
-	switch f.focusedPanel {
-	case CreatePanelFields:
-		// fields gets priority, desc gets leftovers
-		fieldsH = min(fieldsNat, max(remaining-panelMinH, panelMinH))
-		descH = min(descNat, max(remaining-fieldsH, panelMinH))
-	default:
-		// desc gets priority, fields gets leftovers
-		descH = min(descNat, max(remaining-panelMinH, panelMinH))
-		fieldsH = min(fieldsNat, max(remaining-descH, panelMinH))
-	}
-
-	return summaryH, descH, fieldsH
+func (r formRect) contains(x, y int) bool {
+	return x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h
 }
 
-// summaryWrapCount returns how many display lines the summary text wraps to
-func (f *CreateForm) summaryWrapCount(innerW int) int {
-	if len(f.summaryText) == 0 || innerW <= 0 {
-		return 1
+// createLayout places the panels in a w×h screen. Wide screens put Fields in
+// a left column beside Summary over Description; narrow ones stack Summary,
+// Description, and Fields.
+type createLayout struct {
+	split                 bool
+	summary, desc, fields formRect
+}
+
+func (f *CreateForm) layout(w, h int) createLayout {
+	availH := h - 1 // help bar
+	if f.errorMsg != "" {
+		availH--
 	}
-	// account for leading space
-	allRunes := append([]rune{' '}, f.summaryText...)
-	count := 1
-	w := 0
-	for _, r := range allRunes {
-		rw := lipgloss.Width(string(r))
-		if w+rw > innerW {
-			count++
-			w = rw
-		} else {
-			w += rw
+	availH = max(availH, 2*panelMinH)
+
+	if w >= fieldsColMinW+descColMinW {
+		fieldsW := min(max(w*3/10, fieldsColMinW), fieldsColMaxW)
+		rightW := w - fieldsW
+		return createLayout{
+			split:   true,
+			fields:  formRect{0, 0, fieldsW, availH},
+			summary: formRect{fieldsW, 0, rightW, panelMinH},
+			desc:    formRect{fieldsW, panelMinH, rightW, availH - panelMinH},
 		}
 	}
-	// +1 for cursor at end of full line
-	if w >= innerW {
-		count++
+
+	rest := availH - panelMinH
+	fieldsNat := max(len(f.filteredFields())+2, panelMinH)
+	fieldsH := min(fieldsNat, max(rest/2, panelMinH))
+	descH := max(rest-fieldsH, panelMinH)
+	return createLayout{
+		summary: formRect{0, 0, w, panelMinH},
+		desc:    formRect{0, panelMinH, w, descH},
+		fields:  formRect{0, panelMinH + descH, w, fieldsH},
 	}
-	return count
+}
+
+func (f *CreateForm) sizeDesc(w, h int) {
+	if f.desc == nil {
+		return
+	}
+	r := f.layout(w, h).desc
+	f.desc.SetWidth(max(r.w-2, 1))
+	f.desc.SetHeight(max(r.h-2, 1))
 }
 
 // Render
@@ -775,36 +736,31 @@ func (f *CreateForm) Render(bg string, w, h int) string {
 }
 
 func (f *CreateForm) renderForm(bg string, w, h int) string {
-	formW := min(max(w*6/10, 40), w-2)
-	availH := h - 1 // leave 1 line for help bar
-	if f.errorMsg != "" {
-		availH-- // reserve 1 line for error
+	f.sizeDesc(w, h)
+	l := f.layout(w, h)
+
+	summaryPanel := f.renderSummary(l.summary.w, l.summary.h)
+	descPanel := f.renderDescription(l.desc.w, l.desc.h)
+	fieldsPanel := f.renderFields(l.fields.w, l.fields.h)
+
+	var combined string
+	if l.split {
+		right := lipgloss.JoinVertical(lipgloss.Left, summaryPanel, descPanel)
+		combined = lipgloss.JoinHorizontal(lipgloss.Top, fieldsPanel, right)
+	} else {
+		combined = lipgloss.JoinVertical(lipgloss.Left, summaryPanel, descPanel, fieldsPanel)
 	}
-
-	summaryH, descH, fieldsH := f.layoutSubPanels(availH)
-
-	summaryPanel := f.renderSummary(formW, summaryH)
-	descPanel := f.renderDescription(formW, descH)
-	fieldsPanel := f.renderFields(formW, fieldsH)
-
-	combined := lipgloss.JoinVertical(lipgloss.Left, summaryPanel, descPanel, fieldsPanel)
 
 	if f.errorMsg != "" {
 		errStyle := lipgloss.NewStyle().Foreground(theme.ColorRed)
-		errLine := errStyle.Render(" " + f.errorMsg)
-		if lw := lipgloss.Width(errLine); lw < formW {
-			errLine += strings.Repeat(" ", formW-lw)
+		errLine := errStyle.Render(TruncateEnd(" "+f.errorMsg, w))
+		if lw := lipgloss.Width(errLine); lw < w {
+			errLine += strings.Repeat(" ", w-lw)
 		}
 		combined = lipgloss.JoinVertical(lipgloss.Left, combined, errLine)
 	}
 
-	totalH := summaryH + descH + fieldsH
-	if f.errorMsg != "" {
-		totalH++
-	}
-	x := (w - formW) / 2
-	y := (h - totalH) / 2
-	return OverlayAt(bg, combined, x, y, w, h)
+	return OverlayAt(bg, combined, 0, 0, w, h)
 }
 
 func (f *CreateForm) renderSummary(formW, panelH int) string {
@@ -942,46 +898,14 @@ func (f *CreateForm) renderSummaryPlain(innerW, innerH int) string {
 	return strings.Join(lines, "\n")
 }
 
-func (f *CreateForm) renderDescription(formW, panelH int) string {
+func (f *CreateForm) renderDescription(panelW, panelH int) string {
 	focused := f.focusedPanel == CreatePanelDescription
-	innerW := max(formW-2, 1)
 	innerH := max(panelH-2, 1)
-
-	text := ""
-	if f.descIdx >= 0 {
-		text = f.allFields[f.descIdx].DisplayValue
+	content := ""
+	if f.desc != nil {
+		content = f.desc.View()
 	}
-
-	allLines := f.renderDescLines(text, innerW)
-
-	// clamp scroll offset
-	maxOff := max(len(allLines)-innerH, 0)
-	if f.descOffset > maxOff {
-		f.descOffset = maxOff
-	}
-	if f.descOffset < 0 {
-		f.descOffset = 0
-	}
-
-	// apply scroll
-	end := min(f.descOffset+innerH, len(allLines))
-	visible := allLines[f.descOffset:end]
-	for len(visible) < innerH {
-		visible = append(visible, "")
-	}
-
-	content := strings.Join(visible, "\n")
-
-	var scroll *ScrollInfo
-	if len(allLines) > innerH {
-		scroll = &ScrollInfo{
-			Total:   len(allLines),
-			Visible: innerH,
-			Offset:  f.descOffset,
-		}
-	}
-
-	return RenderPanelFull("Description", "", content, formW, innerH, focused, scroll)
+	return RenderPanelFull("Description", "", content, panelW, innerH, focused, nil)
 }
 
 func (f *CreateForm) renderFields(formW, panelH int) string {
@@ -1115,41 +1039,4 @@ func styleFieldValue(fld CreateFormField, val string) string {
 		}
 		return val
 	}
-}
-
-// wrapTextLines wraps text to fit within maxWidth display columns
-func wrapTextLines(s string, maxWidth int) []string {
-	if s == "" {
-		return []string{""}
-	}
-	if maxWidth <= 0 {
-		return []string{s}
-	}
-	var lines []string
-	for _, rawLine := range strings.Split(s, "\n") {
-		if rawLine == "" {
-			lines = append(lines, "")
-			continue
-		}
-		runes := []rune(rawLine)
-		off := 0
-		for off < len(runes) {
-			w := 0
-			cut := off
-			for i := off; i < len(runes); i++ {
-				rw := lipgloss.Width(string(runes[i]))
-				if w+rw > maxWidth {
-					break
-				}
-				w += rw
-				cut = i + 1
-			}
-			if cut <= off {
-				cut = off + 1
-			}
-			lines = append(lines, string(runes[off:cut]))
-			off = cut
-		}
-	}
-	return lines
 }

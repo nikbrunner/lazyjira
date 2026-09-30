@@ -83,6 +83,9 @@ type createCtx struct {
 	issueTypeName string
 	parentKey     string
 	duplicateFrom *jira.Issue
+	// descConvState is the converter state of a Cloud description prefilled
+	// as Markdown, passed back to FromMarkdown on submit.
+	descConvState any
 }
 
 type onSelectFunc func(components.ModalItem) tea.Cmd
@@ -320,7 +323,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	diffView := components.NewDiffView()
 	inputModal := components.NewInputModal()
 	jqlModal := components.NewJQLModal()
-	createForm := components.NewCreateForm(adfRenderer.Render)
+	createForm := components.NewCreateForm()
 
 	logFlag := new(bool)
 	client.SetOnRequest(func(rl jira.RequestLog) {
@@ -412,11 +415,6 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		fmt.Fprintln(os.Stderr, "lazyjira:", warning)
 		app.statusPanel.SetError(warning)
 	}
-
-	isCloud := cfg.Jira.IsCloud()
-	app.createForm.SetDescRenderer(func(text string, width int) []string {
-		return views.RenderDescriptionPreview(text, width, isCloud, adfRenderer)
-	})
 
 	app.overlays = components.OverlayStack{
 		&app.projectPicker,
@@ -600,10 +598,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case components.CreateFormSubmitMsg:
 		return a.handleCreateFormSubmit(msg)
 	case components.CreateFormCancelMsg:
-		a.invalidateSprintFetch()
-		a.createCtx = createCtx{}
-		a.onSelect = nil
-		return a, nil
+		return a.handleCreateFormCancel()
 
 	case components.ModalSelectedMsg:
 		return a.handleModalSelected(msg)

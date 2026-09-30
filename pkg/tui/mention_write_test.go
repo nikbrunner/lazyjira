@@ -176,7 +176,12 @@ func TestMentionUsersResultKeepsItsProjectIdentity(t *testing.T) {
 
 func TestMentionColdPath_CreateDesc(t *testing.T) {
 	t.Parallel()
-	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	var created map[string]any
+	fake := &jiratest.FakeClient{T: t, CreateIssueFunc: func(_ context.Context, fields map[string]any) (*jira.Issue, error) {
+		created = fields
+		return &jira.Issue{Key: "PLAT-1"}, nil
+	}}
+	app := newAppWithFake(t, fake)
 	app.converter = identityConverter{}
 	app.isCloud = true
 	app.projectKey = testProject
@@ -184,23 +189,42 @@ func TestMentionColdPath_CreateDesc(t *testing.T) {
 		{FieldID: "summary"},
 		{FieldID: "description"},
 	})
-	app.editContext = editCtx{kind: editCreateDesc, fieldIndex: 1}
-	path := writeTempFile(t, "see @Solo_One")
 
-	if _, cmd := app.handleEditorFinished(editorFinishedMsg{original: "old", tempPath: path}); cmd == nil {
-		t.Fatal("editor finish on cold cache should return a fetch cmd")
+	fields := map[string]any{"summary": "s", fldDescription: "see @Solo_One"}
+	if _, cmd := app.handleCreateFormSubmit(components.CreateFormSubmitMsg{Fields: fields}); cmd == nil {
+		t.Fatal("submit on cold cache should return a fetch cmd")
 	}
-	if app.pendingMention == nil || !app.pendingMention.createDesc {
-		t.Fatal("create-desc cold path must defer via pendingMention")
-	}
-
-	if model, cmd := app.handleMentionUsersLoaded(mentionUsersLoadedMsg{users: []jira.User{soloUser()}, projectKey: testProject}); model != app || cmd != nil {
-		t.Fatal("mention completion returned an unexpected update")
+	if app.pendingMention == nil || app.pendingMention.createFields == nil {
+		t.Fatal("create submit cold path must defer via pendingMention")
 	}
 
-	got, _ := app.createForm.FieldAt(1).Value.(string)
+	_, cmd := app.handleMentionUsersLoaded(mentionUsersLoadedMsg{users: []jira.User{soloUser()}, projectKey: testProject})
+	if cmd == nil {
+		t.Fatal("mention completion should create the issue")
+	}
+	cmd()
+
+	got, _ := created[fldDescription].(string)
 	if !strings.Contains(got, "accountid:s1") {
 		t.Errorf("description value = %q, want it to contain accountid:s1", got)
+	}
+}
+
+func TestMentionColdPath_CreateDescCancelledDropsSubmit(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	app.converter = identityConverter{}
+	app.isCloud = true
+	app.projectKey = testProject
+	app.createForm = formWithFields([]components.CreateFormField{{FieldID: "summary"}, {FieldID: "description"}})
+
+	_, _ = app.handleCreateFormSubmit(components.CreateFormSubmitMsg{Fields: map[string]any{fldDescription: "see @Solo_One"}})
+	app.createForm.Hide()
+	app.Update(components.CreateFormCancelMsg{})
+	app.createForm = formWithFields([]components.CreateFormField{{FieldID: "summary"}, {FieldID: "description"}})
+
+	if _, cmd := app.handleMentionUsersLoaded(mentionUsersLoadedMsg{users: []jira.User{soloUser()}, projectKey: testProject}); cmd != nil {
+		t.Fatal("a cancelled form must not create the issue")
 	}
 }
 

@@ -15,7 +15,7 @@ import (
 )
 
 func formWithFields(fields []components.CreateFormField) components.CreateForm {
-	form := components.NewCreateForm(nil)
+	form := components.NewCreateForm()
 	form.ShowForm(fields, "Story", testProject)
 	return form
 }
@@ -501,20 +501,26 @@ func TestHandleExpandBlock_ShowsReadOnlyModal(t *testing.T) {
 func TestHandleEditorFinished(t *testing.T) {
 	t.Parallel()
 
-	t.Run("create description updates form field", func(t *testing.T) {
+	t.Run("create description puts raw text back into the textarea", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+		app.isCloud = true
+		app.usersCache.set(testProject, []jira.User{soloUser()})
+		app.projectKey = testProject
 		app.createForm = formWithFields([]components.CreateFormField{
 			{FieldID: "summary"},
 			{FieldID: "description"},
 		})
-		app.editContext = editCtx{kind: editCreateDesc, fieldIndex: 1}
-		path := writeTempFile(t, "new body")
+		app.editContext = editCtx{kind: editCreateDesc}
+		path := writeTempFile(t, "# New body\n\nping @Solo_One\n")
 
 		_, _ = app.handleEditorFinished(editorFinishedMsg{original: "old", tempPath: path})
 
-		if got := app.createForm.FieldAt(1).Value; got != "new body" {
-			t.Errorf("field value = %v, want new body", got)
+		if got := app.createForm.DescriptionText(); got != "# New body\n\nping @Solo_One" {
+			t.Errorf("description text = %q, want the raw Markdown", got)
+		}
+		if got := app.createForm.FieldAt(1).Value; got != nil {
+			t.Errorf("field value = %v, want nil until submit", got)
 		}
 		if app.editContext.kind != editNone {
 			t.Error("editContext should reset")
