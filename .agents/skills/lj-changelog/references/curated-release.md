@@ -27,5 +27,6 @@ Highlights are the one place where prose addresses the reader, and they carry no
 ## Screenshots
 
 Store screenshots under `docs/assets/changelog/<version>-<topic>.webp`, captured clean at a fixed terminal size. Reference
-them with an absolute `https://raw.githubusercontent.com/nikbrunner/lazyjira/main/...` URL so they render in the GitHub
-Release notes too.
+them, and the README recordings, with an absolute URL pinned to the release tag,
+`https://raw.githubusercontent.com/nikbrunner/lazyjira/v<version>/...`, so they render in the GitHub Release notes and keep
+showing that release after later recordings replace the files on `main`.
