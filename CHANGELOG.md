@@ -3,18 +3,55 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
-## [Unreleased]
+## `0.7.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.30
 
-### Breaking
+### Highlights
 
-- **Breaking:** `y` copies the issue key and summary instead of the issue URL, which moves to `Y`. A configured `copyURL`
-  key keeps working. — nbr <nikolaus.brunner@protonmail.ch>
+lazyjira is a keyboard-driven terminal UI for Jira. Browse issues through your own JQL tabs, edit them in place, and turn an
+issue into a Git branch or worktree. It works with Jira Cloud and Jira Server / Data Center.
 
-### Added
+![lazyjira workspace with issue tabs, the Issues panel, Issue info, and an issue description with a code block](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.7.0/docs/assets/recordings/screenshot.png)
 
-- Issues panel — nbr <nikolaus.brunner@protonmail.ch>
-  - `ctrl+y` copies the issue as a Markdown link, `[KEY Summary](URL)`, remappable as `copyMarkdownLink`.
-  - Copying a single issue shows the copied text in the status bar.
+#### Install
+
+On macOS or Linux, the install script downloads the release, checks it against `checksums.txt`, and installs it to
+`~/.local/bin`. mise and Go work too:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/nikbrunner/lazyjira/main/install.sh | sh
+mise use -g github:nikbrunner/lazyjira
+go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest
+```
+
+#### A fixed workspace
+
+Five panes keep their place. `0` to `4` jump to a pane, `H` `J` `K` `L` move between them, and `+` maximizes Issues or
+Details. `f` filters the loaded issues by status, type, and priority, and `s` runs a JQL search into a temporary tab.
+
+![Maximized Issues panel, maximized issue details, filter picker, comments, JQL search, and project picker](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.7.0/docs/assets/recordings/preview.gif)
+
+#### Open any issue by key
+
+`#` opens a prompt that starts with the active project key, completes other project keys, and suggests issues as you type
+the number.
+
+![Opening PLAT-3 by key with project and issue completion](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.7.0/docs/assets/recordings/issue-lookup.gif)
+
+#### Three ways to copy an issue
+
+From the Issues panel, `y` copies the key and summary, `ctrl+y` copies a Markdown link, and `Y` copies the URL. With issues
+marked, `y` copies the marked rows. The status bar shows what was copied, and `sanitize.remove` cleans the summary.
+
+```text
+y       SHOP-1 Implement shopping cart persistence
+ctrl+y  [SHOP-1 Implement shopping cart persistence](https://example.atlassian.net/browse/SHOP-1)
+Y       https://example.atlassian.net/browse/SHOP-1
+```
+
+The new keys are remappable as `copySummary` and `copyMarkdownLink`.
+
+The [`0.6.5` notes](https://github.com/nikbrunner/lazyjira/releases/tag/v0.6.5) and the
+[README](https://github.com/nikbrunner/lazyjira#features) list everything else.
 
 ### Changed
 
