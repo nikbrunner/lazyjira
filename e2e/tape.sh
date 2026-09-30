@@ -27,6 +27,7 @@
 #   @confirm              → Enter + Sleep (confirm modal/input)
 #   @comments             → Type "c" + Sleep (jump to comments tab)
 #   @priority             → Type "p" + Sleep (open priority picker)
+#   @clipboard_image PATH → before @start: put the PNG at PATH on the clipboard before the demo launches
 #
 # Pipe mode:   ./e2e/tape.sh e2e/tapes/foo.tape.sh | vhs -
 # Subcommands:
@@ -37,6 +38,7 @@ set -euo pipefail
 
 DEFAULT_SLEEP=200
 LONG_SLEEP=400
+CLIPBOARD_IMAGE=""
 
 repeat() {
     local n="${1:-1}"
@@ -70,10 +72,17 @@ process_line() {
             echo ''
             echo 'Env EDITOR "vim -u NONE -N"'
             echo 'Hide'
-            echo 'Type "rm -f e2e/demo-config/jql_history && LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira-demo --demo"'
+            local setup="rm -f e2e/demo-config/jql_history"
+            if [[ -n "$CLIPBOARD_IMAGE" ]]; then
+                setup="$setup && e2e/set-clipboard-image.sh $CLIPBOARD_IMAGE"
+            fi
+            echo "Type \"$setup && LAZYJIRA_CONFIG_DIR=e2e/demo-config ./lazyjira-demo --demo\""
             echo 'Enter'
             echo 'Sleep 2s'
             echo 'Show'
+            ;;
+        @clipboard_image\ *)
+            CLIPBOARD_IMAGE="${line#@clipboard_image }"
             ;;
         @down*)
             local n="${line#@down}"; n="${n// /}"; n="${n:-1}"
@@ -183,6 +192,7 @@ generate_one() {
     local dir base
     dir="$(dirname "$src")"
     base="$(basename "$src" .tape.sh)"
+    CLIPBOARD_IMAGE=""
 
     process_file "$src" > "$dir/$base.tape"
     echo "wrote $dir/$base.tape"
