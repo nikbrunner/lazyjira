@@ -16,6 +16,8 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 - Create issue form — nbr <nikolaus.brunner@protonmail.ch>
   - The Description is a text area in the form. Pasted text keeps its line breaks.
+- Documentation — nbr <nikolaus.brunner@protonmail.ch>
+  - The README recommends Jira CLIs for scripts and AI agents, in order: TWG CLI, Atlassian CLI, and jira-cli.
 
 ### Changed
 

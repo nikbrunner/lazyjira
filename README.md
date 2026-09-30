@@ -172,6 +172,17 @@ issueTabs:
 - [Keybindings](docs/Keybindings.md): the default keys and the pane map
 - [Custom Fields](docs/Custom_Fields.md): showing Jira custom fields
 
+## Jira from scripts and agents
+
+lazyjira is a terminal UI and has no commands for scripts or AI agents. For that, use one of these CLIs:
+
+1. [TWG CLI](https://github.com/atlassian/twg-cli) (`twg`): Atlassian's agent-first CLI for Jira, Confluence, Bitbucket,
+   and more. It installs agent skills for Claude Code, Codex, Cursor, pi, and others, and signs in with OAuth. Cloud only.
+2. [Atlassian CLI](https://developer.atlassian.com/cloud/acli/) (`acli`): Atlassian's official CLI for Jira Cloud,
+   with JSON and CSV output, JQL search, bulk edits, and transitions. Cloud only.
+3. [jira-cli](https://github.com/ankitpokhrel/jira-cli) (`jira`): an open-source CLI that also has JSON and CSV output
+   for issue lists, and the only choice on this list for Jira Server / Data Center.
+
 ## Releases
 
 [release-please](https://github.com/googleapis/release-please) cuts versions and GitHub Releases from
