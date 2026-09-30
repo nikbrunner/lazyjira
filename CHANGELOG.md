@@ -3,37 +3,48 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
-## [Unreleased]
+## `0.8.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.30
 
-### Breaking
+### Highlights
 
-- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
-  - **Breaking:** `e` in the Issues panel and the Issue details pane opens the selected issue in the Issue Edit View.
-    It replaces the summary prompt and the `$EDITOR` description edit. Saving with `ctrl+s` sends only the changed
-    fields, then uploads any pasted images. `e` in the Issue info pane still edits the focused field.
-  - **Breaking:** `ctrl+g` opens the Description in `$EDITOR`. `e` types a letter there.
-  - **Breaking:** Only `ctrl+s` creates the issue, from any panel. `enter` moves from Summary to Description, starts a
-    new line in the Description, and edits the selected field in Fields.
-  - **Breaking:** `n` opens the Issue Edit View directly, without an issue type picker first. Type is the first row in Fields and
-    starts on the type last used in that project this session, or on the first one Jira lists. Changing it keeps
-    Summary, Description, and the values of fields the new type shares. A subtask keeps its subtask type, and a
-    duplicate starts on its source's type.
+#### One view to create and edit issues
+
+`n` and `e` open the same Issue Edit View. Fields sit in a column on the left, Summary and a full-height Description on
+the right, and the Description is a real text area: type, paste, and press `enter` for a new line. `ctrl+s` saves from
+any panel, and `ctrl+g` opens the Description in `$EDITOR` when you want your own editor.
+
+Creating an issue is one step. Type is the first row in Fields and starts on the type you used last in the project.
+Changing it keeps what you wrote. Editing an existing issue sends only the fields you changed, and `e` in the Issue info
+pane still edits a single field in place.
+
+![Creating an issue with a pasted screenshot in the Issue Edit View](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.8.0/docs/assets/recordings/create-issue.gif)
+
+#### Paste screenshots into issues
+
+`ctrl+v` in the Description pastes the image on your clipboard as `[Image #1]`, and dragging image files into the terminal
+does the same. The images upload as attachments when you save, for new and existing issues alike. The clipboard needs
+`osascript` on macOS, `wl-paste` on Wayland, or `xclip` on X11.
+
+#### Upgrading from 0.7
+
+Creating an issue skips the type picker, and only `ctrl+s` saves it:
+
+```diff
+- n, pick a type, enter
++ n, ctrl+s
+```
+
+`e` in the Issues panel and the Issue details pane opens the Issue Edit View, and `ctrl+g` inside it opens `$EDITOR`:
+
+```diff
+- e   edit the summary, or the description in $EDITOR
++ e   open the Issue Edit View; ctrl+g for $EDITOR
+```
 
 ### Added
 
-- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
-  - The Description is a text area in the view. Pasted text keeps its line breaks.
-  - `ctrl+v` in the Description pastes a clipboard image, and dropped image files attach too. Each image adds an
-    `[Image #N]` token and uploads as an attachment after the issue is created. The clipboard needs `osascript` on
-    macOS, `wl-paste` on Wayland, or `xclip` on X11.
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>
   - The README recommends Jira CLIs for scripts and AI agents, in order: TWG CLI, Atlassian CLI, and jira-cli.
-
-### Changed
-
-- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
-  - The view fills the workspace, with Fields in a left column beside Summary and Description. Terminals narrower than
-    68 columns stack the three panels.
 
 ---
 

@@ -32,11 +32,12 @@ runs a JQL search into a temporary tab, and switches to another project.
 
 ### Creating an issue
 
-`n` opens an empty form that starts on a bug, the description is written in `$EDITOR`, and priority, assignee,
-labels, and components are picked from lists. The new issue then opens with its description.
+`n` opens the Issue Edit View on a bug. The summary and description are typed in place, `ctrl+v` pastes a screenshot,
+priority, assignee, labels, and components are picked from lists, and `ctrl+s` creates the issue, which then opens with
+its description.
 
 <p align="center">
-  <img src="docs/assets/recordings/create-issue.gif" width="100%" alt="lazyjira demo: creating a bug with a description written in vim">
+  <img src="docs/assets/recordings/create-issue.gif" width="100%" alt="lazyjira demo: creating a bug with a pasted screenshot in the Issue Edit View">
 </p>
 
 ### Opening an issue by key
