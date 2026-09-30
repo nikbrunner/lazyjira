@@ -3,7 +3,8 @@
 #
 # Usage in .tape files:
 #   Source e2e/tape.sh    (ignored by VHS, parsed by preprocessor)
-#   @start                → Set Shell/Width/Height/FontSize/Theme + launch demo with e2e/demo-config
+#   @start [SCALE]        → Set Shell/Width/Height/FontSize/Theme + launch demo with e2e/demo-config;
+#                           SCALE multiplies pixel size and font size, keeping the same columns and rows
 #   @down [N]             → Type "j" + Sleep (repeated N times, default 1)
 #   @up [N]               → Type "k" + Sleep
 #   @tab_next [N]         → Type "]" + Sleep
@@ -55,13 +56,14 @@ process_line() {
     line="${line%"${line##*[![:space:]]}"}" # rtrim
 
     case "$line" in
-        @start)
+        @start*)
+            local scale="${line#@start}"; scale="${scale// /}"; scale="${scale:-1}"
             echo 'Set Shell bash'
-            echo 'Set Width 1400'
-            echo 'Set Height 800'
-            echo 'Set FontSize 14'
+            echo "Set Width $((1400 * scale))"
+            echo "Set Height $((800 * scale))"
+            echo "Set FontSize $((14 * scale))"
             echo 'Set FontFamily "TX-02"'
-            echo 'Set Padding 60'
+            echo "Set Padding $((60 * scale))"
             echo 'Set TypingSpeed 0ms'
             echo 'Set PlaybackSpeed 0.8'
             echo 'Set Theme "GitHub Dark"'

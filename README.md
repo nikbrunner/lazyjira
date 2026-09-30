@@ -1,25 +1,28 @@
 # lazyjira
 
-<p align="center">
+<p>
   <a href="https://go.dev/"><img src="https://img.shields.io/github/go-mod/go-version/nikbrunner/lazyjira" alt="Go"></a>
   <a href="https://github.com/nikbrunner/lazyjira/releases"><img src="https://img.shields.io/github/v/release/nikbrunner/lazyjira" alt="Release"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+  <img src="docs/assets/recordings/screenshot.png" width="100%" alt="lazyjira workspace with issue tabs, the Issues panel, Issue info, and an issue description with a code block">
 </p>
 
 A keyboard-driven terminal UI for Jira, in the spirit of [lazygit](https://github.com/jesseduffield/lazygit). Browse issues
 through your own JQL tabs, read descriptions and comments, change status, priority, and assignee, and turn an issue into a
 Git branch or worktree without opening a browser.
 
-Based on the [original project](https://github.com/textfuel/lazyjira), created by textfuel and its contributors. The
-original MIT license and copyright notice are preserved in [LICENSE](LICENSE).
+Based on the [original project](https://github.com/textfuel/lazyjira), created by
+[textfuel](https://github.com/textfuel) and its contributors. The original MIT license and copyright notice are
+preserved in [LICENSE](LICENSE).
 
-<p align="center">
-  <img src="docs/assets/recordings/hero.gif" width="100%" alt="lazyjira: browsing issues, switching issue tabs, and opening an issue in the maximized Issues panel">
-</p>
+## Walkthrough
 
-## See it in action
+### Browsing
 
-Browsing: the Issues panel is maximized to scroll through 42 issues, and an issue opens in maximized details. Then the
+The Issues panel is maximized to scroll through 42 issues, and an issue opens in maximized details. Then the
 recording switches issue tabs, filters by status with `f`, marks a range with `v`, reads a description and its comments,
 runs a JQL search into a temporary tab, and switches to another project.
 
@@ -27,41 +30,23 @@ runs a JQL search into a temporary tab, and switches to another project.
   <img src="docs/assets/recordings/preview.gif" width="100%" alt="lazyjira demo: maximized Issues panel, maximized issue details, issue tabs, filter picker, marked range, comments, JQL search, project picker">
 </p>
 
-Creating an issue: `n` opens an empty form for a bug, the description is written in `$EDITOR`, and priority, assignee,
+### Creating an issue
+
+`n` opens an empty form for a bug, the description is written in `$EDITOR`, and priority, assignee,
 labels, and components are picked from lists. The new issue then opens with its description.
 
 <p align="center">
   <img src="docs/assets/recordings/create-issue.gif" width="100%" alt="lazyjira demo: creating a bug with a description written in vim">
 </p>
 
-Opening an issue by key: `#` starts with the active project, `pl` and `Tab` switch to Platform Services, and `3` finds
+### Opening an issue by key
+
+`#` starts with the active project, `pl` and `Tab` switch to Platform Services, and `3` finds
 PLAT-3, which opens in maximized details until `esc` returns to the workspace.
 
 <p align="center">
   <img src="docs/assets/recordings/issue-lookup.gif" width="100%" alt="lazyjira demo: opening PLAT-3 by key with project and issue completion">
 </p>
-
-## Features
-
-- The workspace has five panes that keep their place: the Project selector, Issue tabs, Issues, Issue info, and Issue
-  details. `0` to `4` jump to a pane, `H` `J` `K` `L` move to its neighbour, and `+` maximizes Issues or Details.
-- Issue tabs are JQL queries from your config. `s` opens a JQL search with autocomplete, syntax highlighting, and history,
-  and shows the result in a temporary tab. `>` opens an issue's children the same way.
-- The Issues panel shows the columns you pick (key, type, status, priority, summary, assignee, updated age) and can group
-  issues by your workflow's status order.
-- `#` opens any issue by its key. The prompt completes the project key, then suggests issues as you type the number.
-- `/` filters the loaded issues by text. `f` filters them by status, issue type, and priority, with counts that show what
-  each choice leaves.
-- `space` and `v` mark issues, and `y` copies the marked rows as plain text.
-- Summary, transition, priority, assignee, labels, components, sprint, and parent are edited in place. Description and
-  comments open in `$EDITOR`. `n` creates an issue, `ctrl+n` duplicates one, and `S` adds a subtask.
-- Issue details renders Jira's rich text, including headings, lists, tables, and highlighted code blocks, next to comments
-  and history. `o` opens the issue in the browser and `u` picks a link from the description.
-- `b` and `w` copy a branch or worktree name built from the issue. `B` and `W` create the branch or the worktree.
-- Custom commands bind shell commands to keys, with the focused issue's fields as shell-escaped template values.
-- Colors come from your terminal's color scheme, so lazyjira matches it from the first start. `themeColors` overrides
-  single colors when you want to. Borders are rounded or sharp.
-- lazyjira works with Jira Cloud and Jira Server / Data Center, including client certificates (mTLS).
 
 ## Try the demo
 
@@ -120,6 +105,25 @@ Archives for macOS, Linux, and Windows are also attached to each
 downloaded in a browser; run `xattr -d com.apple.quarantine lazyjira` once to allow it. Check the install with
 `lazyjira --version`.
 
+## Features
+
+- Works with Jira Cloud and Jira Server / Data Center, including mTLS.
+- Issue tabs are your own JQL queries. `s` searches with autocomplete and history.
+- Edit fields in place, description and comments in `$EDITOR`. `n` creates, `ctrl+n` duplicates, `S` adds a subtask.
+- `b` and `w` copy a branch or worktree name, `B` and `W` create it.
+- Jira rich text renders with headings, lists, tables, and highlighted code. `o` opens the browser, `u` picks a link.
+- `#` opens any issue by key, completing the project and the issue number.
+- `>` opens an issue's children in a temporary tab, `backspace` its parent.
+- `/` filters by text, `f` by status, type, and priority.
+- Opened issues and Jira reference data (boards, sprints, users) are cached in memory. `R` refreshes everything.
+- Custom commands bind shell commands to keys, with the issue's fields as template values.
+- Pick the Issues columns and group issues by your workflow's status order.
+- Pick the fields in the Issue info pane, Jira custom fields included.
+- Colors follow your terminal's color scheme. `themeColors` overrides single colors.
+- `y` copies the issue URL, or the rows marked with `space` and `v`.
+- Five fixed panes: `0` to `4` jump to one, `H` `J` `K` `L` move between them, `+` maximizes.
+- Most keys can be remapped. `?` lists them all, and `/` filters that list.
+
 ## Setup
 
 Run `lazyjira`. On first launch a setup wizard asks for your Jira type, host, and credentials, and saves them to
@@ -131,7 +135,8 @@ Run `lazyjira`. On first launch a setup wizard asks for your Jira type, host, an
 For client certificates (mTLS), see [TLS](docs/Config.md#tls).
 
 lazyjira only talks to your Jira host. It sends no telemetry and does not check for updates. `auth.json` is readable
-only by your user. To look around without changing anything in Jira, start it with `lazyjira --dry-run`.
+only by your user. To try it without touching Jira, start it with `lazyjira --dry-run`. Edits then look like they work,
+but they're only logged, never sent.
 
 ## Usage
 
@@ -139,7 +144,7 @@ only by your user. To look around without changing anything in Jira, start it wi
 lazyjira                    # start
 lazyjira auth               # re-authenticate
 lazyjira logout             # clear credentials
-lazyjira --dry-run          # read-only mode, no writes to Jira
+lazyjira --dry-run          # simulate edits, never send them to Jira
 lazyjira --log app.log      # log API requests to a file
 lazyjira --debug debug.log  # write debug logs to a file
 lazyjira --version          # show version

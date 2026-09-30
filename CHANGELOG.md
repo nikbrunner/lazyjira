@@ -3,6 +3,20 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [Unreleased]
+
+### Changed
+
+- Documentation — nbr <nikolaus.brunner@protonmail.ch>
+  - The README opens with a screenshot, then the description, a Walkthrough of the three recordings, the demo, and
+    installation.
+  - The README feature list is ordered by impact, one line per feature, and covers copying, parent and child issues,
+    custom fields, caching, and remappable keys.
+  - The README describes `--dry-run` as simulated edits that are logged and never sent to Jira.
+  - The README screenshot is re-recorded with the GIFs on every release, at twice their resolution.
+
+---
+
 ## `0.6.5` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.29
 
 ### Highlights

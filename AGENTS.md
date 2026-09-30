@@ -22,7 +22,3 @@
 ## Publishing
 
 - Releases publish through GitHub Releases. Adding package-manager publishing requires explicit approval and verified ownership of its destination.
-
-## Release in progress
-
-- `0.6.5` is prepared but unpublished. Add changelog entries to its section in `CHANGELOG.md` and add no `## [Unreleased]` section. Remove this section once `0.6.5` is published.
