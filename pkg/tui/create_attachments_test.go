@@ -84,7 +84,7 @@ func TestUploadAttachments_UploadsInOrderAndReportsPartialFailure(t *testing.T) 
 	fake.GetIssueFunc = func(context.Context, string) (*jira.Issue, error) { return &jira.Issue{Key: "PLAT-7"}, nil }
 	app := newAppWithFake(t, fake)
 
-	msg := uploadAttachments(fake, "PLAT-7", []components.CreateAttachment{
+	msg := uploadAttachments(fake, "PLAT-7", "Created", []components.CreateAttachment{
 		{Path: temp, Name: "image-1.png", Temp: true},
 		{Path: own, Name: "own.png"},
 	})().(attachmentsUploadedMsg)

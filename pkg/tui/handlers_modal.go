@@ -398,6 +398,9 @@ func (a *App) handleCreateFormCancel() (tea.Model, tea.Cmd) {
 
 // handleCreateFormSubmit sends create issue request
 func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Model, tea.Cmd) {
+	if a.createCtx.editKey != "" {
+		return a.handleEditSave(msg)
+	}
 	msg.Fields["project"] = map[string]string{"key": a.createCtx.projectKey}
 	msg.Fields[fldIssueType] = map[string]string{"id": a.createCtx.issueTypeID}
 	a.createCtx.attachments = msg.Attachments
@@ -412,24 +415,37 @@ func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Mo
 	}
 	a.createForm.SetLoading(true)
 	*a.logFlag = true
+	return a, a.submitIssueForm(msg.Fields)
+}
 
-	desc, ok := msg.Fields[fldDescription].(string)
+// submitIssueForm prepares the description for the Jira flavour, then creates
+// or saves the issue: Server gets the raw text with image tokens escaped,
+// Cloud gets ADF with resolved mentions.
+func (a *App) submitIssueForm(fields map[string]any) tea.Cmd {
+	desc, ok := fields[fldDescription].(string)
 	if ok && !a.isCloud {
-		msg.Fields[fldDescription] = escapeImageTokensForWiki(desc)
+		fields[fldDescription] = escapeImageTokensForWiki(desc)
 	}
 	if !ok || !a.isCloud {
-		return a, createIssue(a.client, msg.Fields)
+		return a.sendIssueForm(fields)
 	}
-	pm := pendingMention{content: desc, createFields: msg.Fields, convState: a.createCtx.descConvState, projectKey: a.projectKey}
+	pm := pendingMention{content: desc, createFields: fields, convState: a.createCtx.descConvState, projectKey: a.projectKey}
 	if !hasMentionCandidate(desc) {
-		return a, a.completeCreateDesc(pm, nil)
+		return a.completeCreateDesc(pm, nil)
 	}
 	users, ok := a.projectUsers(a.projectKey)
 	if !ok {
 		a.pendingMention = &pm
-		return a, fetchUsersForMention(a.client, a.projectKey, a.referenceCacheVersion)
+		return fetchUsersForMention(a.client, a.projectKey, a.referenceCacheVersion)
 	}
-	return a, a.completeCreateDesc(pm, users)
+	return a.completeCreateDesc(pm, users)
+}
+
+func (a *App) sendIssueForm(fields map[string]any) tea.Cmd {
+	if key := a.createCtx.editKey; key != "" {
+		return saveIssue(a.client, key, fields)
+	}
+	return createIssue(a.client, fields)
 }
 
 // handleExpandBlock shows expanded content in a read-only modal.

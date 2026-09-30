@@ -900,27 +900,6 @@ func TestHandleActionEdit_ConversionFailures(t *testing.T) {
 		}
 	})
 
-	t.Run("description ADF conversion error surfaces", func(t *testing.T) {
-		t.Parallel()
-		app := focusApp(t)
-		app.converter = failingConverter{}
-		app.side = sideRight
-		issue := &jira.Issue{Key: testKey, DescriptionADF: map[string]any{"type": "doc"}}
-		app.issuesList.SetIssues([]jira.Issue{*issue})
-		app.previewKey = testKey
-		app.issueCache[testKey] = issue
-		app.detailView.SetIssue(issue)
-
-		_, cmd := app.handleActionEdit()
-
-		if cmd != nil {
-			t.Error("conversion failure must not launch the editor")
-		}
-		if app.statusPanel.ErrorMessage() == "" {
-			t.Error("conversion failure should surface in status panel")
-		}
-	})
-
 	t.Run("comments tab without selected comment is noop", func(t *testing.T) {
 		t.Parallel()
 		app := focusApp(t)

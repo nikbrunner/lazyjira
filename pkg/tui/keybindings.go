@@ -79,7 +79,7 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActCopyMarkdownLink, "copy Markdown link"),
 			a.bind(ActCopyURL, "copy URL"),
 			a.bind(ActTransition, "transition issue status"),
-			a.bind(ActEdit, "edit summary"),
+			a.bind(ActEdit, "edit issue"),
 			a.bind(ActComments, "go to comments"),
 			a.bind(ActPriority, "change priority"),
 			a.bind(ActAssignee, "change assignee"),
@@ -144,7 +144,7 @@ func (a *App) ContextBindings() []Binding {
 			)
 		} else {
 			bindings = append(bindings,
-				a.bind(ActEdit, "edit description"),
+				a.bind(ActEdit, "edit issue"),
 			)
 		}
 		bindings = append(bindings, a.customCommandBindings(config.CtxDetail)...)
@@ -161,9 +161,13 @@ func (a *App) helpBarItems() []components.HelpItem {
 	// Overlay-specific hints take priority over panel hints
 	switch {
 	case a.createForm.IsVisible():
+		save := "create"
+		if a.createCtx.editKey != "" {
+			save = "save"
+		}
 		items := []components.HelpItem{
 			{Key: "tab", Description: "next panel"},
-			{Key: "ctrl+s", Description: "submit"},
+			{Key: "ctrl+s", Description: save},
 			{Key: "esc", Description: "cancel"},
 		}
 		switch a.createForm.FocusedPanel() { //nolint:exhaustive

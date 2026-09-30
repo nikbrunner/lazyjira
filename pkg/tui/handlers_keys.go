@@ -842,9 +842,7 @@ func (a *App) handleActionEdit() (tea.Model, tea.Cmd) {
 		return a, nil
 	}
 	if a.side == sideLeft && a.leftFocus == focusIssues {
-		a.inputModal.Show("Edit Summary", cur.Summary)
-		a.editContext = editCtx{kind: editSummary, issueKey: cur.Key}
-		return a, nil
+		return a.startEditIssue(cur.Key)
 	}
 	if a.side == sideLeft && a.leftFocus == focusInfo {
 		if a.infoPanel.ActiveTab() == views.InfoTabFields {
@@ -879,20 +877,10 @@ func (a *App) handleActionEdit() (tea.Model, tea.Cmd) {
 		a.editContext = editCtx{kind: editCommentMod, issueKey: cur.Key, commentID: cmt.ID, converterState: convState}
 		return a, launchEditor(md, ".md")
 	}
-	md := ""
-	var convState any
-	if cur.DescriptionADF != nil {
-		var err error
-		md, convState, err = a.converter.ToMarkdown(cur.DescriptionADF)
-		if err != nil {
-			a.statusPanel.SetError("convert description: " + err.Error())
-			return a, nil
-		}
-	} else if cur.Description != "" {
-		md = cur.Description
+	if a.side == sideRight {
+		return a.startEditIssue(cur.Key)
 	}
-	a.editContext = editCtx{kind: editDesc, issueKey: cur.Key, converterState: convState}
-	return a, launchEditor(md, ".md")
+	return a, nil
 }
 
 func (a *App) handleActionCopyName(action Action) (tea.Model, tea.Cmd) {

@@ -119,7 +119,9 @@ func TestPrefillDescriptionMarkdown_ConvertsADF(t *testing.T) {
 		{FieldID: fldDescription, DisplayValue: "plain text", Value: map[string]any{"md": "**rich**"}},
 	}
 
-	app.prefillDescriptionMarkdown(fields)
+	if err := app.prefillDescriptionMarkdown(fields); err != nil {
+		t.Fatal(err)
+	}
 
 	if fields[1].DisplayValue != "**rich**" || fields[1].Value != "**rich**" {
 		t.Errorf("description = %q / %#v, want Markdown", fields[1].DisplayValue, fields[1].Value)

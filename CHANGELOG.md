@@ -7,19 +7,22 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ### Breaking
 
-- Create issue form — nbr <nikolaus.brunner@protonmail.ch>
+- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
+  - **Breaking:** `e` in the Issues panel and the Issue details pane opens the selected issue in the Issue Edit View.
+    It replaces the summary prompt and the `$EDITOR` description edit. Saving with `ctrl+s` sends only the changed
+    fields, then uploads any pasted images. `e` in the Issue info pane still edits the focused field.
   - **Breaking:** `ctrl+g` opens the Description in `$EDITOR`. `e` types a letter there.
   - **Breaking:** Only `ctrl+s` creates the issue, from any panel. `enter` moves from Summary to Description, starts a
     new line in the Description, and edits the selected field in Fields.
-  - **Breaking:** `n` opens the form directly, without an issue type picker first. Type is the first row in Fields and
+  - **Breaking:** `n` opens the Issue Edit View directly, without an issue type picker first. Type is the first row in Fields and
     starts on the type last used in that project this session, or on the first one Jira lists. Changing it keeps
     Summary, Description, and the values of fields the new type shares. A subtask keeps its subtask type, and a
     duplicate starts on its source's type.
 
 ### Added
 
-- Create issue form — nbr <nikolaus.brunner@protonmail.ch>
-  - The Description is a text area in the form. Pasted text keeps its line breaks.
+- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
+  - The Description is a text area in the view. Pasted text keeps its line breaks.
   - `ctrl+v` in the Description pastes a clipboard image, and dropped image files attach too. Each image adds an
     `[Image #N]` token and uploads as an attachment after the issue is created. The clipboard needs `osascript` on
     macOS, `wl-paste` on Wayland, or `xclip` on X11.
@@ -28,8 +31,8 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ### Changed
 
-- Create issue form — nbr <nikolaus.brunner@protonmail.ch>
-  - The form fills the workspace, with Fields in a left column beside Summary and Description. Terminals narrower than
+- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
+  - The view fills the workspace, with Fields in a left column beside Summary and Description. Terminals narrower than
     68 columns stack the three panels.
 
 ---

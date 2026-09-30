@@ -33,7 +33,7 @@ type mentionUsersLoadedMsg struct {
 // would store the link syntax as literal text; they are excluded.
 func mentionsApply(kind editKind) bool {
 	switch kind {
-	case editDesc, editCommentNew, editCommentMod:
+	case editCommentNew, editCommentMod:
 		return true
 	default:
 		return false
@@ -75,7 +75,7 @@ func (a *App) handleMentionUsersLoaded(msg mentionUsersLoadedMsg) (tea.Model, te
 }
 
 // completeCreateDesc resolves mentions with the given users, converts the
-// description to ADF and creates the issue. A form cancelled while users were
+// description to ADF and creates or saves the issue. A form cancelled while users were
 // loading drops the submit.
 func (a *App) completeCreateDesc(pm pendingMention, users []jira.User) tea.Cmd {
 	if !a.createForm.IsVisible() {
@@ -88,7 +88,7 @@ func (a *App) completeCreateDesc(pm pendingMention, users []jira.User) tea.Cmd {
 		return nil
 	}
 	pm.createFields[fldDescription] = adf
-	return createIssue(a.client, pm.createFields)
+	return a.sendIssueForm(pm.createFields)
 }
 
 // completeApplyEdit resolves mentions with the now-available users, converts to

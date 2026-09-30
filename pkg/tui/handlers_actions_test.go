@@ -22,7 +22,7 @@ func actionApp(t *testing.T) *App {
 	return app
 }
 
-func TestHandleActionEdit_IssuePanelShowsInputModal(t *testing.T) {
+func TestHandleActionEdit_IssuePanelOpensEditView(t *testing.T) {
 	t.Parallel()
 	app := actionApp(t)
 	app.side = sideLeft
@@ -32,13 +32,12 @@ func TestHandleActionEdit_IssuePanelShowsInputModal(t *testing.T) {
 	app.previewKey = testKey
 	app.issueCache[testKey] = issue
 
-	_, _ = app.handleActionEdit()
+	_, cmd := app.handleActionEdit()
 
-	if !app.inputModal.IsVisible() {
-		t.Error("input modal should be visible after edit on issues panel")
+	if cmd == nil || !app.createForm.IsVisible() || app.inputModal.IsVisible() {
+		t.Error("e on the issues panel should open the loading Issue Edit View")
 	}
-	testkit.AssertEqual(t, "editContext kind", app.editContext.kind, editSummary)
-	testkit.AssertEqual(t, "editContext issueKey", app.editContext.issueKey, testKey)
+	testkit.AssertEqual(t, "edit key", app.createCtx.editKey, testKey)
 }
 
 func TestHandleActionEdit_NoIssueIsNoop(t *testing.T) {
@@ -99,7 +98,7 @@ func TestHandleActionEdit_DetailCommentsTabLaunchesEditor(t *testing.T) {
 	testkit.AssertEqual(t, "editContext kind", app.editContext.kind, editCommentMod)
 }
 
-func TestHandleActionEdit_DetailDescriptionLaunchesEditor(t *testing.T) {
+func TestHandleActionEdit_DetailOpensEditView(t *testing.T) {
 	t.Parallel()
 	app := actionApp(t)
 	app.side = sideRight
@@ -112,10 +111,11 @@ func TestHandleActionEdit_DetailDescriptionLaunchesEditor(t *testing.T) {
 
 	_, cmd := app.handleActionEdit()
 
-	if cmd == nil {
-		t.Error("expected editor launch cmd for description edit")
+	if cmd == nil || !app.createForm.IsVisible() {
+		t.Error("e in the details pane should open the loading Issue Edit View")
 	}
-	testkit.AssertEqual(t, "editContext kind", app.editContext.kind, editDesc)
+	testkit.AssertEqual(t, "edit key", app.createCtx.editKey, testKey)
+	testkit.AssertEqual(t, "no $EDITOR edit", app.editContext.kind, editNone)
 }
 
 func TestHandleActionSelect_IssuesTogglesMark(t *testing.T) {

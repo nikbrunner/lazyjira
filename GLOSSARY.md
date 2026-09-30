@@ -34,6 +34,7 @@
 | **App status panel** | The display-only panel showing app version, account, authentication method, host, and connection state. | Account status panel, Info |
 | **Issue info pane** | The interactive pane for an issue's fields, links, and subtasks. | Account info, Info without qualification |
 | **Issue details pane** | The interactive pane for an issue's description, comments, and history. | Issue info pane |
+| **Issue Edit View** | The full-screen view for writing an issue's type, summary, description, fields, and images. `n` opens it to create an issue, `e` to edit one. | Create form, create issue form, edit form |
 
 ## Issue-list layout
 
@@ -74,6 +75,7 @@
 - The **Project selector** shows the active **Jira project** and opens the **Project picker** to select another.
 - The **App status panel** shows app and connection information without taking focus.
 - The **Issue info pane** provides field editing and relationship navigation; the **Issue details pane** presents issue description, comments, and history.
+- The **Issue Edit View** creates an **Issue** or edits the **Selected issue**; editing from the **Issue info pane** stays one field at a time.
 - The **Issue tabs pane** lists the **Issue tabs**; its active tab determines the **Issue list** shown in the **Issues panel**.
 - An **Issue tab** contains zero or more **Issues**; an **Issue** can appear in more than one tab.
 - A **Local filter** and a **Picker filter** narrow the active tab's loaded issues into the current **Issue list**; **Status order** sets its order.

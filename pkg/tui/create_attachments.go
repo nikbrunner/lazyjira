@@ -15,6 +15,7 @@ import (
 // attachmentsUploadedMsg reports the uploads for a newly created issue.
 type attachmentsUploadedMsg struct {
 	issueKey string
+	verb     string // "Created" or "Updated"
 	total    int
 	errs     []error
 }
@@ -29,10 +30,10 @@ func escapeImageTokensForWiki(text string) string {
 
 // uploadAttachments uploads the images one after another and deletes the
 // clipboard temp files afterwards.
-func uploadAttachments(client jira.ClientInterface, issueKey string, attachments []components.CreateAttachment) tea.Cmd {
+func uploadAttachments(client jira.ClientInterface, issueKey, verb string, attachments []components.CreateAttachment) tea.Cmd {
 	return func() tea.Msg {
 		defer components.RemoveTempAttachments(attachments)
-		msg := attachmentsUploadedMsg{issueKey: issueKey, total: len(attachments)}
+		msg := attachmentsUploadedMsg{issueKey: issueKey, verb: verb, total: len(attachments)}
 		for _, att := range attachments {
 			data, err := os.ReadFile(att.Path)
 			if err == nil {
@@ -51,8 +52,8 @@ func uploadAttachments(client jira.ClientInterface, issueKey string, attachments
 // refresh, which clears the status error.
 func (a *App) handleAttachmentsUploaded(msg attachmentsUploadedMsg) (tea.Model, tea.Cmd) {
 	if len(msg.errs) > 0 {
-		text := fmt.Sprintf("Created %s; %d of %d images failed to upload: %v",
-			msg.issueKey, len(msg.errs), msg.total, msg.errs[0])
+		text := fmt.Sprintf("%s %s; %d of %d images failed to upload: %v",
+			msg.verb, msg.issueKey, len(msg.errs), msg.total, msg.errs[0])
 		a.statusPanel.SetError(text)
 		a.modal.ShowError("Upload failed", []components.ModalItem{{Label: text}})
 	} else {
@@ -60,7 +61,7 @@ func (a *App) handleAttachmentsUploaded(msg attachmentsUploadedMsg) (tea.Model, 
 		if msg.total == 1 {
 			noun = "image"
 		}
-		a.helpBar.SetStatusMsg(fmt.Sprintf("Created %s with %d %s", msg.issueKey, msg.total, noun))
+		a.helpBar.SetStatusMsg(fmt.Sprintf("%s %s with %d %s", msg.verb, msg.issueKey, msg.total, noun))
 	}
 	return a, tea.Batch(a.fetchActiveTab(), fetchIssueDetail(a.client, msg.issueKey))
 }

@@ -1,6 +1,7 @@
 package components
 
 import (
+	"cmp"
 	"fmt"
 	"os"
 	"slices"
@@ -104,7 +105,9 @@ type CreateForm struct {
 
 	issueTypeName string
 	projectKey    string
-	focusedPanel  CreatePanel
+	// title names the view's use, such as "Edit PLAT-3", on the Summary border.
+	title        string
+	focusedPanel CreatePanel
 
 	allFields []CreateFormField
 
@@ -160,6 +163,9 @@ func (f *CreateForm) Pause() { f.paused = true }
 
 // Resume resumes key interception after sub-overlay closes
 func (f *CreateForm) Resume() { f.paused = false }
+
+// SetTitle sets the view title shown on the Summary border and while loading.
+func (f *CreateForm) SetTitle(title string) { f.title = title }
 
 // FocusedPanel returns which sub-panel is currently focused
 func (f *CreateForm) FocusedPanel() CreatePanel { return f.focusedPanel }
@@ -292,6 +298,7 @@ func (f *CreateForm) Hide() {
 	f.summaryText = nil
 	f.desc = nil
 	f.attachments = nil
+	f.title = ""
 	f.errorMsg = ""
 	f.loading = false
 	f.filterInput.SetValue("")
@@ -715,8 +722,20 @@ func (f *CreateForm) editCurrentField(filtered []int) (tea.Cmd, bool) {
 	return nil, true
 }
 
-func (f *CreateForm) submitForm() (tea.Cmd, bool) {
-	// sync summary text back to allFields
+// Values returns the fields a submit would send, keyed by field ID.
+func (f *CreateForm) Values() map[string]any {
+	f.syncText()
+	values := make(map[string]any)
+	for _, fld := range f.allFields {
+		if fld.Value != nil {
+			values[fld.FieldID] = fld.Value
+		}
+	}
+	return values
+}
+
+// syncText copies the Summary and Description text into their fields.
+func (f *CreateForm) syncText() {
 	if f.summaryIdx >= 0 {
 		text := strings.TrimSpace(string(f.summaryText))
 		f.allFields[f.summaryIdx].Value = text
@@ -730,6 +749,10 @@ func (f *CreateForm) submitForm() (tea.Cmd, bool) {
 			f.allFields[f.descIdx].Value = text
 		}
 	}
+}
+
+func (f *CreateForm) submitForm() (tea.Cmd, bool) {
+	f.syncText()
 
 	// validate required fields
 	hasErrors := false
@@ -754,12 +777,7 @@ func (f *CreateForm) submitForm() (tea.Cmd, bool) {
 		return nil, true
 	}
 
-	fieldsMap := make(map[string]any)
-	for _, fld := range f.allFields {
-		if fld.Value != nil {
-			fieldsMap[fld.FieldID] = fld.Value
-		}
-	}
+	fieldsMap := f.Values()
 	attachments := slices.Clone(f.attachments)
 	return func() tea.Msg { return CreateFormSubmitMsg{Fields: fieldsMap, Attachments: attachments} }, true
 }
@@ -836,7 +854,7 @@ func (f *CreateForm) Render(bg string, w, h int) string {
 		return bg
 	}
 	if f.loading && len(f.allFields) == 0 {
-		popup := RenderPanelFull("Create issue", "", "\n  Loading...\n", 40, 3, true, nil)
+		popup := RenderPanelFull(cmp.Or(f.title, "Create issue"), "", "\n  Loading...\n", 40, 3, true, nil)
 		return Overlay(bg, popup, w, h)
 	}
 	return f.renderForm(bg, w, h)
@@ -878,6 +896,9 @@ func (f *CreateForm) renderSummary(formW, panelH int) string {
 	title := "Summary"
 	if f.summaryIdx >= 0 && f.allFields[f.summaryIdx].Required {
 		title = "*Summary"
+	}
+	if f.title != "" {
+		title = f.title + " · " + title
 	}
 
 	if focused {

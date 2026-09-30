@@ -31,8 +31,8 @@ func TestEditAction_TargetsPreviewedIssue(t *testing.T) {
 
 	_, _ = app.handleActionEdit()
 
-	if got := app.editContext.issueKey; got != subKey1 {
-		t.Errorf("editContext.issueKey = %q, want %q", got, subKey1)
+	if got := app.createCtx.editKey; got != subKey1 {
+		t.Errorf("createCtx.editKey = %q, want %q", got, subKey1)
 	}
 }
 
@@ -107,7 +107,7 @@ func TestEditAction_OnInfoSubTab_EditsPreviewedIssueSummary(t *testing.T) {
 	}
 }
 
-func TestEditAction_Description_TargetsPreviewedIssue(t *testing.T) {
+func TestEditAction_Details_EditsPreviewedIssue(t *testing.T) {
 	t.Parallel()
 	fake := &jiratest.FakeClient{T: t}
 	app := setupPreviewedSub(t, fake, &jira.Issue{Key: subKey1, Description: "sub desc"})
@@ -116,11 +116,8 @@ func TestEditAction_Description_TargetsPreviewedIssue(t *testing.T) {
 
 	_, _ = app.handleActionEdit()
 
-	if got := app.editContext.issueKey; got != subKey1 {
-		t.Errorf("editContext.issueKey = %q, want %q", got, subKey1)
-	}
-	if app.editContext.kind != editDesc {
-		t.Errorf("editContext.kind = %v, want editDesc", app.editContext.kind)
+	if got := app.createCtx.editKey; got != subKey1 {
+		t.Errorf("createCtx.editKey = %q, want %q", got, subKey1)
 	}
 }
 

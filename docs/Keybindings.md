@@ -43,7 +43,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `v` | Start a marked range at the cursor; press again to end it and keep the range marked |
 | `f` | Filter the loaded issues by status, issue type, and priority; `space` toggles a value, `enter` applies. Counts show the issues each value would leave, and values that would leave none are dimmed. Each tab keeps its own filter for the session |
 | `t` | Transition status |
-| `e` | Edit (summary, description, or focused field) |
+| `e` | Open the selected issue in the Issue Edit View (issues list and details pane), edit the focused field (Issue info pane), or edit the selected comment (comments tab) |
 | `p` | Change priority |
 | `a` | Change assignee |
 | `n` | Create new issue (issues list) or new comment (comments tab) |
@@ -73,23 +73,27 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `esc` | Clear filter or close |
 | `q` / `?` | Close |
 
-## Create issue form
+## Issue Edit View
 
-The form shows Fields beside Summary and Description, or stacks them on narrow terminals. Type is the first row in Fields. It starts on the type last used in the project this session, or on the first type Jira lists, and editing it switches the form to another type. A subtask's Type can't be changed. Its keys are fixed.
+`n` opens the Issue Edit View to create an issue, and `e` opens it on the selected issue to edit it. The view shows Fields beside Summary and Description, or stacks them on narrow terminals. Its keys are fixed.
+
+Type is the first row in Fields. When creating, it starts on the type last used in the project this session, or on the first type Jira lists, and editing it switches the view to another type. A subtask's Type and an edited issue's Type can't be changed.
+
+Editing starts from the issue's current values, and saving sends only the fields you changed.
 
 | Key | Action |
 |-----|--------|
 | `tab` / `shift+tab` | Next / previous panel |
-| `ctrl+s` | Create the issue from any panel |
+| `ctrl+s` | Create or save the issue from any panel |
 | `enter` | Move from Summary to Description; start a new line in Description; edit the selected field in Fields |
-| `ctrl+g` | Open the Description in `$EDITOR`; the saved text returns to the form |
+| `ctrl+g` | Open the Description in `$EDITOR`; the saved text returns to the view |
 | `ctrl+v` | Paste an image from the clipboard into the Description |
 | `e` / `space` | Edit the selected field (Fields) |
 | `/` | Filter fields (Fields) |
 | `q` | Cancel (Fields) |
 | `esc` | Cancel |
 
-Dropping image files (PNG, JPEG, GIF, WebP) on the terminal while the Description is focused attaches them too. Each image adds an `[Image #N]` token at the cursor and a line under the Description. The images upload as attachments once the issue exists, and the tokens stay as text in the description. An image stays attached until the form closes, even if its token is deleted from the text.
+Dropping image files (PNG, JPEG, GIF, WebP) on the terminal while the Description is focused attaches them too. Each image adds an `[Image #N]` token at the cursor and a line under the Description, which lists only the images added in this view. The images upload as attachments once the issue is created or saved, and the tokens stay as text in the description. An image stays attached until the view closes, even if its token is deleted from the text.
 
 Reading the clipboard needs `osascript` on macOS, `wl-paste` on Wayland, or `xclip` on X11.
 

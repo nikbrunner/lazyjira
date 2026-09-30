@@ -553,6 +553,9 @@ func (a *App) handleCreatePreFormError(msg createPreFormErrorMsg) (tea.Model, te
 	}
 	subtask := a.createCtx.parentKey != ""
 	text := formatCreateError(msg.err, a.createCtx.projectKey, subtask)
+	if key := a.createCtx.editKey; key != "" {
+		text = "Cannot edit " + key + ": " + msg.err.Error()
+	}
 	if a.createFormPopulated() {
 		a.createCtx.loadingTypeID, a.createCtx.loadingTypeName = "", ""
 		a.createForm.SetError(text)
@@ -571,8 +574,9 @@ func (a *App) createFormPopulated() bool {
 	return a.createForm.IsVisible() && a.createForm.FieldAt(0) != nil
 }
 
-// createTypeField is the Type row of the create form. The subtask flow keeps
-// its type, so the row offers no choices there.
+// createTypeField is the Type row of the form. The subtask flow keeps its
+// type, and changing an existing issue's type is a Jira move, so the row
+// offers no choices there.
 func (a *App) createTypeField() components.CreateFormField {
 	f := components.CreateFormField{
 		FieldID:      fldIssueType,
@@ -580,7 +584,7 @@ func (a *App) createTypeField() components.CreateFormField {
 		Type:         components.CFFieldSingleSelect,
 		DisplayValue: a.createCtx.issueTypeName,
 	}
-	if a.createCtx.parentKey == "" {
+	if a.createCtx.parentKey == "" && a.createCtx.editKey == "" {
 		f.AllowedValues = a.createCtx.issueTypes
 	}
 	return f
@@ -614,7 +618,16 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 		return a, nil
 	}
 
-	if a.cfg.GUI.ShouldPrefillFromTab() {
+	title := "Create issue"
+	switch {
+	case a.createCtx.editFrom != nil:
+		title = "Edit " + a.createCtx.editKey
+		applyEditPrefill(fields, a.createCtx.editFrom, a.isCloud)
+		// Saving the plain-text fallback would flatten the rich description.
+		if err := a.prefillDescriptionMarkdown(fields); err != nil {
+			return a.handleEditIssueLoaded(editIssueLoadedMsg{key: a.createCtx.editKey, err: err})
+		}
+	case a.cfg.GUI.ShouldPrefillFromTab():
 		tab := a.issuesList.ActiveTab()
 		if tab.JQL != "" {
 			jql := resolveTabJQL(tab, a.projectKey, a.cfg.Jira.Email)
@@ -625,11 +638,15 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 
 	if src := a.createCtx.duplicateFrom; src != nil {
 		applyDuplicatePrefill(fields, src, a.isCloud)
-		a.prefillDescriptionMarkdown(fields)
+		_ = a.prefillDescriptionMarkdown(fields)
 	}
 
 	a.invalidateSprintFetch()
+	a.createForm.SetTitle(title)
 	a.createForm.ShowForm(fields, a.createCtx.issueTypeName, a.createCtx.projectKey)
+	if a.createCtx.editFrom != nil {
+		a.createCtx.editInitial = a.createForm.Values()
+	}
 
 	var cmds []tea.Cmd
 	if _, ok := a.usersCache.get(a.projectKey); !ok {
@@ -642,25 +659,27 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 }
 
 // prefillDescriptionMarkdown turns an ADF description prefill into the
-// Markdown the form edits, keeping the converter state for submit.
-func (a *App) prefillDescriptionMarkdown(fields []components.CreateFormField) {
+// Markdown the form edits, keeping the converter state for submit. On a
+// conversion error the prefill keeps its plain text and the error is returned.
+func (a *App) prefillDescriptionMarkdown(fields []components.CreateFormField) error {
 	for i := range fields {
 		if fields[i].FieldID != fldDescription || fields[i].Value == nil {
 			continue
 		}
 		if _, isStr := fields[i].Value.(string); isStr {
-			return
+			return nil
 		}
 		md, state, err := a.converter.ToMarkdown(fields[i].Value)
 		if err != nil {
 			a.statusPanel.SetError("convert description: " + err.Error())
-			return
+			return err
 		}
 		fields[i].Value = md
 		fields[i].DisplayValue = md
 		a.createCtx.descConvState = state
-		return
+		return nil
 	}
+	return nil
 }
 
 // applyDuplicatePrefill copies field values from a source issue to form fields
@@ -946,7 +965,7 @@ func (a *App) handleIssueCreated(msg issueCreatedMsg) (tea.Model, tea.Cmd) {
 		if len(attachments) > 0 {
 			// Refreshing waits for the uploads: a finished refresh turns off
 			// request logging and clears the status error.
-			return a, uploadAttachments(a.client, msg.issue.Key, attachments)
+			return a, uploadAttachments(a.client, msg.issue.Key, "Created", attachments)
 		}
 		return a, tea.Batch(a.fetchActiveTab(), fetchIssueDetail(a.client, msg.issue.Key))
 	}

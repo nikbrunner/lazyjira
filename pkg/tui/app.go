@@ -48,13 +48,13 @@ const (
 	fldName        = "name"
 	fldDescription = "description"
 	fldIssueType   = "issuetype"
+	fldSummary     = "summary"
 )
 
 type editKind int
 
 const (
 	editNone editKind = iota
-	editDesc
 	editCommentNew
 	editCommentMod
 	editSummary
@@ -92,6 +92,12 @@ type createCtx struct {
 	loadingTypeName string
 	// attachments are uploaded once the submitted issue exists.
 	attachments []components.CreateAttachment
+	// editKey is set when the Issue Edit View edits an existing issue.
+	editKey  string
+	editFrom *jira.Issue
+	// editInitial holds the view's values when it opened; a save sends only
+	// what differs from them.
+	editInitial map[string]any
 	// descConvState is the converter state of a Cloud description prefilled
 	// as Markdown, passed back to FromMarkdown on submit.
 	descConvState any
@@ -620,6 +626,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleClipboardImage(msg)
 	case attachmentsUploadedMsg:
 		return a.handleAttachmentsUploaded(msg)
+	case editIssueLoadedMsg:
+		return a.handleEditIssueLoaded(msg)
+	case issueSavedMsg:
+		return a.handleIssueSaved(msg)
 	case components.CreateFormCancelMsg:
 		return a.handleCreateFormCancel()
 
@@ -1028,9 +1038,6 @@ func (a *App) convertAndSubmit(ctx editCtx, mdContent string) tea.Cmd {
 // markdown used for optimistic local updates.
 func (a *App) submitEdit(ctx editCtx, body any, md string) tea.Cmd {
 	switch ctx.kind { //nolint:exhaustive
-	case editDesc:
-		a.optimisticFieldUpdate(ctx.issueKey, fldDescription, md)
-		return updateIssueField(a.client, ctx.issueKey, fldDescription, body)
 	case editCommentNew:
 		return addComment(a.client, ctx.issueKey, body)
 	case editCommentMod:

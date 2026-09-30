@@ -435,35 +435,6 @@ func TestApplyEdit(t *testing.T) {
 		wantsCmd bool
 	}{
 		{
-			name:     "description on server sends markdown",
-			kind:     editDesc,
-			wantsCmd: true,
-			assert: func(t *testing.T, fake *jiratest.FakeClient) {
-				t.Helper()
-				if len(fake.UpdateIssueCalls) != 1 {
-					t.Fatalf("UpdateIssue calls = %d", len(fake.UpdateIssueCalls))
-				}
-				if body, ok := fake.UpdateIssueCalls[0].Fields[fldDescription].(string); !ok || body != "hello" {
-					t.Errorf("description body = %v, want plain string", fake.UpdateIssueCalls[0].Fields[fldDescription])
-				}
-			},
-		},
-		{
-			name:     "description on cloud converts to ADF",
-			kind:     editDesc,
-			isCloud:  true,
-			wantsCmd: true,
-			assert: func(t *testing.T, fake *jiratest.FakeClient) {
-				t.Helper()
-				if len(fake.UpdateIssueCalls) != 1 {
-					t.Fatalf("UpdateIssue calls = %d", len(fake.UpdateIssueCalls))
-				}
-				if _, isString := fake.UpdateIssueCalls[0].Fields[fldDescription].(string); isString {
-					t.Error("cloud description should be ADF, not a string")
-				}
-			},
-		},
-		{
 			name:     "new comment posts comment",
 			kind:     editCommentNew,
 			wantsCmd: true,
@@ -540,7 +511,7 @@ func TestApplyEdit_ConverterErrorSurfacesInStatus(t *testing.T) {
 	app := editFlowApp(t, &jiratest.FakeClient{T: t})
 	app.isCloud = true
 	app.converter = failingConverter{}
-	app.editContext = editCtx{kind: editDesc, issueKey: testKey}
+	app.editContext = editCtx{kind: editCommentNew, issueKey: testKey}
 
 	cmd := app.applyEdit("hello")
 
