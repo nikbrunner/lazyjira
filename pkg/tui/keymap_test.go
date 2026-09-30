@@ -44,6 +44,7 @@ func TestKeymapFromConfig_ExplicitBindingsDisplaceDefaults(t *testing.T) {
 		{name: "existing worktree key override", issues: config.IssueKeys{Browser: "w"}, key: "w", want: ActBrowser},
 		{name: "swapped branch bindings", issues: config.IssueKeys{CreateBranch: "b", CopyBranchName: "B"}, key: "B", want: ActCopyBranchName},
 		{name: "one default alias displaced", issues: config.IssueKeys{CreateBranch: "ctrl+c"}, key: "ctrl+c", want: ActCreateBranch},
+		{name: "legacy copy URL binding", issues: config.IssueKeys{CopyURL: "y"}, key: "y", want: ActCopyURL},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -194,6 +194,8 @@ type IssueKeys struct {
 	Browser          string `yaml:"browser"`
 	URLPicker        string `yaml:"urlPicker"`
 	CopyURL          string `yaml:"copyURL"`
+	CopySummary      string `yaml:"copySummary"`
+	CopyMarkdownLink string `yaml:"copyMarkdownLink"`
 	CopyBranchName   string `yaml:"copyBranchName"`
 	CopyWorktreeName string `yaml:"copyWorktreeName"`
 	CloseJQLTab      string `yaml:"closeJQLTab"`

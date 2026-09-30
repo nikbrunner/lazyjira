@@ -5,6 +5,17 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [Unreleased]
 
+### Breaking
+
+- **Breaking:** `y` copies the issue key and summary instead of the issue URL, which moves to `Y`. A configured `copyURL`
+  key keeps working. — nbr <nikolaus.brunner@protonmail.ch>
+
+### Added
+
+- Issues panel — nbr <nikolaus.brunner@protonmail.ch>
+  - `ctrl+y` copies the issue as a Markdown link, `[KEY Summary](URL)`, remappable as `copyMarkdownLink`.
+  - Copying a single issue shows the copied text in the status bar.
+
 ### Changed
 
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>

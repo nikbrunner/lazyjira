@@ -27,7 +27,7 @@ func marksApp(t *testing.T) *App {
 }
 
 //nolint:paralleltest // Replaces the process-wide clipboard command runner.
-func TestYank_MarkedRowsThenURL(t *testing.T) {
+func TestYank_MarkedRowsThenSummary(t *testing.T) {
 	original := runExternalCommand
 	t.Cleanup(func() { runExternalCommand = original })
 	var copied string
@@ -51,13 +51,13 @@ func TestYank_MarkedRowsThenURL(t *testing.T) {
 
 	app.handleKeyMsg(keyRunes("y"))
 
-	if want := "https://jira.example/browse/A-3"; copied != want {
+	if want := "A-3 Three"; copied != want {
 		t.Fatalf("copied %q without marks, want %q", copied, want)
 	}
 }
 
 //nolint:paralleltest // Replaces the process-wide clipboard command runner.
-func TestYank_MarksHiddenByFilterCopyURL(t *testing.T) {
+func TestYank_MarksHiddenByFilterCopySummary(t *testing.T) {
 	original := runExternalCommand
 	t.Cleanup(func() { runExternalCommand = original })
 	var copied string
@@ -69,7 +69,7 @@ func TestYank_MarksHiddenByFilterCopyURL(t *testing.T) {
 
 	app.handleKeyMsg(keyRunes("y"))
 
-	if want := "https://jira.example/browse/A-3"; copied != want {
+	if want := "A-3 Three"; copied != want {
 		t.Fatalf("copied %q, want %q", copied, want)
 	}
 
@@ -103,6 +103,34 @@ func TestYank_MarkingModeBypassesCustomCommand(t *testing.T) {
 
 	if want := "A-1 One"; copied != want {
 		t.Fatalf("yanked %q, want %q", copied, want)
+	}
+}
+
+//nolint:paralleltest // Replaces the process-wide clipboard command runner.
+func TestCopy_URLAndMarkdownLinkUseCursorIssue(t *testing.T) {
+	original := runExternalCommand
+	t.Cleanup(func() { runExternalCommand = original })
+	var copied string
+	runExternalCommand = func(input string, _ bool, _ string, _ ...string) { copied = input }
+
+	app := marksApp(t)
+	app.cfg.Sanitize = config.SanitizeConfig{Remove: []string{"[", "]"}}
+	app.issuesList.SetIssues([]jira.Issue{{Key: "A-1", Summary: "[web] Fix login"}, {Key: "A-2", Summary: "Two"}})
+	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.issuesList.Cursor = 1
+
+	app.handleKeyMsg(keyRunes("Y"))
+	if want := "https://jira.example/browse/A-2"; copied != want {
+		t.Fatalf("Y copied %q, want %q", copied, want)
+	}
+	if !app.issuesList.HasMarks() {
+		t.Fatal("Y cleared the marks")
+	}
+
+	app.issuesList.Cursor = 0
+	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyCtrlY})
+	if want := "[A-1 web Fix login](https://jira.example/browse/A-1)"; copied != want {
+		t.Fatalf("ctrl+y copied %q, want %q", copied, want)
 	}
 }
 

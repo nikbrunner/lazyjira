@@ -52,7 +52,9 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `c` | View comments |
 | `o` | Open in browser |
 | `u` | Pick URL from description |
-| `y` | Copy marked issue rows as plain text, one per line with `sanitize.remove` applied, and clear the marks. Without marks, copy the issue URL |
+| `y` | Copy the issue key and summary. With marks, copy the marked issue rows as plain text, one per line, and clear the marks. `sanitize.remove` applies to both |
+| `ctrl+y` | Copy the issue as a Markdown link, `[KEY Summary](URL)`, with `sanitize.remove` applied to the summary |
+| `Y` | Copy the issue URL |
 | `b` | Copy branch name (issues, info, or detail panel) |
 | `B` | Create branch from issue using the same name as `b` |
 | `w` | Copy repository-prefixed worktree name (issues, info, or detail panel) |

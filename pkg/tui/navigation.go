@@ -181,6 +181,13 @@ func copyToClipboard(text string) {
 	runExternalCommand(text, true, name, args...)
 }
 
+func (a *App) issueURL(key string) string { return a.cfg.Jira.Host + "/browse/" + key }
+
+func (a *App) copyIssueText(text string) {
+	copyToClipboard(text)
+	a.helpBar.SetStatusMsg("Copied: " + text)
+}
+
 func openBrowser(url string) {
 	name, args := platformCommand("open", url)
 	runExternalCommand("", false, name, args...)

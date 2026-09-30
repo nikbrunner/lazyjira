@@ -2,8 +2,8 @@ package config
 
 import "strings"
 
-// SanitizeConfig lists text removed from copied values: yanked issue rows and
-// the `sanitize` custom command helper.
+// SanitizeConfig lists text removed from copied values: yanked issue rows,
+// copied summaries and Markdown links, and the `sanitize` custom command helper.
 type SanitizeConfig struct {
 	Remove []string `yaml:"remove"`
 }

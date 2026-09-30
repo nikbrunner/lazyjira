@@ -452,7 +452,7 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 
 func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 	switch action { //nolint:exhaustive
-	case ActCopyURL:
+	case ActCopySummary:
 		if a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.HasMarks() {
 			n := len(a.issuesList.MarkedIssues())
 			copyToClipboard(a.issuesList.MarkedRowsText())
@@ -465,7 +465,19 @@ func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 			return a, nil, true
 		}
 		if cur := a.currentIssue(); cur != nil {
-			copyToClipboard(a.cfg.Jira.Host + "/browse/" + cur.Key)
+			a.copyIssueText(cur.Key + " " + a.cfg.Sanitize.Apply(cur.Summary))
+		}
+		return a, nil, true
+
+	case ActCopyMarkdownLink:
+		if cur := a.currentIssue(); cur != nil {
+			a.copyIssueText(fmt.Sprintf("[%s %s](%s)", cur.Key, a.cfg.Sanitize.Apply(cur.Summary), a.issueURL(cur.Key)))
+		}
+		return a, nil, true
+
+	case ActCopyURL:
+		if cur := a.currentIssue(); cur != nil {
+			a.copyIssueText(a.issueURL(cur.Key))
 		}
 		return a, nil, true
 
@@ -680,7 +692,7 @@ func (a *App) isMarkingKey(key string) bool {
 		return false
 	}
 	switch a.keymap.Match(key) { //nolint:exhaustive
-	case ActSelect, ActVisualSelect, ActCopyURL, ActFocusLeft:
+	case ActSelect, ActVisualSelect, ActCopySummary, ActFocusLeft:
 		return true
 	}
 	return false
