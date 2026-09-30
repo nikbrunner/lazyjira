@@ -160,7 +160,7 @@ func TestSprintRequestInvalidationClosesOnlyOwnedLoadingModal(t *testing.T) {
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.createForm = components.NewCreateForm()
 		app.createForm.ShowForm(nil, "Task", testProject)
-		app.createCtx = createCtx{projectKey: testProject, issueTypeID: "1", issueTypeName: "Task"}
+		app.createCtx = createCtx{projectKey: testProject, loadingTypeID: "1", loadingTypeName: "Task"}
 		app.startSprintFetch(sprintPickerTarget{createForm: true})
 		app.handleCreateMetaLoaded(createMetaLoadedMsg{projectKey: testProject, issueTypeID: "1", cacheVersion: app.referenceCacheVersion})
 		if app.modal.IsVisible() || !app.createForm.IsVisible() {

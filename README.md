@@ -32,7 +32,7 @@ runs a JQL search into a temporary tab, and switches to another project.
 
 ### Creating an issue
 
-`n` opens an empty form for a bug, the description is written in `$EDITOR`, and priority, assignee,
+`n` opens an empty form that starts on a bug, the description is written in `$EDITOR`, and priority, assignee,
 labels, and components are picked from lists. The new issue then opens with its description.
 
 <p align="center">

@@ -16,8 +16,7 @@ Type "plat"
 # create a new issue
 @create
 
-# type picker: select Bug
-Enter
+# the form opens on Bug, the first issue type
 Sleep 600ms
 
 # type the summary
@@ -49,9 +48,10 @@ Sleep 300ms
 Enter
 Sleep 800ms
 
-# go to fields
+# go to fields, past the Type row
 Tab
 Sleep 200ms
+@down
 
 # edit priority to High
 @edit
@@ -86,9 +86,7 @@ Sleep 200ms
 @wait 300
 
 # submit
-Tab
-Sleep 200ms
-Enter
+Ctrl+S
 Sleep 600ms
 
 # issue created: open it to show the description

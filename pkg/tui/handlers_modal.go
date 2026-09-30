@@ -207,6 +207,23 @@ func (a *App) handleCreateFormPicker(msg components.CreateFormPickerMsg) (tea.Mo
 	}
 	idx := msg.FieldIndex
 
+	if field.FieldID == fldIssueType {
+		if len(msg.Items) == 0 {
+			return a, nil
+		}
+		a.createForm.Pause()
+		a.onSelect = func(item components.ModalItem) tea.Cmd {
+			if item.ID == a.createCtx.issueTypeID {
+				return nil
+			}
+			return func() tea.Msg {
+				return components.CreateFormTypeSelectedMsg{TypeID: item.ID, TypeName: item.Label}
+			}
+		}
+		a.modal.Show("Select issue type", msg.Items)
+		return a, nil
+	}
+
 	a.createForm.Pause()
 
 	// for assignee/person fields, fetch users if no items provided
@@ -382,7 +399,13 @@ func (a *App) handleCreateFormCancel() (tea.Model, tea.Cmd) {
 // handleCreateFormSubmit sends create issue request
 func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Model, tea.Cmd) {
 	msg.Fields["project"] = map[string]string{"key": a.createCtx.projectKey}
-	msg.Fields["issuetype"] = map[string]string{"id": a.createCtx.issueTypeID}
+	msg.Fields[fldIssueType] = map[string]string{"id": a.createCtx.issueTypeID}
+	if a.createCtx.parentKey == "" {
+		if a.lastCreateType == nil {
+			a.lastCreateType = make(map[string]string)
+		}
+		a.lastCreateType[a.createCtx.projectKey] = a.createCtx.issueTypeID
+	}
 	if a.createCtx.parentKey != "" {
 		msg.Fields["parent"] = map[string]string{"key": a.createCtx.parentKey}
 	}

@@ -462,7 +462,7 @@ func TestCreateForm_InterceptFieldsEditMultiSelect(t *testing.T) {
 	}
 }
 
-func TestCreateForm_InterceptFieldsEnterSubmitsMissingRequired(t *testing.T) {
+func TestCreateForm_CtrlSSubmitsMissingRequired(t *testing.T) {
 	t.Parallel()
 	form := NewCreateForm()
 	form.SetSize(120, 40)
@@ -474,7 +474,7 @@ func TestCreateForm_InterceptFieldsEnterSubmitsMissingRequired(t *testing.T) {
 	form.ShowForm(fields, testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	_, _ = form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
 	testkit.AssertEqual(t, "error set for missing required", form.errorMsg != "", true)
 }
 
@@ -486,7 +486,7 @@ func TestCreateForm_SubmitFormSucceeds(t *testing.T) {
 		{FieldID: "summary", Name: "Summary", Type: CFFieldSingleText, DisplayValue: testSummaryText, Value: testSummaryText},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
 	testkit.AssertEqual(t, "consumed", consumed, true)
 	if cmd == nil {
 		t.Fatal("expected submit cmd")
@@ -919,4 +919,32 @@ func TestCreateForm_ClickFocusesPanelUnderPointer(t *testing.T) {
 	testkit.AssertEqual(t, "first field row selected", form.fieldCursor, 0)
 	click(50, 1)
 	testkit.AssertEqual(t, "click in summary", form.FocusedPanel(), CreatePanelSummary)
+}
+
+func TestCreateForm_SummaryEnterMovesToDescription(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.SetSize(120, 40)
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
+	testkit.AssertEqual(t, "consumed", consumed, true)
+	testkit.AssertEqual(t, "no command", cmd == nil, true)
+	testkit.AssertEqual(t, "focus moved", form.FocusedPanel(), CreatePanelDescription)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	testkit.AssertEqual(t, "typing reaches the textarea", form.DescriptionText(), "x")
+}
+
+func TestCreateForm_FieldsEnterEditsSelectedField(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.SetSize(120, 40)
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyShiftTab})
+	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatal("expected edit cmd")
+	}
+	if _, ok := cmd().(CreateFormPickerMsg); !ok {
+		t.Errorf("enter on a select field = %T, want CreateFormPickerMsg", cmd())
+	}
 }

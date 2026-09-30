@@ -401,7 +401,8 @@ func (a *App) handleComponentsLoaded(msg componentsLoadedMsg) (tea.Model, tea.Cm
 	return a, nil
 }
 
-// handleIssueTypesLoaded shows the issue type picker modal or create form type picker
+// handleIssueTypesLoaded opens the create form with its default issue type,
+// or shows the issue type picker modal
 func (a *App) handleIssueTypesLoaded(msg issueTypesLoadedMsg) (tea.Model, tea.Cmd) {
 	if a.createCtx.intent {
 		a.createCtx.intent = false
@@ -412,17 +413,24 @@ func (a *App) handleIssueTypesLoaded(msg issueTypesLoadedMsg) (tea.Model, tea.Cm
 				items = append(items, components.ModalItem{ID: t.ID, Label: t.Name})
 			}
 		}
-		a.onSelect = func(item components.ModalItem) tea.Cmd {
-			return func() tea.Msg {
-				return components.CreateFormTypeSelectedMsg{TypeID: item.ID, TypeName: item.Label}
+		if len(items) == 0 {
+			a.statusPanel.SetError("No issue types to create in " + a.createCtx.projectKey)
+			a.createCtx = createCtx{}
+			return a, nil
+		}
+		a.createCtx.issueTypes = items
+		preferred := a.lastCreateType[a.createCtx.projectKey]
+		if src := a.createCtx.duplicateFrom; src != nil && src.IssueType != nil {
+			preferred = src.IssueType.ID
+		}
+		selected := items[0]
+		for _, item := range items {
+			if item.ID == preferred {
+				selected = item
+				break
 			}
 		}
-		title := "Select issue type"
-		if subtaskOnly {
-			title = "Select subtask type"
-		}
-		a.modal.Show(title, items)
-		return a, nil
+		return a.handleCreateFormTypeSelected(components.CreateFormTypeSelectedMsg{TypeID: selected.ID, TypeName: selected.Label})
 	}
 	items := make([]components.ModalItem, 0, len(msg.issueTypes))
 	for _, t := range msg.issueTypes {
@@ -524,8 +532,8 @@ func (a *App) handleBatchPrefetched(msg batchPrefetchedMsg) (tea.Model, tea.Cmd)
 
 // handleCreateFormTypeSelected fetches create metadata for selected type
 func (a *App) handleCreateFormTypeSelected(msg components.CreateFormTypeSelectedMsg) (tea.Model, tea.Cmd) {
-	a.createCtx.issueTypeID = msg.TypeID
-	a.createCtx.issueTypeName = msg.TypeName
+	a.createCtx.loadingTypeID = msg.TypeID
+	a.createCtx.loadingTypeName = msg.TypeName
 	cacheKey := a.createCtx.projectKey + ":" + msg.TypeID
 	if cached, ok := a.createMetaCache.get(cacheKey); ok {
 		return a.handleCreateMetaLoaded(createMetaLoadedMsg{fields: cached, projectKey: a.createCtx.projectKey, issueTypeID: msg.TypeID, cacheVersion: a.referenceCacheVersion, fromCache: true})
@@ -538,9 +546,18 @@ func (a *App) handleCreateFormTypeSelected(msg components.CreateFormTypeSelected
 // handleCreatePreFormError aborts a create flow that failed before the form was
 // populated. The form is hidden (never resumed empty) and the failure is shown
 // as a readable status message carrying Jira's own wording.
+// A failed type change keeps the open form on its previous type.
 func (a *App) handleCreatePreFormError(msg createPreFormErrorMsg) (tea.Model, tea.Cmd) {
+	if msg.issueTypeID != a.createCtx.loadingTypeID {
+		return a, nil
+	}
 	subtask := a.createCtx.parentKey != ""
 	text := formatCreateError(msg.err, a.createCtx.projectKey, subtask)
+	if a.createFormPopulated() {
+		a.createCtx.loadingTypeID, a.createCtx.loadingTypeName = "", ""
+		a.createForm.SetError(text)
+		return a, nil
+	}
 	a.createForm.Hide()
 	a.createCtx = createCtx{}
 	a.statusPanel.SetError(text)
@@ -548,8 +565,37 @@ func (a *App) handleCreatePreFormError(msg createPreFormErrorMsg) (tea.Model, te
 	return a, nil
 }
 
+// createFormPopulated reports whether the create form shows fields, so a
+// createmeta response changes its type instead of opening it.
+func (a *App) createFormPopulated() bool {
+	return a.createForm.IsVisible() && a.createForm.FieldAt(0) != nil
+}
+
+// createTypeField is the Type row of the create form. The subtask flow keeps
+// its type, so the row offers no choices there.
+func (a *App) createTypeField() components.CreateFormField {
+	f := components.CreateFormField{
+		FieldID:      fldIssueType,
+		Name:         "Type",
+		Type:         components.CFFieldSingleSelect,
+		DisplayValue: a.createCtx.issueTypeName,
+	}
+	if a.createCtx.parentKey == "" {
+		f.AllowedValues = a.createCtx.issueTypes
+	}
+	return f
+}
+
 // handleCreateMetaLoaded builds form fields from metadata
 func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cmd) {
+	if msg.issueTypeID != a.createCtx.loadingTypeID {
+		return a, nil
+	}
+	if msg.issueTypeID != "" {
+		a.createCtx.issueTypeID = msg.issueTypeID
+		a.createCtx.issueTypeName = a.createCtx.loadingTypeName
+		a.createCtx.loadingTypeID, a.createCtx.loadingTypeName = "", ""
+	}
 	projectKey := msg.projectKey
 	if projectKey == "" {
 		projectKey = a.createCtx.projectKey
@@ -561,7 +607,12 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 	if projectKey != "" && issueTypeID != "" && msg.cacheVersion == a.referenceCacheVersion && !msg.fromCache {
 		a.createMetaCache.set(projectKey+":"+issueTypeID, msg.fields)
 	}
-	fields := a.buildCreateFields(msg.fields)
+	fields := append([]components.CreateFormField{a.createTypeField()}, a.buildCreateFields(msg.fields)...)
+
+	if a.createFormPopulated() {
+		a.createForm.ChangeType(fields, a.createCtx.issueTypeName)
+		return a, nil
+	}
 
 	if a.cfg.GUI.ShouldPrefillFromTab() {
 		tab := a.issuesList.ActiveTab()

@@ -203,6 +203,41 @@ func (f *CreateForm) setFocus(p CreatePanel) {
 	}
 }
 
+// ChangeType swaps in the fields of another issue type. Summary and
+// Description keep their text; any other field keeps its value when the new
+// type has a field with the same ID.
+func (f *CreateForm) ChangeType(fields []CreateFormField, issueTypeName string) {
+	prev := make(map[string]CreateFormField, len(f.allFields))
+	for _, fld := range f.allFields {
+		prev[fld.FieldID] = fld
+	}
+	f.issueTypeName = issueTypeName
+	f.allFields = fields
+	f.summaryIdx = -1
+	f.descIdx = -1
+	f.fieldIndices = nil
+	for i := range fields {
+		switch fields[i].FieldID {
+		case "summary":
+			f.summaryIdx = i
+		case "description":
+			f.descIdx = i
+		default:
+			if old, ok := prev[fields[i].FieldID]; ok && fields[i].FieldID != "issuetype" {
+				fields[i].Value = old.Value
+				fields[i].DisplayValue = old.DisplayValue
+			}
+			f.fieldIndices = append(f.fieldIndices, i)
+		}
+	}
+	f.fieldCursor = 0
+	f.fieldOffset = 0
+	f.filterInput.SetValue("")
+	f.filtering = false
+	f.errorMsg = ""
+	f.loading = false
+}
+
 func (f *CreateForm) Hide() {
 	f.visible = false
 	f.allFields = nil
@@ -266,6 +301,9 @@ func (f *CreateForm) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	}
 
 	if mm, isMouse := msg.(tea.MouseMsg); isMouse {
+		if f.loading {
+			return nil, true
+		}
 		return f.interceptMouse(mm)
 	}
 
@@ -424,7 +462,7 @@ func (f *CreateForm) interceptFilter(msg tea.KeyMsg) (tea.Cmd, bool) {
 func (f *CreateForm) interceptSummary(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.Type { //nolint:exhaustive
 	case tea.KeyEnter:
-		return f.submitForm()
+		f.setFocus(CreatePanelDescription)
 	case tea.KeyEsc:
 		f.Hide()
 		return func() tea.Msg { return CreateFormCancelMsg{} }, true
@@ -523,10 +561,8 @@ func (f *CreateForm) interceptFields(msg tea.KeyMsg) (tea.Cmd, bool) {
 	case "/":
 		f.filtering = true
 		f.filterInput.SetValue("")
-	case "e", " ":
+	case "e", " ", keyEnter:
 		return f.editCurrentField(filtered)
-	case keyEnter:
-		return f.submitForm()
 	case keyEsc, "q":
 		f.Hide()
 		return func() tea.Msg { return CreateFormCancelMsg{} }, true
@@ -1005,7 +1041,10 @@ func (f *CreateForm) renderFields(formW, panelH int) string {
 	content := strings.Join(lines, "\n")
 
 	footer := ""
-	if len(filtered) > 0 {
+	switch {
+	case f.loading:
+		footer = "Loading..."
+	case len(filtered) > 0:
 		footer = fmt.Sprintf("%d of %d", f.fieldCursor+1, len(filtered))
 	}
 

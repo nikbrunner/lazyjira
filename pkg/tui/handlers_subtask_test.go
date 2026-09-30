@@ -2,7 +2,7 @@ package tui
 
 import (
 	"context"
-	"strings"
+	"reflect"
 	"testing"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -250,15 +250,12 @@ func TestHandleIssueTypesLoaded_SubtaskFilter(t *testing.T) {
 		{ID: "2", Name: "Sub-task", Subtask: true},
 	}})
 
-	view := app.modal.View()
-	if !strings.Contains(view, "Sub-task") {
-		t.Errorf("subtask type should be offered, view:\n%s", view)
+	want := []components.ModalItem{{ID: "2", Label: "Sub-task"}}
+	if !reflect.DeepEqual(app.createCtx.issueTypes, want) {
+		t.Errorf("issueTypes = %v, want only the subtask type", app.createCtx.issueTypes)
 	}
-	if strings.Contains(view, "Story") {
-		t.Errorf("standard type should be filtered out, view:\n%s", view)
-	}
-	if !strings.Contains(view, "Select subtask type") {
-		t.Errorf("title should mark subtask selection, view:\n%s", view)
+	if app.createCtx.loadingTypeID != "2" {
+		t.Errorf("loadingTypeID = %q, want the subtask type", app.createCtx.loadingTypeID)
 	}
 }
 
@@ -273,15 +270,12 @@ func TestHandleIssueTypesLoaded_NonSubtaskFilter(t *testing.T) {
 		{ID: "2", Name: "Sub-task", Subtask: true},
 	}})
 
-	view := app.modal.View()
-	if !strings.Contains(view, "Story") {
-		t.Errorf("standard type should be offered, view:\n%s", view)
+	want := []components.ModalItem{{ID: "1", Label: "Story"}}
+	if !reflect.DeepEqual(app.createCtx.issueTypes, want) {
+		t.Errorf("issueTypes = %v, want only the standard type", app.createCtx.issueTypes)
 	}
-	if strings.Contains(view, "Sub-task") {
-		t.Errorf("subtask type should be filtered out without a parent, view:\n%s", view)
-	}
-	if !strings.Contains(view, "Select issue type") {
-		t.Errorf("title should mark plain issue selection, view:\n%s", view)
+	if app.createCtx.loadingTypeID != "1" {
+		t.Errorf("loadingTypeID = %q, want the standard type", app.createCtx.loadingTypeID)
 	}
 }
 

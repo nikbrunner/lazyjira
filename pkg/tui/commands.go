@@ -257,7 +257,10 @@ type createErrorMsg struct{ err error }
 // createPreFormErrorMsg is a create failure that happens before the form is
 // populated (issue-type metadata load). Unlike createErrorMsg it aborts the
 // flow instead of resuming an empty form.
-type createPreFormErrorMsg struct{ err error }
+type createPreFormErrorMsg struct {
+	err         error
+	issueTypeID string
+}
 
 type customFieldOptionsMsg struct {
 	issueKey      string
@@ -321,7 +324,7 @@ func fetchCreateMeta(client jira.ClientInterface, projectKey, issueTypeID string
 	return func() tea.Msg {
 		fields, err := client.GetCreateMeta(context.Background(), projectKey, issueTypeID)
 		if err != nil {
-			return createPreFormErrorMsg{err: err}
+			return createPreFormErrorMsg{err: err, issueTypeID: issueTypeID}
 		}
 		return createMetaLoadedMsg{fields: fields, projectKey: projectKey, issueTypeID: issueTypeID, cacheVersion: cacheVersion}
 	}

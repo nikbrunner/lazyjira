@@ -9,8 +9,12 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 - Create issue form — nbr <nikolaus.brunner@protonmail.ch>
   - **Breaking:** `ctrl+g` opens the Description in `$EDITOR`. `e` types a letter there.
-  - **Breaking:** `enter` in the Description starts a new line. `ctrl+s` creates the issue from any panel, and `enter`
-    still does from Summary and Fields.
+  - **Breaking:** Only `ctrl+s` creates the issue, from any panel. `enter` moves from Summary to Description, starts a
+    new line in the Description, and edits the selected field in Fields.
+  - **Breaking:** `n` opens the form directly, without an issue type picker first. Type is the first row in Fields and
+    starts on the type last used in that project this session, or on the first one Jira lists. Changing it keeps
+    Summary, Description, and the values of fields the new type shares. A subtask keeps its subtask type, and a
+    duplicate starts on its source's type.
 
 ### Added
 

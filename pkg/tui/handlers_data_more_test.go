@@ -145,8 +145,8 @@ func TestHandleCreateFormTypeSelected(t *testing.T) {
 		if cmd == nil {
 			t.Fatal("expected fetch create meta command")
 		}
-		if app.createCtx.issueTypeID != "10001" {
-			t.Errorf("issueTypeID = %q, want 10001", app.createCtx.issueTypeID)
+		if app.createCtx.loadingTypeID != "10001" {
+			t.Errorf("loadingTypeID = %q, want 10001", app.createCtx.loadingTypeID)
 		}
 	})
 
@@ -398,21 +398,21 @@ func TestApplyDuplicatePrefill(t *testing.T) {
 func TestHandleIssueTypesLoaded(t *testing.T) {
 	t.Parallel()
 
-	t.Run("create intent filters subtasks and installs handler", func(t *testing.T) {
+	t.Run("create intent loads the default type without a picker", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.createCtx = createCtx{intent: true}
 
-		_, _ = app.handleIssueTypesLoaded(issueTypesLoadedMsg{issueTypes: []jira.IssueType{
-			{ID: "1", Name: "Story"},
+		_, cmd := app.handleIssueTypesLoaded(issueTypesLoadedMsg{issueTypes: []jira.IssueType{
 			{ID: "2", Name: "Sub-task", Subtask: true},
+			{ID: "1", Name: "Story"},
 		}})
 
-		if !app.modal.IsVisible() {
-			t.Error("issue type modal should be visible")
+		if app.modal.IsVisible() {
+			t.Error("issue type modal should stay closed")
 		}
-		if app.onSelect == nil {
-			t.Error("onSelect should be set for create intent")
+		if cmd == nil || app.createCtx.loadingTypeID != "1" {
+			t.Errorf("want a createmeta fetch for the first non-subtask type, loadingTypeID = %q", app.createCtx.loadingTypeID)
 		}
 		if app.createCtx.intent {
 			t.Error("intent should be cleared")

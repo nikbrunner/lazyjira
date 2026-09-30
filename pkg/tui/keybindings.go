@@ -161,14 +161,11 @@ func (a *App) helpBarItems() []components.HelpItem {
 	// Overlay-specific hints take priority over panel hints
 	switch {
 	case a.createForm.IsVisible():
-		items := []components.HelpItem{{Key: "tab", Description: "next panel"}}
-		if a.createForm.FocusedPanel() != components.CreatePanelDescription {
-			items = append(items, components.HelpItem{Key: "enter", Description: "submit"})
+		items := []components.HelpItem{
+			{Key: "tab", Description: "next panel"},
+			{Key: "ctrl+s", Description: "submit"},
+			{Key: "esc", Description: "cancel"},
 		}
-		items = append(items,
-			components.HelpItem{Key: "ctrl+s", Description: "submit"},
-			components.HelpItem{Key: "esc", Description: "cancel"},
-		)
 		switch a.createForm.FocusedPanel() { //nolint:exhaustive
 		case components.CreatePanelFields:
 			items = append(items,

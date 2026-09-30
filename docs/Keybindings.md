@@ -75,13 +75,13 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 
 ## Create issue form
 
-The form shows Fields beside Summary and Description, or stacks them on narrow terminals. Its keys are fixed.
+The form shows Fields beside Summary and Description, or stacks them on narrow terminals. Type is the first row in Fields. It starts on the type last used in the project this session, or on the first type Jira lists, and editing it switches the form to another type. A subtask's Type can't be changed. Its keys are fixed.
 
 | Key | Action |
 |-----|--------|
 | `tab` / `shift+tab` | Next / previous panel |
 | `ctrl+s` | Create the issue from any panel |
-| `enter` | Create the issue from Summary or Fields; start a new line in Description |
+| `enter` | Move from Summary to Description; start a new line in Description; edit the selected field in Fields |
 | `ctrl+g` | Open the Description in `$EDITOR`; the saved text returns to the form |
 | `e` / `space` | Edit the selected field (Fields) |
 | `/` | Filter fields (Fields) |

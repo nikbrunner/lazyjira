@@ -47,6 +47,7 @@ const (
 	fldAccountID   = "accountId"
 	fldName        = "name"
 	fldDescription = "description"
+	fldIssueType   = "issuetype"
 )
 
 type editKind int
@@ -83,6 +84,12 @@ type createCtx struct {
 	issueTypeName string
 	parentKey     string
 	duplicateFrom *jira.Issue
+	// issueTypes are the choices of the form's Type row.
+	issueTypes []components.ModalItem
+	// loadingTypeID is the issue type whose createmeta is in flight. A
+	// response for any other type is stale.
+	loadingTypeID   string
+	loadingTypeName string
 	// descConvState is the converter state of a Cloud description prefilled
 	// as Markdown, passed back to FromMarkdown on submit.
 	descConvState any
@@ -190,6 +197,10 @@ type App struct {
 	// pendingMention holds a write deferred until the user cache is loaded.
 	pendingMention *pendingMention
 	converter      ADFConverter
+
+	// lastCreateType maps a project key to the issue type ID last submitted
+	// from the create form this session.
+	lastCreateType map[string]string
 
 	onSelect              onSelectFunc
 	onChecklist           onChecklistFunc
