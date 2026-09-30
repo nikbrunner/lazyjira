@@ -110,6 +110,7 @@ downloaded in a browser; run `xattr -d com.apple.quarantine lazyjira` once to al
 - Works with Jira Cloud and Jira Server / Data Center, including mTLS.
 - Issue tabs are your own JQL queries. `s` searches with autocomplete and history.
 - Edit fields in place, description and comments in `$EDITOR`. `n` creates, `ctrl+n` duplicates, `S` adds a subtask.
+- New issues take pasted or dropped images as attachments.
 - `b` and `w` copy a branch or worktree name, `B` and `W` create it.
 - Jira rich text renders with headings, lists, tables, and highlighted code. `o` opens the browser, `u` picks a link.
 - `#` opens any issue by key, completing the project and the issue number.

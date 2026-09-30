@@ -20,6 +20,9 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 - Create issue form — nbr <nikolaus.brunner@protonmail.ch>
   - The Description is a text area in the form. Pasted text keeps its line breaks.
+  - `ctrl+v` in the Description pastes a clipboard image, and dropped image files attach too. Each image adds an
+    `[Image #N]` token and uploads as an attachment after the issue is created. The clipboard needs `osascript` on
+    macOS, `wl-paste` on Wayland, or `xclip` on X11.
 - Documentation — nbr <nikolaus.brunner@protonmail.ch>
   - The README recommends Jira CLIs for scripts and AI agents, in order: TWG CLI, Atlassian CLI, and jira-cli.
 

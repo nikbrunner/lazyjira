@@ -400,6 +400,7 @@ func (a *App) handleCreateFormCancel() (tea.Model, tea.Cmd) {
 func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Model, tea.Cmd) {
 	msg.Fields["project"] = map[string]string{"key": a.createCtx.projectKey}
 	msg.Fields[fldIssueType] = map[string]string{"id": a.createCtx.issueTypeID}
+	a.createCtx.attachments = msg.Attachments
 	if a.createCtx.parentKey == "" {
 		if a.lastCreateType == nil {
 			a.lastCreateType = make(map[string]string)
@@ -413,6 +414,9 @@ func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Mo
 	*a.logFlag = true
 
 	desc, ok := msg.Fields[fldDescription].(string)
+	if ok && !a.isCloud {
+		msg.Fields[fldDescription] = escapeImageTokensForWiki(desc)
+	}
 	if !ok || !a.isCloud {
 		return a, createIssue(a.client, msg.Fields)
 	}

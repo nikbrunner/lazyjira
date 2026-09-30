@@ -90,6 +90,8 @@ type createCtx struct {
 	// response for any other type is stale.
 	loadingTypeID   string
 	loadingTypeName string
+	// attachments are uploaded once the submitted issue exists.
+	attachments []components.CreateAttachment
 	// descConvState is the converter state of a Cloud description prefilled
 	// as Markdown, passed back to FromMarkdown on submit.
 	descConvState any
@@ -197,6 +199,9 @@ type App struct {
 	// pendingMention holds a write deferred until the user cache is loaded.
 	pendingMention *pendingMention
 	converter      ADFConverter
+
+	// readClipboardImage writes the clipboard image to a temp file.
+	readClipboardImage func() (string, error)
 
 	// lastCreateType maps a project key to the issue type ID last submitted
 	// from the create form this session.
@@ -371,36 +376,37 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	}
 
 	app := &App{
-		cfg:             cfg,
-		client:          client,
-		keymap:          KeymapFromConfig(cfg.Keybinding),
-		splashInfo:      splash,
-		statusPanel:     statusPanel,
-		issuesList:      issuesList,
-		infoPanel:       infoPanel,
-		projectList:     projectList,
-		detailView:      detailView,
-		logPanel:        logPanel,
-		helpBar:         helpBar,
-		searchBar:       searchBar,
-		modal:           modal,
-		jqlModal:        jqlModal,
-		diffView:        diffView,
-		inputModal:      inputModal,
-		createForm:      createForm,
-		side:            sideLeft,
-		leftFocus:       focusIssues,
-		projectKey:      projectKey,
-		isCloud:         cfg.Jira.IsCloud(),
-		demoMode:        authMethod == AuthDemo,
-		logFlag:         logFlag,
-		boardsCache:     newTTLCache[[]jira.Board](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
-		sprintsCache:    newTTLCache[[]sprintOption](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
-		usersCache:      newTTLCache[[]jira.User](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
-		issueCache:      make(map[string]*jira.Issue),
-		childrenCache:   make(map[string][]jira.Issue),
-		createMetaCache: newTTLCache[[]jira.CreateMetaField](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
-		converter:       BuiltinConverter{},
+		cfg:                cfg,
+		client:             client,
+		keymap:             KeymapFromConfig(cfg.Keybinding),
+		splashInfo:         splash,
+		statusPanel:        statusPanel,
+		issuesList:         issuesList,
+		infoPanel:          infoPanel,
+		projectList:        projectList,
+		detailView:         detailView,
+		logPanel:           logPanel,
+		helpBar:            helpBar,
+		searchBar:          searchBar,
+		modal:              modal,
+		jqlModal:           jqlModal,
+		diffView:           diffView,
+		inputModal:         inputModal,
+		createForm:         createForm,
+		side:               sideLeft,
+		leftFocus:          focusIssues,
+		projectKey:         projectKey,
+		isCloud:            cfg.Jira.IsCloud(),
+		demoMode:           authMethod == AuthDemo,
+		logFlag:            logFlag,
+		boardsCache:        newTTLCache[[]jira.Board](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		sprintsCache:       newTTLCache[[]sprintOption](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		usersCache:         newTTLCache[[]jira.User](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		issueCache:         make(map[string]*jira.Issue),
+		childrenCache:      make(map[string][]jira.Issue),
+		createMetaCache:    newTTLCache[[]jira.CreateMetaField](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		converter:          BuiltinConverter{},
+		readClipboardImage: readClipboardImage,
 	}
 	// cfg.Converter is validated at config-load time; "" and "builtin"
 	// both fall through to the BuiltinConverter set above.
@@ -608,6 +614,12 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleCreateFormChecklist(msg)
 	case components.CreateFormSubmitMsg:
 		return a.handleCreateFormSubmit(msg)
+	case components.CreateFormPasteImageMsg:
+		return a, a.pasteClipboardImage()
+	case clipboardImageMsg:
+		return a.handleClipboardImage(msg)
+	case attachmentsUploadedMsg:
+		return a.handleAttachmentsUploaded(msg)
 	case components.CreateFormCancelMsg:
 		return a.handleCreateFormCancel()
 

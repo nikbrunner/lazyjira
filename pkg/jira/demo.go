@@ -459,6 +459,11 @@ func (d *DemoClient) RemoveIssueParent(_ context.Context, issueKey string) error
 	iss.Updated = time.Now()
 	return nil
 }
+func (d *DemoClient) AddAttachment(_ context.Context, issueKey, _ string, _ []byte) error {
+	d.logRequest("POST", "/issue/"+issueKey+"/attachments")
+	return nil
+}
+
 func (d *DemoClient) CreateIssue(_ context.Context, fields map[string]any) (*Issue, error) {
 	d.logRequest("POST", "/issue")
 	projectKey := "DEMO"

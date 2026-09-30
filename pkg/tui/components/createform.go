@@ -2,6 +2,8 @@ package components
 
 import (
 	"fmt"
+	"os"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/cursor"
@@ -65,7 +67,33 @@ type CreateFormChecklistMsg struct {
 	FieldIndex int
 	Items      []ModalItem
 }
-type CreateFormSubmitMsg struct{ Fields map[string]any }
+type CreateFormSubmitMsg struct {
+	Fields      map[string]any
+	Attachments []CreateAttachment
+}
+
+// CreateFormPasteImageMsg asks the app to read an image from the clipboard.
+type CreateFormPasteImageMsg struct{}
+
+// CreateAttachment is an image pasted or dropped into the Description. Temp
+// marks a clipboard file that lazyjira wrote and deletes after use.
+type CreateAttachment struct {
+	Path string
+	Name string
+	Size int64
+	Temp bool
+}
+
+// RemoveTempAttachments deletes the clipboard files among attachments and
+// leaves the user's own files alone.
+func RemoveTempAttachments(attachments []CreateAttachment) {
+	for _, a := range attachments {
+		if a.Temp {
+			_ = os.Remove(a.Path)
+		}
+	}
+}
+
 type CreateFormCancelMsg struct{}
 
 // CreateForm is a 3-panel overlay for issue creation
@@ -87,6 +115,9 @@ type CreateForm struct {
 	descIdx int
 	// desc is nil until ShowForm; Hide drops it with the rest of the form state.
 	desc *textarea.Model
+	// attachments stay attached until the form closes, whether or not their
+	// [Image #N] token is still in the Description.
+	attachments []CreateAttachment
 
 	fieldIndices  []int
 	fieldCursor   int
@@ -150,6 +181,21 @@ func (f *CreateForm) DescriptionText() string {
 	return f.desc.Value()
 }
 
+// AttachImage records an image and inserts its [Image #N] token at the
+// Description cursor. An unnamed image is named image-N.png.
+func (f *CreateForm) AttachImage(a CreateAttachment) {
+	if f.desc == nil {
+		return
+	}
+	n := len(f.attachments) + 1
+	if a.Name == "" {
+		a.Name = fmt.Sprintf("image-%d.png", n)
+	}
+	f.attachments = append(f.attachments, a)
+	f.desc.InsertString(fmt.Sprintf("[Image #%d]", n))
+	f.errorMsg = ""
+}
+
 // SetDescriptionText replaces the Description textarea content.
 func (f *CreateForm) SetDescriptionText(text string) {
 	if f.desc != nil {
@@ -173,6 +219,7 @@ func (f *CreateForm) ShowForm(fields []CreateFormField, issueTypeName, projectKe
 	f.filtering = false
 	desc := newDescArea()
 	f.desc = &desc
+	f.attachments = nil
 
 	for i, fld := range fields {
 		switch fld.FieldID {
@@ -244,6 +291,7 @@ func (f *CreateForm) Hide() {
 	f.fieldIndices = nil
 	f.summaryText = nil
 	f.desc = nil
+	f.attachments = nil
 	f.errorMsg = ""
 	f.loading = false
 	f.filterInput.SetValue("")
@@ -288,6 +336,9 @@ func (f *CreateForm) FieldAt(index int) *CreateFormField {
 
 func (f *CreateForm) IsVisible() bool { return f.visible }
 
+// IsLoading reports whether the form waits for createmeta or a create request.
+func (f *CreateForm) IsLoading() bool { return f.loading }
+
 func (f *CreateForm) SetSize(w, h int) {
 	f.width = w
 	f.height = h
@@ -313,8 +364,7 @@ func (f *CreateForm) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	}
 	if f.loading {
 		if km.String() == keyEsc {
-			f.Hide()
-			return func() tea.Msg { return CreateFormCancelMsg{} }, true
+			return f.cancel()
 		}
 		return nil, true
 	}
@@ -464,8 +514,7 @@ func (f *CreateForm) interceptSummary(msg tea.KeyMsg) (tea.Cmd, bool) {
 	case tea.KeyEnter:
 		f.setFocus(CreatePanelDescription)
 	case tea.KeyEsc:
-		f.Hide()
-		return func() tea.Msg { return CreateFormCancelMsg{} }, true
+		return f.cancel()
 	case tea.KeyBackspace:
 		if f.summaryCursor > 0 {
 			f.summaryText = append(f.summaryText[:f.summaryCursor-1], f.summaryText[f.summaryCursor:]...)
@@ -509,11 +558,18 @@ func (f *CreateForm) insertSummaryRunes(runes []rune) {
 	f.summaryCursor += len(runes)
 }
 
+func (f *CreateForm) cancel() (tea.Cmd, bool) {
+	RemoveTempAttachments(f.attachments)
+	f.Hide()
+	return func() tea.Msg { return CreateFormCancelMsg{} }, true
+}
+
 func (f *CreateForm) interceptDescription(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.Type { //nolint:exhaustive
 	case tea.KeyEsc:
-		f.Hide()
-		return func() tea.Msg { return CreateFormCancelMsg{} }, true
+		return f.cancel()
+	case tea.KeyCtrlV:
+		return func() tea.Msg { return CreateFormPasteImageMsg{} }, true
 	case tea.KeyCtrlG:
 		if f.descIdx >= 0 {
 			idx := f.descIdx
@@ -523,6 +579,17 @@ func (f *CreateForm) interceptDescription(msg tea.KeyMsg) (tea.Cmd, bool) {
 	}
 	if f.desc == nil {
 		return nil, true
+	}
+	if msg.Paste {
+		if images := pastedImages(string(msg.Runes)); images != nil {
+			for i, img := range images {
+				if i > 0 {
+					f.desc.InsertString(" ")
+				}
+				f.AttachImage(img)
+			}
+			return nil, true
+		}
 	}
 	var cmd tea.Cmd
 	*f.desc, cmd = f.desc.Update(msg)
@@ -564,8 +631,7 @@ func (f *CreateForm) interceptFields(msg tea.KeyMsg) (tea.Cmd, bool) {
 	case "e", " ", keyEnter:
 		return f.editCurrentField(filtered)
 	case keyEsc, "q":
-		f.Hide()
-		return func() tea.Msg { return CreateFormCancelMsg{} }, true
+		return f.cancel()
 	}
 	return nil, true
 }
@@ -694,7 +760,8 @@ func (f *CreateForm) submitForm() (tea.Cmd, bool) {
 			fieldsMap[fld.FieldID] = fld.Value
 		}
 	}
-	return func() tea.Msg { return CreateFormSubmitMsg{Fields: fieldsMap} }, true
+	attachments := slices.Clone(f.attachments)
+	return func() tea.Msg { return CreateFormSubmitMsg{Fields: fieldsMap, Attachments: attachments} }, true
 }
 
 // Layout
@@ -755,7 +822,11 @@ func (f *CreateForm) sizeDesc(w, h int) {
 	}
 	r := f.layout(w, h).desc
 	f.desc.SetWidth(max(r.w-2, 1))
-	f.desc.SetHeight(max(r.h-2, 1))
+	listH := 0
+	if len(f.attachments) > 0 {
+		listH = 1
+	}
+	f.desc.SetHeight(max(r.h-2-listH, 1))
 }
 
 // Render
@@ -940,8 +1011,27 @@ func (f *CreateForm) renderDescription(panelW, panelH int) string {
 	content := ""
 	if f.desc != nil {
 		content = f.desc.View()
+		if len(f.attachments) > 0 {
+			content += "\n" + f.attachmentLine(max(panelW-2, 1))
+		}
 	}
 	return RenderPanelFull("Description", "", content, panelW, innerH, focused, nil)
+}
+
+func (f *CreateForm) attachmentLine(width int) string {
+	parts := make([]string, len(f.attachments))
+	for i, a := range f.attachments {
+		parts[i] = fmt.Sprintf("[Image #%d] %s  %s", i+1, a.Name, formatFileSize(a.Size))
+	}
+	return noneStyle().Render(TruncateEnd(" Attachments  "+strings.Join(parts, " · "), width))
+}
+
+func formatFileSize(n int64) string {
+	const kb, mb = 1024, 1024 * 1024
+	if n < mb {
+		return fmt.Sprintf("%d KB", max((n+kb/2)/kb, 1))
+	}
+	return fmt.Sprintf("%.1f MB", float64(n)/mb)
 }
 
 func (f *CreateForm) renderFields(formW, panelH int) string {

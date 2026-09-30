@@ -934,6 +934,7 @@ func (a *App) metaToFormField(mf jira.CreateMetaField) components.CreateFormFiel
 
 // handleIssueCreated closes form and refreshes issue list
 func (a *App) handleIssueCreated(msg issueCreatedMsg) (tea.Model, tea.Cmd) {
+	attachments := a.createCtx.attachments
 	a.createForm.Hide()
 	a.createCtx = createCtx{}
 	if msg.issue != nil {
@@ -942,8 +943,14 @@ func (a *App) handleIssueCreated(msg issueCreatedMsg) (tea.Model, tea.Cmd) {
 			a.gitDetectedKey = msg.issue.Key
 			a.detailView.SetIssue(nil)
 		}
+		if len(attachments) > 0 {
+			// Refreshing waits for the uploads: a finished refresh turns off
+			// request logging and clears the status error.
+			return a, uploadAttachments(a.client, msg.issue.Key, attachments)
+		}
 		return a, tea.Batch(a.fetchActiveTab(), fetchIssueDetail(a.client, msg.issue.Key))
 	}
+	components.RemoveTempAttachments(attachments)
 	return a, a.fetchActiveTab()
 }
 

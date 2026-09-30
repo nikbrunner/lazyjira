@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -78,6 +79,8 @@ func (s *DemoServer) handle(w http.ResponseWriter, r *http.Request) {
 		} else {
 			s.handleComments(w, key)
 		}
+	case strings.HasSuffix(path, "/attachments") && r.Method == http.MethodPost:
+		s.handleAddAttachment(w, r, extractKeyFromPath(path, "/attachments"))
 	case strings.HasSuffix(path, "/changelog"):
 		key := extractKeyFromPath(path, "/changelog")
 		s.handleChangelog(w, key)
@@ -338,6 +341,25 @@ func (s *DemoServer) handleCreateIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, issueToJSON(issue))
+}
+
+func (s *DemoServer) handleAddAttachment(w http.ResponseWriter, r *http.Request, key string) {
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer func() { _ = file.Close() }()
+	data, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := s.data.AddAttachment(context.Background(), key, header.Filename, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, []map[string]any{{"filename": header.Filename, "size": len(data)}})
 }
 
 func (s *DemoServer) handleAddComment(w http.ResponseWriter, r *http.Request, key string) {

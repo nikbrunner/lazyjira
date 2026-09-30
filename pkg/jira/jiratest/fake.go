@@ -82,6 +82,13 @@ type CreateIssueCall struct {
 	Fields map[string]any
 }
 
+type AddAttachmentCall struct {
+	Ctx      context.Context
+	Key      string
+	Filename string
+	Data     []byte
+}
+
 type GetCreateMetaCall struct {
 	Ctx         context.Context
 	ProjectKey  string
@@ -163,6 +170,7 @@ type FakeClient struct {
 	GetPrioritiesFunc                 func(ctx context.Context) ([]jira.Priority, error)
 	SuggestIssuesFunc                 func(ctx context.Context, query string) ([]jira.IssueSuggestion, error)
 	CreateIssueFunc                   func(ctx context.Context, fields map[string]any) (*jira.Issue, error)
+	AddAttachmentFunc                 func(ctx context.Context, key, filename string, data []byte) error
 	GetCreateMetaFunc                 func(ctx context.Context, projectKey, issueTypeID string) ([]jira.CreateMetaField, error)
 	GetCommentsFunc                   func(ctx context.Context, key string) ([]jira.Comment, error)
 	GetMyselfFunc                     func(ctx context.Context) (*jira.User, error)
@@ -198,6 +206,7 @@ type FakeClient struct {
 	GetPrioritiesCalls                 []context.Context
 	SuggestIssuesCalls                 []string
 	CreateIssueCalls                   []CreateIssueCall
+	AddAttachmentCalls                 []AddAttachmentCall
 	GetCreateMetaCalls                 []GetCreateMetaCall
 	GetCommentsCalls                   []GetCommentsCall
 	GetMyselfCalls                     []context.Context
@@ -374,6 +383,15 @@ func (f *FakeClient) CreateIssue(ctx context.Context, fields map[string]any) (*j
 		return nil, nil
 	}
 	return f.CreateIssueFunc(ctx, fields)
+}
+
+func (f *FakeClient) AddAttachment(ctx context.Context, key, filename string, data []byte) error {
+	f.AddAttachmentCalls = append(f.AddAttachmentCalls, AddAttachmentCall{Ctx: ctx, Key: key, Filename: filename, Data: data})
+	if f.AddAttachmentFunc == nil {
+		f.fatal("AddAttachment")
+		return nil
+	}
+	return f.AddAttachmentFunc(ctx, key, filename, data)
 }
 
 func (f *FakeClient) GetCreateMeta(ctx context.Context, projectKey, issueTypeID string) ([]jira.CreateMetaField, error) {

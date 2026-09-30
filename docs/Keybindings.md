@@ -83,10 +83,15 @@ The form shows Fields beside Summary and Description, or stacks them on narrow t
 | `ctrl+s` | Create the issue from any panel |
 | `enter` | Move from Summary to Description; start a new line in Description; edit the selected field in Fields |
 | `ctrl+g` | Open the Description in `$EDITOR`; the saved text returns to the form |
+| `ctrl+v` | Paste an image from the clipboard into the Description |
 | `e` / `space` | Edit the selected field (Fields) |
 | `/` | Filter fields (Fields) |
 | `q` | Cancel (Fields) |
 | `esc` | Cancel |
+
+Dropping image files (PNG, JPEG, GIF, WebP) on the terminal while the Description is focused attaches them too. Each image adds an `[Image #N]` token at the cursor and a line under the Description. The images upload as attachments once the issue exists, and the tokens stay as text in the description. An image stays attached until the form closes, even if its token is deleted from the text.
+
+Reading the clipboard needs `osascript` on macOS, `wl-paste` on Wayland, or `xclip` on X11.
 
 ## General
 

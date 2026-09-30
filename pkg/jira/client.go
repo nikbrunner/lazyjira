@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -31,6 +33,7 @@ type ClientInterface interface {
 	GetPriorities(ctx context.Context) ([]Priority, error)
 	SuggestIssues(ctx context.Context, query string) ([]IssueSuggestion, error)
 	CreateIssue(ctx context.Context, fields map[string]any) (*Issue, error)
+	AddAttachment(ctx context.Context, issueKey, filename string, data []byte) error
 	GetCreateMeta(ctx context.Context, projectKey, issueTypeID string) ([]CreateMetaField, error)
 	GetComments(ctx context.Context, issueKey string) ([]Comment, error)
 	GetMyself(ctx context.Context) (*User, error)
@@ -196,17 +199,42 @@ func (c *Client) do(ctx context.Context, method, path string, body any, result a
 }
 
 func (c *Client) doWithBase(ctx context.Context, baseURL, method, path string, body any, result any) error {
-	start := time.Now()
-
 	var reqBody io.Reader
+	header := http.Header{}
 	if body != nil {
 		data, err := json.Marshal(body)
 		if err != nil {
 			return fmt.Errorf("marshal request body: %w", err)
 		}
 		reqBody = bytes.NewReader(data)
+		header.Set("Content-Type", "application/json")
 	}
+	return c.send(ctx, baseURL, method, path, reqBody, header, result)
+}
 
+// doMultipart posts one file as multipart/form-data under the field name
+// "file". Jira rejects attachment uploads without the no-check XSRF header.
+func (c *Client) doMultipart(ctx context.Context, path, filename string, data []byte) error {
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	part, err := w.CreateFormFile("file", filename)
+	if err != nil {
+		return fmt.Errorf("create multipart part: %w", err)
+	}
+	if _, err := part.Write(data); err != nil {
+		return fmt.Errorf("write multipart part: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("close multipart body: %w", err)
+	}
+	header := http.Header{}
+	header.Set("Content-Type", w.FormDataContentType())
+	header.Set("X-Atlassian-Token", "no-check")
+	return c.send(ctx, c.baseURL, http.MethodPost, path, &buf, header, nil)
+}
+
+func (c *Client) send(ctx context.Context, baseURL, method, path string, reqBody io.Reader, header http.Header, result any) error {
+	start := time.Now()
 	fullURL := baseURL + path
 
 	c.log("%s %s %s\n", start.Format("15:04:05"), method, fullURL)
@@ -221,11 +249,9 @@ func (c *Client) doWithBase(ctx context.Context, baseURL, method, path string, b
 		return fmt.Errorf("create request: %w", err)
 	}
 
+	maps.Copy(req.Header, header)
 	req.Header.Set("Authorization", c.authHeader)
 	req.Header.Set("Accept", "application/json")
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -589,6 +615,13 @@ func (c *Client) CreateIssue(ctx context.Context, fields map[string]any) (*Issue
 	}
 	issue := raw.toIssue()
 	return &issue, nil
+}
+
+func (c *Client) AddAttachment(ctx context.Context, issueKey, filename string, data []byte) error {
+	if err := c.doMultipart(ctx, "/issue/"+issueKey+"/attachments", filename, data); err != nil {
+		return fmt.Errorf("add attachment %s to %s: %w", filename, issueKey, err)
+	}
+	return nil
 }
 
 func (c *Client) GetCreateMeta(ctx context.Context, projectKey, issueTypeID string) ([]CreateMetaField, error) {
