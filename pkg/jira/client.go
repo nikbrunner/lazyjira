@@ -52,7 +52,10 @@ type ClientInterface interface {
 	SprintFieldID() string
 }
 
-const sprintFieldAlias = "sprint"
+const (
+	sprintFieldAlias = "sprint"
+	sprintCustomType = "com.pyxis.greenhopper.jira:gh-sprint"
+)
 
 type RequestLog struct {
 	Method  string
@@ -116,7 +119,7 @@ func (c *Client) DiscoverFields(ctx context.Context) error {
 		return fmt.Errorf("discover fields: %w", err)
 	}
 	for _, field := range raw {
-		if field.Schema.Custom == "com.pyxis.greenhopper.jira:gh-sprint" {
+		if field.Schema.Custom == sprintCustomType {
 			c.sprintFieldID = field.ID
 			return nil
 		}
@@ -607,7 +610,7 @@ func (c *Client) SuggestIssues(ctx context.Context, query string) ([]IssueSugges
 }
 
 func (c *Client) CreateIssue(ctx context.Context, fields map[string]any) (*Issue, error) {
-	body := map[string]any{"fields": fields}
+	body := map[string]any{"fields": remapSprintField(fields, c.SprintFieldID())}
 	var raw issueResponse
 	err := c.do(ctx, http.MethodPost, "/issue", body, &raw)
 	if err != nil {
@@ -689,7 +692,7 @@ func (c *Client) getCreateMetaCloud(ctx context.Context, projectKey, issueTypeID
 			}
 			cf.AllowedValues = append(cf.AllowedValues, CreateMetaValue{ID: v.ID, Name: name})
 		}
-		fields = append(fields, cf)
+		fields = append(fields, aliasSprintField(cf))
 	}
 	return fields, nil
 }
@@ -741,9 +744,19 @@ func (c *Client) getCreateMetaServer(ctx context.Context, projectKey, issueTypeI
 			}
 			cf.AllowedValues = append(cf.AllowedValues, CreateMetaValue{ID: v.ID, Name: name})
 		}
-		fields = append(fields, cf)
+		fields = append(fields, aliasSprintField(cf))
 	}
 	return fields, nil
+}
+
+// aliasSprintField addresses the sprint custom field by the "sprint" alias, as
+// the rest of the app does; writes map it back to the resolved custom field id.
+func aliasSprintField(f CreateMetaField) CreateMetaField {
+	if f.Schema.Custom == sprintCustomType {
+		f.FieldID = sprintFieldAlias
+		f.Schema.System = sprintFieldAlias
+	}
+	return f
 }
 
 func (c *Client) GetComments(ctx context.Context, issueKey string) ([]Comment, error) {

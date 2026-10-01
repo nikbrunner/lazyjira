@@ -198,10 +198,11 @@ func TestClient_GetCreateMeta_CloudParsesFields(t *testing.T) {
 	client, recorded := newRecordingClient(t, cloudOpts(), testkit.StubResponse{
 		Status: http.StatusOK,
 		Body: `{
-			"startAt": 0, "maxResults": 200, "total": 2,
+			"startAt": 0, "maxResults": 200, "total": 3,
 			"fields": [
 				{"fieldId": "summary", "name": "Summary", "required": true, "schema": {"type": "string", "system": "summary"}},
-				{"fieldId": "priority", "name": "Priority", "required": false, "schema": {"type": "priority", "system": "priority"}, "allowedValues": [{"id": "2", "name": "High"}]}
+				{"fieldId": "priority", "name": "Priority", "required": false, "schema": {"type": "priority", "system": "priority"}, "allowedValues": [{"id": "2", "name": "High"}]},
+				{"fieldId": "customfield_10020", "name": "Sprint", "required": false, "schema": {"type": "array", "items": "json", "custom": "com.pyxis.greenhopper.jira:gh-sprint"}}
 			]
 		}`,
 	})
@@ -212,8 +213,8 @@ func TestClient_GetCreateMeta_CloudParsesFields(t *testing.T) {
 	}
 
 	testkit.AssertEqual(t, "path", recorded.Path, "/rest/api/3/issue/createmeta/PLAT/issuetypes/10001")
-	if len(fields) != 2 {
-		t.Fatalf("len(fields) = %d, want 2", len(fields))
+	if len(fields) != 3 {
+		t.Fatalf("len(fields) = %d, want 3", len(fields))
 	}
 	testkit.AssertEqual(t, "fields[0].FieldID", fields[0].FieldID, "summary")
 	testkit.AssertEqual(t, "fields[0].Required", fields[0].Required, true)
@@ -221,6 +222,8 @@ func TestClient_GetCreateMeta_CloudParsesFields(t *testing.T) {
 		t.Fatalf("priority AllowedValues = %#v, want one", fields[1].AllowedValues)
 	}
 	testkit.AssertEqual(t, "priority allowed value", fields[1].AllowedValues[0].Name, "High")
+	testkit.AssertEqual(t, "sprint FieldID", fields[2].FieldID, "sprint")
+	testkit.AssertEqual(t, "sprint System", fields[2].Schema.System, "sprint")
 }
 
 func TestClient_GetCreateMeta_ServerParsesNestedFields(t *testing.T) {
@@ -229,7 +232,8 @@ func TestClient_GetCreateMeta_ServerParsesNestedFields(t *testing.T) {
 	client, recorded := newRecordingClient(t, serverOpts(), testkit.StubResponse{
 		Status: http.StatusOK,
 		Body: `{"projects": [{"issuetypes": [{"fields": {
-			"summary": {"name": "Summary", "required": true, "schema": {"type": "string", "system": "summary"}}
+			"summary": {"name": "Summary", "required": true, "schema": {"type": "string", "system": "summary"}},
+			"customfield_10010": {"name": "Sprint", "required": false, "schema": {"type": "array", "items": "string", "custom": "com.pyxis.greenhopper.jira:gh-sprint"}}
 		}}]}]}`,
 	})
 
@@ -240,8 +244,11 @@ func TestClient_GetCreateMeta_ServerParsesNestedFields(t *testing.T) {
 
 	testkit.AssertEqual(t, "path", recorded.Path, "/rest/api/2/issue/createmeta")
 	testkit.AssertEqual(t, "projectKeys query", recorded.Query.Get("projectKeys"), "OPS")
-	if len(fields) != 1 {
-		t.Fatalf("len(fields) = %d, want 1", len(fields))
+	ids := map[string]string{}
+	for _, f := range fields {
+		ids[f.FieldID] = f.Schema.System
 	}
-	testkit.AssertEqual(t, "fields[0].FieldID", fields[0].FieldID, "summary")
+	if len(fields) != 2 || ids["summary"] != "summary" || ids["sprint"] != "sprint" {
+		t.Fatalf("fields = %#v, want summary and the sprint alias", fields)
+	}
 }

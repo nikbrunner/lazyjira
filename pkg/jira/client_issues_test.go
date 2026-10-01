@@ -158,6 +158,25 @@ func TestClient_DoTransition_PostsTransitionID(t *testing.T) {
 	}
 }
 
+func TestClient_CreateIssue_SendsSprintAsResolvedField(t *testing.T) {
+	t.Parallel()
+
+	client, recorded := newRecordingClient(t, cloudOpts(), testkit.StubResponse{
+		Status: http.StatusCreated,
+		Body:   `{"id": "10010", "key": "PLAT-99"}`,
+	})
+	client.sprintFieldID = "customfield_10020"
+
+	if _, err := client.CreateIssue(t.Context(), map[string]any{"summary": "New bug", "sprint": 42}); err != nil {
+		t.Fatalf("CreateIssue: %v", err)
+	}
+
+	fields, _ := decodeBody(t, recorded.Body)["fields"].(map[string]any)
+	if _, ok := fields["sprint"]; ok || fields["customfield_10020"] != float64(42) {
+		t.Errorf("body fields = %#v, want sprint 42 under customfield_10020", fields)
+	}
+}
+
 func TestClient_CreateIssue_WrapsFieldsAndParses(t *testing.T) {
 	t.Parallel()
 
