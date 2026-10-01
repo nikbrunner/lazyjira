@@ -76,6 +76,7 @@
 - The **App status panel** shows app and connection information without taking focus.
 - The **Issue info pane** provides field editing and relationship navigation; the **Issue details pane** presents issue description, comments, and history.
 - The **Issue Edit View** creates an **Issue** or edits the **Selected issue**; editing from the **Issue info pane** stays one field at a time.
+- The **Issue Edit View** shows the **Jira project** of the issue it writes, which for a subtask is the parent's project, beside the **App status panel**.
 - The **Issue tabs pane** lists the **Issue tabs**; its active tab determines the **Issue list** shown in the **Issues panel**.
 - An **Issue tab** contains zero or more **Issues**; an **Issue** can appear in more than one tab.
 - A **Local filter** and a **Picker filter** narrow the active tab's loaded issues into the current **Issue list**; **Status order** sets its order.

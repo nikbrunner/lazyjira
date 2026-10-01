@@ -6,8 +6,6 @@ import (
 	"maps"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -811,8 +809,6 @@ func TestView_BottomBarVariants(t *testing.T) {
 			setup: func(t *testing.T, app *App) {
 				t.Helper()
 				app.createForm = formWithFields([]components.CreateFormField{{FieldID: "customfield_1", Name: "Team"}})
-				_, _ = app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-				_, _ = app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 				_, _ = app.createForm.Intercept(runeKey('/'))
 				if !app.createForm.IsFiltering() {
 					t.Fatal("create form should be filtering")

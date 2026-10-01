@@ -818,19 +818,38 @@ func (a *App) handleProjectPickerSelected(msg components.ProjectPickerSelectedMs
 	return a, nil
 }
 
-func (a *App) renderProjectSelector(width, height int) string {
-	label := "Select project"
+func (a *App) projectLabel(key string) (string, bool) {
 	for _, project := range a.projectList.AllProjects() {
-		if project.Key == a.projectKey {
-			label = project.Key
+		if project.Key == key {
 			if project.Name != "" {
-				label += " · " + project.Name
+				return project.Key + " · " + project.Name, true
 			}
-			break
+			return project.Key, true
 		}
+	}
+	return "", false
+}
+
+func (a *App) renderProjectSelector(width, height int) string {
+	label, ok := a.projectLabel(a.projectKey)
+	if !ok {
+		label = "Select project"
 	}
 	label = components.TruncateEnd(label+"  ↵", max(width-4, 1))
 	return components.RenderPanel("Project ["+a.keymap.Keys(ActFocusProj)+"]", label, width, max(height-2, 1), a.side == sideLeft && a.leftFocus == focusProjects)
+}
+
+// renderCreateHeader renders the header row above the Issue Edit View. It
+// names the project the issue belongs to, which for a subtask or an edit can
+// differ from the active project.
+func (a *App) renderCreateHeader() string {
+	sideW := a.sideWidth()
+	label, ok := a.projectLabel(a.createCtx.projectKey)
+	if !ok {
+		label = a.createCtx.projectKey
+	}
+	project := components.RenderPanel("Project", components.TruncateEnd(label, max(sideW-4, 1)), sideW, statusHeight-2, false)
+	return lipgloss.JoinHorizontal(lipgloss.Top, project, a.statusPanel.UnfocusedView(a.width-sideW, statusHeight))
 }
 
 func (a *App) View() string {
@@ -885,6 +904,9 @@ func (a *App) View() string {
 	full := lipgloss.JoinVertical(lipgloss.Left, content, bottomBar)
 
 	full = a.renderCopyToast(full)
+	if a.createForm.IsVisible() {
+		a.createForm.SetHeader(a.renderCreateHeader())
+	}
 	full = a.overlays.Render(full, a.width, a.height)
 	if a.showHelp {
 		full = a.renderHelpOverlay(full)

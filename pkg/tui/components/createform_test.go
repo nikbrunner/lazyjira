@@ -50,7 +50,7 @@ func TestCreateForm_FocusedPanel(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	testkit.AssertEqual(t, "default panel is summary", form.FocusedPanel(), CreatePanelSummary)
+	testkit.AssertEqual(t, "default panel is fields", form.FocusedPanel(), CreatePanelFields)
 }
 
 func TestCreateForm_Hide(t *testing.T) {
@@ -160,13 +160,13 @@ func TestCreateForm_InterceptTabCyclesPanels(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	testkit.AssertEqual(t, "starts on summary", form.FocusedPanel(), CreatePanelSummary)
+	testkit.AssertEqual(t, "starts on fields", form.FocusedPanel(), CreatePanelFields)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	testkit.AssertEqual(t, "tab moves to summary", form.FocusedPanel(), CreatePanelSummary)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	testkit.AssertEqual(t, "tab moves to description", form.FocusedPanel(), CreatePanelDescription)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	testkit.AssertEqual(t, "tab moves to fields", form.FocusedPanel(), CreatePanelFields)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	testkit.AssertEqual(t, "tab wraps to summary", form.FocusedPanel(), CreatePanelSummary)
+	testkit.AssertEqual(t, "tab wraps to fields", form.FocusedPanel(), CreatePanelFields)
 }
 
 func TestCreateForm_InterceptShiftTabCyclesBackward(t *testing.T) {
@@ -174,6 +174,10 @@ func TestCreateForm_InterceptShiftTabCyclesBackward(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyShiftTab})
+	testkit.AssertEqual(t, "shift-tab moves to description", form.FocusedPanel(), CreatePanelDescription)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyShiftTab})
+	testkit.AssertEqual(t, "shift-tab moves to summary", form.FocusedPanel(), CreatePanelSummary)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyShiftTab})
 	testkit.AssertEqual(t, "shift-tab wraps to fields", form.FocusedPanel(), CreatePanelFields)
 }
@@ -183,6 +187,7 @@ func TestCreateForm_InterceptEscOnSummaryHides(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
 	testkit.AssertEqual(t, "consumed", consumed, true)
 	testkit.AssertEqual(t, "hidden after esc on summary", form.IsVisible(), false)
@@ -199,6 +204,7 @@ func TestCreateForm_InterceptSummaryBackspaceDeleteLeft(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	initialLen := len(form.summaryText)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyBackspace})
 	testkit.AssertEqual(t, "backspace removes char", len(form.summaryText), initialLen-1)
@@ -209,6 +215,7 @@ func TestCreateForm_InterceptSummaryDeleteForward(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	form.summaryCursor = 0
 	initialLen := len(form.summaryText)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyDelete})
@@ -220,6 +227,7 @@ func TestCreateForm_InterceptSummaryLeftRight(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	endPos := form.summaryCursor
 	form.Intercept(tea.KeyMsg{Type: tea.KeyLeft})
 	testkit.AssertEqual(t, "left moves cursor back", form.summaryCursor, endPos-1)
@@ -232,6 +240,7 @@ func TestCreateForm_InterceptSummaryHomeEnd(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyHome})
 	testkit.AssertEqual(t, "cursor at start", form.summaryCursor, 0)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyEnd})
@@ -243,6 +252,7 @@ func TestCreateForm_InterceptSummaryCtrlAE(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlA})
 	testkit.AssertEqual(t, "ctrl+a moves to start", form.summaryCursor, 0)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlE})
@@ -254,9 +264,11 @@ func TestCreateForm_InterceptSummaryCtrlUK(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlU})
 	testkit.AssertEqual(t, "ctrl+u clears to start", len(form.summaryText), 0)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	form.summaryCursor = 0
 	form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlK})
 	testkit.AssertEqual(t, "ctrl+k clears to end when cursor at start", len(form.summaryText), 0)
@@ -267,6 +279,7 @@ func TestCreateForm_InterceptSummarySpace(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	initialLen := len(form.summaryText)
 	form.Intercept(tea.KeyMsg{Type: tea.KeySpace})
 	testkit.AssertEqual(t, "space appended", len(form.summaryText), initialLen+1)
@@ -277,6 +290,7 @@ func TestCreateForm_InterceptSummaryRunes(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	initialLen := len(form.summaryText)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("AB")})
 	testkit.AssertEqual(t, "runes appended", len(form.summaryText), initialLen+2)
@@ -287,6 +301,7 @@ func TestCreateForm_InterceptDescriptionEscHides(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
 	testkit.AssertEqual(t, "hidden after desc esc", form.IsVisible(), false)
@@ -309,8 +324,6 @@ func TestCreateForm_InterceptFieldsJK(t *testing.T) {
 		{FieldID: "f2", Name: "Field2", Type: CFFieldSingleSelect, AllowedValues: []ModalItem{{ID: "b", Label: "B"}}},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	testkit.AssertEqual(t, "on fields panel", form.FocusedPanel(), CreatePanelFields)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
 	testkit.AssertEqual(t, "field cursor moved down", form.fieldCursor, 1)
@@ -330,8 +343,6 @@ func TestCreateForm_InterceptFieldsGG(t *testing.T) {
 		{FieldID: "f3", Name: "F3", Type: CFFieldSingleSelect},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
 	testkit.AssertEqual(t, "G moves to last field", form.fieldCursor, 2)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
@@ -349,8 +360,6 @@ func TestCreateForm_InterceptFieldsCtrlDU(t *testing.T) {
 		fields = append(fields, CreateFormField{FieldID: "f", Name: "F", Type: CFFieldSingleSelect})
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(keyCtrlD)})
 	testkit.AssertEqual(t, "ctrl+d moves cursor down", form.fieldCursor > 0, true)
 	before := form.fieldCursor
@@ -363,8 +372,6 @@ func TestCreateForm_InterceptFieldsSlashEnablesFilter(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
 	testkit.AssertEqual(t, "filtering enabled", form.IsFiltering(), true)
 }
@@ -374,8 +381,6 @@ func TestCreateForm_InterceptFieldsEscHides(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
 	testkit.AssertEqual(t, "hidden after fields esc", form.IsVisible(), false)
 	if cmd == nil {
@@ -388,8 +393,6 @@ func TestCreateForm_InterceptFieldsEditSingleSelect(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
 	if cmd == nil {
 		t.Fatal("expected command from e on single select")
@@ -409,8 +412,6 @@ func TestCreateForm_InterceptFieldsEditSingleText(t *testing.T) {
 		{FieldID: "f1", Name: "TextField", Type: CFFieldSingleText},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
 	if cmd == nil {
 		t.Fatal("expected command from e on text field")
@@ -430,8 +431,6 @@ func TestCreateForm_InterceptFieldsEditMultiText(t *testing.T) {
 		{FieldID: "f1", Name: "MultiTextField", Type: CFFieldMultiText},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
 	if cmd == nil {
 		t.Fatal("expected command from e on multi-text field")
@@ -451,8 +450,6 @@ func TestCreateForm_InterceptFieldsEditMultiSelect(t *testing.T) {
 		{FieldID: "f1", Name: "MultiSelect", Type: CFFieldMultiSelect, AllowedValues: []ModalItem{{ID: "a", Label: "A"}}},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
 	if cmd == nil {
 		t.Fatal("expected command from e on multi-select field")
@@ -472,8 +469,6 @@ func TestCreateForm_CtrlSSubmitsMissingRequired(t *testing.T) {
 		{FieldID: testFieldID, Name: testFieldName, Type: CFFieldSingleSelect, Required: true, DisplayValue: "", Value: nil},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	_, _ = form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
 	testkit.AssertEqual(t, "error set for missing required", form.errorMsg != "", true)
 }
@@ -505,8 +500,6 @@ func TestCreateForm_InterceptFilterEscRestores(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
 	testkit.AssertEqual(t, "filtering on", form.IsFiltering(), true)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
@@ -524,8 +517,6 @@ func TestCreateForm_InterceptFilterEnterConfirms(t *testing.T) {
 		{FieldID: "assignee", Name: "Assignee", Type: CFFieldPerson},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("P")})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(keyEnter)})
@@ -543,8 +534,6 @@ func TestCreateForm_InterceptFilterJKNav(t *testing.T) {
 		{FieldID: "f2", Name: "FieldBeta", Type: CFFieldSingleSelect},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(keyDown)})
 	testkit.AssertEqual(t, "filter nav down", form.fieldCursor, 1)
@@ -712,6 +701,7 @@ func showDescFocused(t *testing.T, desc string) *CreateForm {
 	fields[1].DisplayValue = desc
 	form.ShowForm(fields, testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	testkit.AssertEqual(t, "on description panel", form.FocusedPanel(), CreatePanelDescription)
 	return &form
 }
@@ -776,7 +766,7 @@ func TestCreateForm_DescriptionCtrlGEmitsEditExternal(t *testing.T) {
 
 func TestCreateForm_CtrlSSubmitsFromEveryPanel(t *testing.T) {
 	t.Parallel()
-	for tabs, panel := range []CreatePanel{CreatePanelSummary, CreatePanelDescription, CreatePanelFields} {
+	for tabs, panel := range []CreatePanel{CreatePanelFields, CreatePanelSummary, CreatePanelDescription} {
 		form := NewCreateForm()
 		form.SetSize(120, 40)
 		form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
@@ -863,6 +853,7 @@ func TestCreateForm_RenderFillsScreenAtEverySize(t *testing.T) {
 			form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 			form.SetDescriptionText("日本語のテキスト " + strings.Repeat("wide 表 ", 20) + "\nsecond line")
 			form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+			form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 			if errMsg != "" {
 				form.SetError(errMsg)
 			}
@@ -926,6 +917,7 @@ func TestCreateForm_SummaryEnterMovesToDescription(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
 	testkit.AssertEqual(t, "consumed", consumed, true)
 	testkit.AssertEqual(t, "no command", cmd == nil, true)
@@ -939,7 +931,6 @@ func TestCreateForm_FieldsEnterEditsSelectedField(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyShiftTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd == nil {
 		t.Fatal("expected edit cmd")

@@ -14,6 +14,7 @@ func TestCreateForm_ScrollFocusedSummary(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(80, 15)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.setFocus(CreatePanelSummary)
 	form.summaryCursor = 0
 	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
 	testkit.AssertEqual(t, "scroll down on summary moved cursor", form.summaryCursor > 0, true)
@@ -33,8 +34,6 @@ func TestCreateForm_ScrollFocusedFields(t *testing.T) {
 		fields = append(fields, CreateFormField{FieldID: "f", Name: "F", Type: CFFieldSingleSelect})
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	testkit.AssertEqual(t, "on fields panel", form.FocusedPanel(), CreatePanelFields)
 	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
 	testkit.AssertEqual(t, "scroll down on fields moved cursor", form.fieldCursor > 0, true)
@@ -47,7 +46,6 @@ func TestCreateForm_RenderSummaryPlainNotFocused(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	bg := testkit.BlankCanvas(120, 40)
 	out := form.Render(bg, 120, 40)
 	plain := stripANSI(out)
@@ -71,6 +69,7 @@ func TestCreateForm_InterceptMouseClickOnSummaryPanel(t *testing.T) {
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	testkit.AssertEqual(t, "focus is on description before click", form.FocusedPanel(), CreatePanelDescription)
 	form.Intercept(tea.MouseMsg{
 		Button: tea.MouseButtonLeft,
@@ -79,6 +78,23 @@ func TestCreateForm_InterceptMouseClickOnSummaryPanel(t *testing.T) {
 		Y:      1,
 	})
 	testkit.AssertEqual(t, "click on summary row switches focus to summary", form.FocusedPanel(), CreatePanelSummary)
+}
+
+func TestCreateForm_InterceptMouseClickBelowHeader(t *testing.T) {
+	t.Parallel()
+	form := NewCreateForm()
+	form.SetSize(120, 40)
+	form.SetHeader("1\n2\n3")
+	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	click := func(y int) {
+		form.Intercept(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 60, Y: y})
+	}
+	click(1)
+	testkit.AssertEqual(t, "click on the header leaves focus", form.FocusedPanel(), CreatePanelDescription)
+	click(4)
+	testkit.AssertEqual(t, "click on summary row below the header focuses summary", form.FocusedPanel(), CreatePanelSummary)
 }
 
 func TestCreateForm_EditCurrentField_EmptyFiltered(t *testing.T) {
@@ -90,8 +106,6 @@ func TestCreateForm_EditCurrentField_EmptyFiltered(t *testing.T) {
 		{FieldID: "description", Name: "Description", Type: CFFieldMultiText},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
 	testkit.AssertEqual(t, "consumed even with empty fields", consumed, true)
 	testkit.AssertEqual(t, "nil cmd when no fields", cmd == nil, true)
@@ -102,8 +116,6 @@ func TestCreateForm_InterceptFieldsQHides(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
 	testkit.AssertEqual(t, "hidden after q on fields", form.IsVisible(), false)
 	if cmd == nil {
@@ -122,8 +134,6 @@ func TestCreateForm_FilteredFields_WithFilter(t *testing.T) {
 		{FieldID: "labels", Name: "Labels", Type: CFFieldMultiSelect},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
 	form.filterInput.SetValue("pri")
 	filtered := form.filteredFields()
@@ -141,8 +151,6 @@ func TestCreateForm_EnsureFieldVisible_ScrollsOffset(t *testing.T) {
 		fields = append(fields, CreateFormField{FieldID: "f", Name: "F", Type: CFFieldSingleSelect})
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	form.fieldCursor = 10
 	form.ensureFieldVisible()
 	testkit.AssertEqual(t, "offset adjusted to show cursor", form.fieldOffset > 0, true)

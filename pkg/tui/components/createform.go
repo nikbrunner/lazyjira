@@ -107,6 +107,7 @@ type CreateForm struct {
 	projectKey    string
 	// title names the view's use, such as "Edit PLAT-3", on the Summary border.
 	title        string
+	header       string
 	focusedPanel CreatePanel
 
 	allFields []CreateFormField
@@ -166,6 +167,9 @@ func (f *CreateForm) Resume() { f.paused = false }
 
 // SetTitle sets the view title shown on the Summary border and while loading.
 func (f *CreateForm) SetTitle(title string) { f.title = title }
+
+// SetHeader sets the row drawn above the panels.
+func (f *CreateForm) SetHeader(header string) { f.header = header }
 
 // FocusedPanel returns which sub-panel is currently focused
 func (f *CreateForm) FocusedPanel() CreatePanel { return f.focusedPanel }
@@ -240,7 +244,7 @@ func (f *CreateForm) ShowForm(fields []CreateFormField, issueTypeName, projectKe
 			f.fieldIndices = append(f.fieldIndices, i)
 		}
 	}
-	f.setFocus(CreatePanelSummary)
+	f.setFocus(CreatePanelFields)
 	f.sizeDesc(f.width, f.height)
 }
 
@@ -806,7 +810,11 @@ type createLayout struct {
 }
 
 func (f *CreateForm) layout(w, h int) createLayout {
-	availH := h - 1 // help bar
+	top := 0
+	if f.header != "" {
+		top = lipgloss.Height(f.header)
+	}
+	availH := h - 1 - top // help bar
 	if f.errorMsg != "" {
 		availH--
 	}
@@ -817,9 +825,9 @@ func (f *CreateForm) layout(w, h int) createLayout {
 		rightW := w - fieldsW
 		return createLayout{
 			split:   true,
-			fields:  formRect{0, 0, fieldsW, availH},
-			summary: formRect{fieldsW, 0, rightW, panelMinH},
-			desc:    formRect{fieldsW, panelMinH, rightW, availH - panelMinH},
+			fields:  formRect{0, top, fieldsW, availH},
+			summary: formRect{fieldsW, top, rightW, panelMinH},
+			desc:    formRect{fieldsW, top + panelMinH, rightW, availH - panelMinH},
 		}
 	}
 
@@ -828,9 +836,9 @@ func (f *CreateForm) layout(w, h int) createLayout {
 	fieldsH := min(fieldsNat, max(rest/2, panelMinH))
 	descH := max(rest-fieldsH, panelMinH)
 	return createLayout{
-		summary: formRect{0, 0, w, panelMinH},
-		desc:    formRect{0, panelMinH, w, descH},
-		fields:  formRect{0, panelMinH + descH, w, fieldsH},
+		summary: formRect{0, top, w, panelMinH},
+		desc:    formRect{0, top + panelMinH, w, descH},
+		fields:  formRect{0, top + panelMinH + descH, w, fieldsH},
 	}
 }
 
@@ -883,6 +891,9 @@ func (f *CreateForm) renderForm(bg string, w, h int) string {
 			errLine += strings.Repeat(" ", w-lw)
 		}
 		combined = lipgloss.JoinVertical(lipgloss.Left, combined, errLine)
+	}
+	if f.header != "" {
+		combined = lipgloss.JoinVertical(lipgloss.Left, f.header, combined)
 	}
 
 	return OverlayAt(bg, combined, 0, 0, w, h)

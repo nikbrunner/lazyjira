@@ -3,6 +3,21 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [Unreleased]
+
+### Added
+
+- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
+  - The Issue Edit View shows the issue's project and the App status panel above the form.
+  - The Summary title names the project when creating an issue, such as `Create issue in PLAT`.
+
+### Changed
+
+- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
+  - The Issue Edit View opens with Fields focused; `tab` moves to Summary, then Description.
+
+---
+
 ## `0.8.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.30
 
 ### Highlights

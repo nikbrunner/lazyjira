@@ -618,7 +618,7 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 		return a, nil
 	}
 
-	title := "Create issue"
+	title := "Create issue in " + a.createCtx.projectKey
 	switch {
 	case a.createCtx.editFrom != nil:
 		title = "Edit " + a.createCtx.editKey

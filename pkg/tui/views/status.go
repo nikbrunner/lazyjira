@@ -54,6 +54,13 @@ func (s *StatusPanel) title(name string) string {
 func (s *StatusPanel) Init() tea.Cmd                              { return nil }
 func (s *StatusPanel) Update(msg tea.Msg) (*StatusPanel, tea.Cmd) { return s, nil }
 
+// UnfocusedView renders the panel at w×h without focus or its focus hint.
+func (s *StatusPanel) UnfocusedView(w, h int) string {
+	c := *s
+	c.width, c.height, c.focused, c.focusHint = w, h, false, ""
+	return c.View()
+}
+
 func (s *StatusPanel) View() string {
 	statusTitle := s.title("App Status")
 	indicator := "✓"

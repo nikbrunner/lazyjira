@@ -99,6 +99,7 @@ func TestEditSave_SendsOnlyChangedFields(t *testing.T) {
 	t.Parallel()
 	app, fake := newEditApp(t, editableIssue(), nil)
 	openEdit(t, app)
+	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" now")})
 
 	save(app)
@@ -165,6 +166,7 @@ func TestEditSave_UpdateErrorKeepsViewOpen(t *testing.T) {
 	t.Parallel()
 	app, _ := newEditApp(t, editableIssue(), errors.New("field priority is not on the screen"))
 	openEdit(t, app)
+	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("!")})
 
 	save(app)
@@ -192,6 +194,7 @@ func TestEditSave_UploadsImagesAfterUpdate(t *testing.T) {
 		return nil
 	}
 	openEdit(t, app)
+	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(good + " " + bad), Paste: true})
 
@@ -231,14 +234,63 @@ func TestEditAction_ConversionFailureKeepsViewClosed(t *testing.T) {
 	}
 }
 
-func TestCreateIssue_TitleNamesCreate(t *testing.T) {
+func TestCreateIssue_TitleNamesCreateAndProject(t *testing.T) {
 	t.Parallel()
 	app := newCreateTypeApp(t, nil)
 	_, cmd := app.startCreateIssue()
 	drive(app, cmd)
 	app.createForm.SetSize(120, 40)
 
-	if !strings.Contains(formText(app), "Create issue · *Summary") {
-		t.Errorf("the view should say it creates an issue:\n%s", formText(app))
+	if !strings.Contains(formText(app), "Create issue in "+testProject+" · *Summary") {
+		t.Errorf("the view should say it creates an issue in the active project:\n%s", formText(app))
+	}
+}
+
+func TestCreateIssue_HeaderShowsProjectAboveForm(t *testing.T) {
+	t.Parallel()
+	app := newCreateTypeApp(t, nil)
+	app.projectList.SetProjects([]jira.Project{{Key: testProject, ID: "10000", Name: "Platform"}})
+	app.overlays = components.OverlayStack{&app.createForm}
+	_, _ = app.handleResize(tea.WindowSizeMsg{Width: 120, Height: 40})
+	_, cmd := app.startCreateIssue()
+	drive(app, cmd)
+
+	lines := strings.Split(ansi.Strip(app.View()), "\n")
+	header := strings.Join(lines[:3], "\n")
+	if !strings.Contains(lines[0], "Project") || !strings.Contains(lines[1], testProject+" · Platform") {
+		t.Errorf("the header should name the project:\n%s", header)
+	}
+	if strings.Contains(header, "↵") || strings.Contains(header, "[") {
+		t.Errorf("the header should show no key hints inside the form:\n%s", header)
+	}
+	if !strings.Contains(lines[3], "Summary") {
+		t.Errorf("the form should start below the header:\n%s", strings.Join(lines[:5], "\n"))
+	}
+}
+
+func TestCreateHeader_NamesTargetProject(t *testing.T) {
+	t.Parallel()
+	app := newCreateTypeApp(t, nil)
+	app.projectList.SetProjects([]jira.Project{{Key: testProject, ID: "10000"}})
+	_, _ = app.handleResize(tea.WindowSizeMsg{Width: 120, Height: 40})
+	app.createCtx.projectKey = "DSOTEST"
+
+	if header := ansi.Strip(app.renderCreateHeader()); !strings.Contains(header, "DSOTEST") || strings.Contains(header, testProject) {
+		t.Errorf("the header should name the subtask's project, not the active one:\n%s", header)
+	}
+}
+
+func TestCreateHeader_FullWidthAfterResizeWhileMaximized(t *testing.T) {
+	t.Parallel()
+	app := newCreateTypeApp(t, nil)
+	_, _ = app.handleResize(tea.WindowSizeMsg{Width: 120, Height: 40})
+	app.toggleMaximize(focusIssues)
+	_, _ = app.handleResize(tea.WindowSizeMsg{Width: 150, Height: 40})
+	app.createCtx.projectKey = testProject
+
+	for i, line := range strings.Split(app.renderCreateHeader(), "\n") {
+		if w := ansi.StringWidth(line); w != 150 {
+			t.Errorf("header line %d is %d wide, want 150", i, w)
+		}
 	}
 }

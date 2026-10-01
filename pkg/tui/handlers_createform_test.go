@@ -263,6 +263,7 @@ func TestCreateForm_TypeChangeKeepsTextAndMatchingFields(t *testing.T) {
 	app := newCreateTypeApp(t, nil)
 	_, cmd := app.startCreateIssue()
 	drive(app, cmd)
+	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
 	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Crash on login")})
 	app.createForm.SetDescriptionText("steps")
 	for i := 0; app.createForm.FieldAt(i) != nil; i++ {

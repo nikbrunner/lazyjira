@@ -27,6 +27,8 @@ Sleep 600ms
 Sleep 1200ms
 
 # type the summary
+Tab
+Sleep 200ms
 Set TypingSpeed 40ms
 Type "Login page crashes on expired token refresh"
 Set TypingSpeed 0ms
