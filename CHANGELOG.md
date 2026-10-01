@@ -3,18 +3,24 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
-## [Unreleased]
+## `0.9.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.10.01
 
-### Added
+### Highlights
 
-- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
-  - The Issue Edit View shows the issue's project and the App status panel above the form.
-  - The Summary title names the project when creating an issue, such as `Create issue in PLAT`.
+#### See which project you are writing to
 
-### Changed
+The Issue Edit View shows the project above the form, next to the App status panel, so you can tell at a glance where a
+new issue lands. For a subtask that is the parent's project, even when it differs from the one you have open. The Summary
+title names it too: `Create issue in PLAT`.
 
-- Issue Edit View — nbr <nikolaus.brunner@protonmail.ch>
-  - The Issue Edit View opens with Fields focused; `tab` moves to Summary, then Description.
+![The Issue Edit View with the project shown above the form](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.9.0/docs/assets/recordings/create-issue.gif)
+
+The view now opens with Fields focused. `tab` moves to Summary, then Description, then back to Fields.
+
+#### Important fixes
+
+- `e` on Sprint in the Issue Edit View opens the sprint picker on real Jira sites, and the chosen sprint is saved with
+  the issue.
 
 ---
 
