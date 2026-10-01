@@ -22,8 +22,9 @@ sequenceDiagram
 
 [release-please](https://github.com/googleapis/release-please) reads [Conventional Commits](https://www.conventionalcommits.org/)
 on `main` and keeps one release PR open that bumps
-[`.github/.release-please-manifest.json`](../.github/.release-please-manifest.json). Before `1.0.0`, `feat` bumps the minor
-version and `fix` the patch version. A `Release-As: X.Y.Z` footer in a commit body forces the next version.
+[`.github/.release-please-manifest.json`](../.github/.release-please-manifest.json). Before `1.0.0`, a breaking change and
+`feat` bump the minor version, and `fix` the patch version. A `Release-As: X.Y.Z` footer in a commit body forces the next
+version.
 
 `CHANGELOG.md` is written by hand. release-please never edits it (`skip-changelog` in
 [`.github/release-please-config.json`](../.github/release-please-config.json)).

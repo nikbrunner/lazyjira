@@ -13,7 +13,8 @@ Follow [`docs/releases.md`](../../../docs/releases.md). It is the maintainer sou
 changelog commit, and checking the GitHub Release.
 
 Prepare the release notes with [`lj-changelog`](../lj-changelog/SKILL.md) in release mode before merging:
-it curates the section and sets the release date. The section's version must match the release PR title.
+it curates the section and sets the release date. The section's version must match the release PR title. Read the title
+after release-please has finished its run for the latest push to `main`; each run can change the version.
 
 Re-record the screenshot and GIFs with `make e2e-update` and show Nik the new `docs/assets/recordings/screenshot.png` before committing
 them with the changelog.
