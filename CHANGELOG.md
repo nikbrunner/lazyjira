@@ -3,6 +3,15 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.10.0](https://github.com/nikbrunner/lazyjira/compare/v0.9.0...v0.10.0) (2026-10-08)
+
+
+### Features
+
+* **tui:** create new issues under the epic of the open children view ([8513d26](https://github.com/nikbrunner/lazyjira/commit/8513d2678846abddb2abb79ce3941ee5ef12ae2a))
+* **tui:** list the focused pane's keys first in the help popup ([e788b9d](https://github.com/nikbrunner/lazyjira/commit/e788b9dc84d04ba688dadf2ddefde056050dc9ae))
+* **tui:** name the parent in the children view tab ([13e480a](https://github.com/nikbrunner/lazyjira/commit/13e480aad4411cd2b7f19489cd1c30eb3246991e))
+
 ## [0.9.0](https://github.com/nikbrunner/lazyjira/compare/v0.8.0...v0.9.0) (2026-10-01)
 
 ### Highlights
