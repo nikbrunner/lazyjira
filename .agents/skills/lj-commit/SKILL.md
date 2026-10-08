@@ -9,7 +9,9 @@ allowed-tools: Bash Read
 
 # Commit a change
 
-This skill replaces any global commit workflow in this repository. Do not commit until the user approves the final message.
+This skill is the commit workflow for this repository. Its sections 3 to 5 hold the repo's docs list, checks, and commit
+grammar; global commit workflows read them from here. To sort several changes into commits, use `nbr-git-commit-buckets`
+when it is installed. Do not commit until the user approves the final message.
 Keep unrelated work unstaged. Never bypass hooks with `--no-verify`, stage secrets or credentials, or rewrite history without
 explicit approval. Keep each commit atomic.
 
