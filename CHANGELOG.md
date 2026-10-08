@@ -5,6 +5,20 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [0.10.0](https://github.com/nikbrunner/lazyjira/compare/v0.9.0...v0.10.0) (2026-10-08)
 
+### Highlights
+
+#### Create issues inside an epic
+
+Open an epic's children with `>` and press `n`, and the new issue becomes a child of that epic. The Issue Edit View shows
+a read-only Parent row under Type with the epic's key and summary, so you can see where the issue lands before you save.
+Subtasks created with `S` show their parent the same way. The children view tab names its parent too:
+`Children of PLAT-1`.
+
+#### A help popup for the pane you are in
+
+`?` lists the focused pane's keys first, under Local, and the keys that work everywhere after them, under Global. The
+popup scrolls with the cursor, so long lists reach their end, and actions without a key stay out of it. The help bar
+along the bottom shows only the global keys, the same in every pane.
 
 ### Features
 
