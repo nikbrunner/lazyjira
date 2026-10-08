@@ -3,6 +3,29 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.10.0](https://github.com/nikbrunner/lazyjira/compare/v0.9.0...v0.10.0) (2026-10-08)
+
+### Highlights
+
+#### Create issues inside an epic
+
+Open an epic's children with `>` and press `n`, and the new issue becomes a child of that epic. The Issue Edit View shows
+a read-only Parent row under Type with the epic's key and summary, so you can see where the issue lands before you save.
+Subtasks created with `S` show their parent the same way. The children view tab names its parent too:
+`Children of PLAT-1`.
+
+#### A help popup for the pane you are in
+
+`?` lists the focused pane's keys first, under Local, and the keys that work everywhere after them, under Global. The
+popup scrolls with the cursor, so long lists reach their end, and actions without a key stay out of it. The help bar
+along the bottom shows only the global keys, the same in every pane.
+
+### Features
+
+* **tui:** create new issues under the epic of the open children view ([8513d26](https://github.com/nikbrunner/lazyjira/commit/8513d2678846abddb2abb79ce3941ee5ef12ae2a))
+* **tui:** list the focused pane's keys first in the help popup ([e788b9d](https://github.com/nikbrunner/lazyjira/commit/e788b9dc84d04ba688dadf2ddefde056050dc9ae))
+* **tui:** name the parent in the children view tab ([13e480a](https://github.com/nikbrunner/lazyjira/commit/13e480aad4411cd2b7f19489cd1c30eb3246991e))
+
 ## [0.9.0](https://github.com/nikbrunner/lazyjira/compare/v0.8.0...v0.9.0) (2026-10-01)
 
 ### Highlights

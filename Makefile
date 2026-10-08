@@ -21,7 +21,7 @@ lint-fix:
 	go tool golangci-lint run --fix ./...
 
 lint-docs:
-	npx --yes markdownlint-cli README.md CHANGELOG.md docs/*.md --disable MD001 MD013 MD024 MD033 MD040 MD041 MD060
+	npx --yes markdownlint-cli README.md CHANGELOG.md docs/*.md --disable MD001 MD004 MD013 MD024 MD033 MD040 MD041 MD060
 
 vet:
 	go vet ./...
