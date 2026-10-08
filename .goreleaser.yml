@@ -28,11 +28,7 @@ checksum:
   name_template: checksums.txt
 
 changelog:
-  sort: asc
+  disable: true
 
 release:
-  mode: replace
-  footer: |
-    ---
-    **Full changelog:**
-    https://github.com/nikbrunner/lazyjira/blob/main/CHANGELOG.md
+  mode: keep-existing

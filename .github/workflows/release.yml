@@ -32,20 +32,6 @@ jobs:
           ref: ${{ needs.release-please.outputs.tag_name }}
           fetch-depth: 0
 
-      - name: extract release notes
-        env:
-          VERSION: ${{ needs.release-please.outputs.version }}
-        run: |
-          awk -v heading="## \`${VERSION}\`" '
-            index($0, heading) == 1 { found = 1; next }
-            found && /^---$/ { exit }
-            found { print }
-          ' CHANGELOG.md > "${RUNNER_TEMP}/release-notes.md"
-          if ! grep -q '[^[:space:]]' "${RUNNER_TEMP}/release-notes.md"; then
-            echo "CHANGELOG.md has no section for ${VERSION}" >&2
-            exit 1
-          fi
-
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
@@ -53,6 +39,6 @@ jobs:
       - uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
-          args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -22,4 +22,4 @@
 ## Publishing
 
 - Releases publish through GitHub Releases. Adding package-manager publishing requires explicit approval and verified ownership of its destination.
-- `0.7.0` is the first release announced to users. Every release after it marks breaking changes as `**Breaking:**` entries and ends its highlights with an Upgrading section for each one.
+- `0.7.0` is the first release announced to users. Every release after it marks breaking changes with `!` in the commit type, which release-please lists under Breaking Changes, and ends its highlights with an Upgrading section for each one.

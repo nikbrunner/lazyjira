@@ -1,32 +1,24 @@
 ---
 name: lj-changelog
 description:
-  "Write CHANGELOG.md for lazyjira: the mechanical entry every implementation adds, and the curated release section before
-  a release ships. Use it for every change; only formatting-only, generated-only, changelog-only, or merge/revert changes
-  that leave an existing entry accurate can skip the entry."
-argument-hint: "[entry | release <version>]"
-allowed-tools: Read Edit Bash
+  "Curate the release section of CHANGELOG.md for lazyjira. Use it when a release is being prepared: it writes the
+  Highlights on the release branch and the same section into the release PR description."
 ---
 
-# Write the changelog
+# Curate the changelog
 
-`CHANGELOG.md` has two layers. The **mechanical log** grows one entry per change during development. The **curated release**
-is the reader-facing top of a release section, written once before it ships. release-please never edits the file; the
-curated section becomes the GitHub Release notes.
+release-please writes each release section of `CHANGELOG.md` in its release PR: a heading with the version, compare link,
+and date, then the Conventional Commits grouped as Features, Bug Fixes, and the other configured sections. The curated part
+is `### Highlights`, written on the release branch directly below that heading. release-please publishes the release PR
+description as the GitHub Release notes, so the description carries the same section and the release page matches the
+changelog.
 
-| Task                                        | Read                                                             |
-| ------------------------------------------- | ---------------------------------------------------------------- |
-| A change needs its entry                    | [`references/mechanical-log.md`](references/mechanical-log.md)   |
-| A release is being prepared (`release X.Y`) | [`references/curated-release.md`](references/curated-release.md) |
+Read [`references/curated-release.md`](references/curated-release.md) for the workflow.
 
-## Shared format
+## Format
 
-- A release heading puts the backticked version, eight `&nbsp;`, and the release date:
-  ``## `0.7.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.09.28``. The release workflow finds the section by the
-  backticked version at the start of that line.
-- While a release is prepared but unpublished, new entries go into its section. `## [Unreleased]` exists only while it holds entries.
-- Every entry ends with ` — Name <email>` from the committer's Git config; a breaking entry starts with `**Breaking:**`.
-- Separate release sections with `---`, with a blank line on each side. The release notes end at the first `---`.
-- Run [`humanizer`](../humanizer/SKILL.md) in embedded mode on every entry and highlight before handing it over.
-
-Leave the edit unstaged with the change it describes, and tell the caller what was written or which exception applies.
+- Leave the generated heading and commit groups as release-please wrote them. The commit list stays complete, including the
+  commits a highlight covers.
+- A release section never contains a line that is only `---`. release-please reads the notes from the PR description
+  between its first and last `---` line.
+- Run [`humanizer`](../humanizer/SKILL.md) in embedded mode on every highlight before handing it over.
