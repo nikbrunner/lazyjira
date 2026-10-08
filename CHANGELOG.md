@@ -12,6 +12,11 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
   - The Issue Edit View shows a read-only Parent row with the parent's key and summary when it creates a child or
     subtask.
 
+### Changed
+
+- Issues panel — nbr <nikolaus.brunner@protonmail.ch>
+  - The children view tab names its parent: `Children of PLAT-1`.
+
 ---
 
 ## `0.9.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.10.01

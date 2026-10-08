@@ -37,8 +37,8 @@ func TestHierarchy_EnterWithSubtasks_CreatesHierarchyTab(t *testing.T) {
 	if !a.issuesList.HasHierarchyTab() {
 		t.Fatalf("HasHierarchyTab() = false after showChildren")
 	}
-	if got := a.issuesList.HierarchyTitle(); got != hierarchyTitleChildren {
-		t.Errorf("HierarchyTitle() = %q, want %q", got, hierarchyTitleChildren)
+	if got := a.issuesList.HierarchyTitle(); got != "Children of PARENT-1" {
+		t.Errorf("HierarchyTitle() = %q, want %q", got, "Children of PARENT-1")
 	}
 	if sel := a.issuesList.SelectedIssue(); sel == nil || sel.Key != "SUB-1" {
 		t.Errorf("SelectedIssue() = %+v, want SUB-1", sel)

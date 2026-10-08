@@ -61,7 +61,7 @@ func (a *App) showChildrenFromList() (tea.Cmd, bool) {
 	if len(children) == 0 {
 		return nil, false
 	}
-	a.pushNav("Children", sel.Key, navstack.SourceFromList, children)
+	a.pushNav(childrenTitle(sel.Key), sel.Key, navstack.SourceFromList, children)
 	return a.previewAfterNav(), true
 }
 
@@ -126,7 +126,7 @@ func (a *App) handleChildrenLoaded(msg childrenLoadedMsg) (tea.Model, tea.Cmd) {
 			_, openCmd := a.openIssueDetail()
 			cmds = append(cmds, openCmd)
 		} else {
-			a.pushNav("Children", msg.key, navstack.SourceFromList, msg.issues)
+			a.pushNav(childrenTitle(msg.key), msg.key, navstack.SourceFromList, msg.issues)
 			cmds = append(cmds, a.previewAfterNav())
 		}
 	}
@@ -211,7 +211,7 @@ func (a *App) restoreFromFrame(popped navstack.NavFrame, stack *navstack.NavStac
 		a.issuesList.RemoveHierarchyTab()
 		a.setIssueTabIndex(popped.OriginTabIdx)
 	} else {
-		newTopTitle := titleForNavSource(stack.Peek().Source)
+		newTopTitle := titleForNavFrame(stack.Peek())
 		a.issuesList.ReplaceHierarchyTabContent(newTopTitle, popped.Issues)
 	}
 	a.issuesList.SetFilter(popped.Filter)
@@ -233,14 +233,20 @@ func (a *App) restoreFromFrame(popped navstack.NavFrame, stack *navstack.NavStac
 }
 
 // Avoids storing a title in each NavFrame.
-func titleForNavSource(src navstack.Source) string {
-	switch src {
+func titleForNavFrame(frame navstack.NavFrame) string {
+	switch frame.Source {
 	case navstack.SourceParent:
 		return "Parent"
 	case navstack.SourceFromInfoLink:
 		return "Link"
-	case navstack.SourceFromList, navstack.SourceFromInfoSub:
+	case navstack.SourceFromList:
+		return childrenTitle(frame.ParentKey)
+	case navstack.SourceFromInfoSub:
 		return "Children"
 	}
 	return ""
+}
+
+func childrenTitle(parentKey string) string {
+	return "Children of " + parentKey
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
@@ -177,5 +178,13 @@ func TestBind_ReturnsBindingWithDescription(t *testing.T) {
 	}
 	if b.Key == "" {
 		t.Error("key should not be empty for ActQuit")
+	}
+}
+
+func TestTitleForNavFrame_ChildrenNamesParent(t *testing.T) {
+	t.Parallel()
+	frame := navstack.NavFrame{Source: navstack.SourceFromList, ParentKey: "PLAT-1"}
+	if got := titleForNavFrame(frame); got != "Children of PLAT-1" {
+		t.Errorf("title = %q, want %q", got, "Children of PLAT-1")
 	}
 }
