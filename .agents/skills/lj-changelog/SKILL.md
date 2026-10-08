@@ -21,4 +21,4 @@ Read [`references/curated-release.md`](references/curated-release.md) for the wo
   commits a highlight covers.
 - A release section never contains a line that is only `---`. release-please reads the notes from the PR description
   between its first and last `---` line.
-- Run [`humanizer`](../humanizer/SKILL.md) in embedded mode on every highlight before handing it over.
+- Run the `humanizer` skill in embedded mode on every highlight before handing it over.

@@ -56,6 +56,11 @@ verification fails, fix the cause, restage, and run it again.
 
 A docs-only change may skip `make check`, but say that it was skipped.
 
+Also run `make e2e` when the change touches the screens or keys the tapes in `e2e/tapes/` drive: the workspace layout, the
+Issue Edit View, or issue lookup. It needs [VHS](https://github.com/charmbracelet/vhs). A failing tape is fixed in the same
+commit, in its `e2e/tapes/*.tape.sh` script. The run rewrites `docs/assets/recordings/`; restore those files, since they
+change only with a release.
+
 ## 5. Draft and ask
 
 The message is a [Conventional Commit](https://www.conventionalcommits.org/). release-please derives the next version from it
