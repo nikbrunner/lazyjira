@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -178,6 +180,77 @@ func TestBind_ReturnsBindingWithDescription(t *testing.T) {
 	}
 	if b.Key == "" {
 		t.Error("key should not be empty for ActQuit")
+	}
+}
+
+func TestHelpBarItems_GlobalInEveryPane(t *testing.T) {
+	t.Parallel()
+	app := appForKeybindings(t)
+	app.issuesList.SetIssues([]jira.Issue{{Key: "A1", Parent: &jira.Issue{Key: "P1"}, Subtasks: []jira.Issue{{Key: "S1"}}}})
+	want := app.helpBarItems()
+	for _, focus := range []focusPanel{focusIssueTabs, focusIssues, focusInfo, focusProjects} {
+		app.leftFocus = focus
+		if got := app.helpBarItems(); !reflect.DeepEqual(got, want) {
+			t.Errorf("focus %v: help bar = %v, want %v", focus, got, want)
+		}
+	}
+}
+
+func TestFilteredHelpSections_LocalFirst(t *testing.T) {
+	t.Parallel()
+	app := appForKeybindings(t)
+	app.side = sideLeft
+	app.leftFocus = focusIssues
+
+	bindings, localN := app.filteredHelpSections()
+	if localN == 0 || localN >= len(bindings) {
+		t.Fatalf("localN = %d of %d, want both sections", localN, len(bindings))
+	}
+	if bindings[0].Description != "open issue detail" {
+		t.Errorf("first binding = %+v, want the pane's own", bindings[0])
+	}
+	if !slices.Contains(bindings[:localN], Binding{"backspace", "show parent"}) {
+		t.Error("show parent missing from the Local section")
+	}
+	if !slices.Contains(bindings[localN:], Binding{"q", "quit"}) {
+		t.Error("quit missing from the Global section")
+	}
+
+	app.helpFilter = "quit"
+	if _, localN := app.filteredHelpSections(); localN != 0 {
+		t.Errorf("localN = %d with filter quit, want 0", localN)
+	}
+}
+
+func TestHelpScrollOffset(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name                              string
+		offset, cursorLine, height, total int
+		want                              int
+	}{
+		{"fits", 0, 5, 20, 10, 0},
+		{"cursor near bottom scrolls", 0, 19, 20, 40, 1},
+		{"cursor up keeps two lines above", 10, 11, 20, 40, 9},
+		{"stays put inside window", 5, 12, 20, 40, 5},
+		{"clamps to end", 30, 39, 20, 40, 20},
+	}
+	for _, tc := range cases {
+		if got := helpScrollOffset(tc.offset, tc.cursorLine, tc.height, tc.total); got != tc.want {
+			t.Errorf("%s: offset = %d, want %d", tc.name, got, tc.want)
+		}
+	}
+}
+
+func TestContextBindings_SkipsUnboundActions(t *testing.T) {
+	t.Parallel()
+	app := appForKeybindings(t)
+	app.side = sideLeft
+	app.leftFocus = focusIssues
+	for _, b := range app.ContextBindings() {
+		if b.Key == "" {
+			t.Errorf("binding %q has no key", b.Description)
+		}
 	}
 }
 

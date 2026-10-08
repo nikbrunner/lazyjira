@@ -235,6 +235,7 @@ type App struct {
 	maximizedPane   focusPanel
 	tabOffset       int
 	helpCursor      int
+	helpOffset      int
 	helpSearching   bool
 	helpSearch      components.TextInput
 	helpFilter      string
@@ -1239,7 +1240,7 @@ func (a *App) isPersonSchema(schemaType, schemaItems string) bool {
 }
 
 func (a *App) renderHelpOverlay(base string) string {
-	bindings := a.filteredHelpBindings()
+	bindings, localN := a.filteredHelpSections()
 
 	if a.helpCursor >= len(bindings) {
 		a.helpCursor = len(bindings) - 1
@@ -1260,11 +1261,24 @@ func (a *App) renderHelpOverlay(base string) string {
 	keyNormal := lipgloss.NewStyle().Foreground(theme.ColorGreen).Bold(true)
 	keySel := lipgloss.NewStyle().Foreground(theme.ColorGreen).Bold(true).Background(theme.ColorHighlight)
 	descSel := lipgloss.NewStyle().Background(theme.ColorHighlight)
+	sectionStyle := lipgloss.NewStyle().Foreground(theme.ColorOrange).Bold(true)
+	section := func(name string) string {
+		return "  " + strings.Repeat(" ", maxKey) + "  " + sectionStyle.Render("── "+name)
+	}
 
-	lines := make([]string, 0, len(bindings)+2)
+	lines := make([]string, 0, len(bindings)+5)
 	lines = append(lines, "")
 	descMaxW := popupW - maxKey - 6
+	cursorLine := 0
 	for i, b := range bindings {
+		switch {
+		case i == 0 && localN > 0:
+			lines = append(lines, section("Local"))
+		case i == localN && localN > 0:
+			lines = append(lines, "", section("Global"))
+		case i == localN:
+			lines = append(lines, section("Global"))
+		}
 		padded := b.Key
 		for len(padded) < maxKey {
 			padded += " "
@@ -1275,6 +1289,7 @@ func (a *App) renderHelpOverlay(base string) string {
 		}
 		var line string
 		if i == a.helpCursor {
+			cursorLine = len(lines)
 			line = descSel.Render("  ") + keySel.Render(padded) + descSel.Render("  "+desc)
 		} else {
 			line = "  " + keyNormal.Render(padded) + "  " + desc
@@ -1284,12 +1299,25 @@ func (a *App) renderHelpOverlay(base string) string {
 	lines = append(lines, "")
 
 	popupH := min(len(lines), a.height-4)
+	a.helpOffset = helpScrollOffset(a.helpOffset, cursorLine, popupH, len(lines))
+	lines = lines[a.helpOffset:min(a.helpOffset+popupH, len(lines))]
 	footer := fmt.Sprintf("%d of %d", a.helpCursor+1, len(bindings))
 
 	popupContent := strings.Join(lines, "\n")
 	content := components.RenderPanelFull("Keybindings", footer, popupContent, popupW, popupH, true, nil)
 
 	return components.Overlay(base, content, a.width, a.height)
+}
+
+// helpScrollOffset keeps the cursor line inside the window with two lines of
+// context above it, so a section's header shows with its first binding.
+func helpScrollOffset(offset, cursorLine, height, total int) int {
+	if height <= 0 {
+		return 0
+	}
+	offset = min(offset, max(cursorLine-2, 0))
+	offset = max(offset, cursorLine+2-height)
+	return max(min(offset, total-height), 0)
 }
 
 func (a *App) handleGitBranchSwitch(name string) (tea.Model, tea.Cmd) {

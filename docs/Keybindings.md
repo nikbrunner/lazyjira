@@ -1,6 +1,6 @@
 # Keybindings
 
-Press `?` inside lazyjira to see all available keys. Use `/` inside the help popup to filter keybindings.
+Press `?` inside lazyjira to see all available keys. The help popup lists the focused pane's keys under Local, then the keys that work everywhere under Global. Use `/` inside it to filter keybindings. The help bar along the bottom shows only global keys.
 
 Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspace `Tab`/`Shift+Tab` collection switching, uppercase `H`/`J`/`K`/`L` focus movement, and `j`/`k` collection switching in Issue tabs are fixed.
 

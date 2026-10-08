@@ -14,7 +14,6 @@ import (
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
-	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
@@ -334,17 +333,6 @@ func keyShadowsContext(key string, ctx config.Context, cmds []config.ResolvedCus
 		}
 	}
 	return false
-}
-
-// customCommandHelpItems returns HelpItem entries for the help bar in the given context.
-func (a *App) customCommandHelpItems(ctx config.Context) []components.HelpItem {
-	items := make([]components.HelpItem, 0)
-	for _, rc := range a.customCmds {
-		if rc.HasContext(ctx) {
-			items = append(items, components.HelpItem{Key: rc.Key, Description: rc.Name})
-		}
-	}
-	return items
 }
 
 // customCommandBindings returns Binding entries for the help overlay in the given context.

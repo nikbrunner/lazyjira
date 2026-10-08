@@ -38,10 +38,19 @@ func (a *App) detailScrollBindings() []Binding {
 	}
 }
 
-// ContextBindings returns keybindings for the current focus context
+// ContextBindings returns the focused pane's bindings, then the global ones.
 func (a *App) ContextBindings() []Binding {
+	return append(boundOnly(a.localBindings()), boundOnly(a.globalBindings())...)
+}
+
+// boundOnly drops actions that have no key in the active keymap.
+func boundOnly(bindings []Binding) []Binding {
+	return slices.DeleteFunc(bindings, func(b Binding) bool { return b.Key == "" })
+}
+
+func (a *App) globalBindings() []Binding {
 	km := a.keymap
-	global := []Binding{
+	return []Binding{
 		{km.Keys(ActQuit), "quit"},
 		{km.Keys(ActFocusProj), "focus Project selector"},
 		{km.Keys(ActFocusIssueTabs), "focus Issue tabs"},
@@ -58,22 +67,23 @@ func (a *App) ContextBindings() []Binding {
 		a.bind(ActIssueLookup, "open issue by key"),
 		{km.Keys(ActHelp), "show all keybindings"},
 	}
+}
 
+func (a *App) localBindings() []Binding {
 	switch {
 	case a.side == sideLeft && a.leftFocus == focusIssueTabs:
-		bindings := slices.Concat(global, a.navBindings())
-		return append(bindings, Binding{"enter", "focus Issues"}, Binding{"j/k", "switch issue collection"},
-			a.bind(ActJQLSearch, "JQL search from tab query"))
+		return slices.Concat([]Binding{{"enter", "focus Issues"}, {"j/k", "switch issue collection"},
+			a.bind(ActJQLSearch, "JQL search from tab query")}, a.navBindings())
 
 	case a.side == sideLeft && a.leftFocus == focusIssues:
-		bindings := slices.Concat(global, a.navBindings(), a.detailScrollBindings())
-		bindings = append(bindings,
+		return slices.Concat([]Binding{
 			a.bind(ActOpen, "open issue detail"),
 			a.bind(ActFocusRight, "open issue detail"),
 			a.bind(ActInfoTab, "focus Issue info"),
 			a.bind(ActSelect, "mark issue"),
 			a.bind(ActVisualSelect, "mark range"),
 			a.bind(ActShowChildren, "show children"),
+			a.bind(ActShowParent, "show parent"),
 			a.bind(ActFilterPicker, "filter by status, type, priority"),
 			a.bind(ActCopySummary, "copy key and summary, or marked rows"),
 			a.bind(ActCopyMarkdownLink, "copy Markdown link"),
@@ -90,18 +100,16 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActCopyWorktreeName, "copy worktree name"),
 			a.bind(ActCreateWorktree, "create worktree"),
 			a.bind(ActNew, "create issue"),
+			a.bind(ActCreateSubtask, "create subtask"),
 			a.bind(ActFocusLeft, "clear marks, then filters"),
 			a.bind(ActDuplicateIssue, "duplicate issue"),
 			a.bind(ActCloseJQLTab, "close JQL tab"),
-			Binding{"[]", "switch tab"},
-		)
-		bindings = append(bindings, a.customCommandBindings(config.CtxIssues)...)
-		return bindings
+			{"[]", "switch tab"},
+		}, a.customCommandBindings(config.CtxIssues), a.navBindings(), a.detailScrollBindings())
 
 	case a.side == sideLeft && a.leftFocus == focusInfo:
-		bindings := slices.Concat(global, a.navBindings(), a.detailScrollBindings())
-		bindings = append(bindings,
-			Binding{"[]", "switch tab (Info/Lnk/Sub)"},
+		return slices.Concat([]Binding{
+			{"[]", "switch tab (Info/Lnk/Sub)"},
 			a.bind(ActEdit, "edit field"),
 			a.bind(ActTransition, "transition issue status"),
 			a.bind(ActPriority, "change priority"),
@@ -111,22 +119,18 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActCopyBranchName, "copy branch name"),
 			a.bind(ActCopyWorktreeName, "copy worktree name"),
 			a.bind(ActCreateWorktree, "create worktree"),
+			a.bind(ActCreateSubtask, "create subtask (Sub tab)"),
 			a.bind(ActFocusRight, "next panel"),
 			a.bind(ActFocusLeft, "previous panel"),
-		)
-		bindings = append(bindings, a.customCommandBindings(config.CtxInfo)...)
-		return bindings
+		}, a.customCommandBindings(config.CtxInfo), a.navBindings(), a.detailScrollBindings())
 
 	case a.side == sideLeft && a.leftFocus == focusProjects:
-		bindings := slices.Concat(global, a.navBindings())
-		bindings = append(bindings, a.bind(ActOpen, "choose project"))
-		bindings = append(bindings, a.customCommandBindings(config.CtxProjects)...)
-		return bindings
+		return slices.Concat([]Binding{a.bind(ActOpen, "choose project")},
+			a.customCommandBindings(config.CtxProjects), a.navBindings())
 
 	case a.side == sideRight:
-		bindings := slices.Concat(global, a.navBindings())
-		bindings = append(bindings,
-			Binding{"[]", "previous/next tab"},
+		bindings := []Binding{
+			{"[]", "previous/next tab"},
 			a.bind(ActFocusLeft, "back to left panel"),
 			a.bind(ActInfoTab, "focus info panel"),
 			a.bind(ActPriority, "change priority"),
@@ -136,7 +140,7 @@ func (a *App) ContextBindings() []Binding {
 			a.bind(ActCopyBranchName, "copy branch name"),
 			a.bind(ActCopyWorktreeName, "copy worktree name"),
 			a.bind(ActCreateWorktree, "create worktree"),
-		)
+		}
 		if a.detailView.ActiveTab() == views.TabComments {
 			bindings = append(bindings,
 				a.bind(ActEdit, "edit comment"),
@@ -151,10 +155,10 @@ func (a *App) ContextBindings() []Binding {
 		if a.detailView.ActiveTab() == views.TabComments {
 			bindings = append(bindings, a.customCommandBindings(config.CtxDetailComments)...)
 		}
-		return bindings
+		return append(bindings, a.navBindings()...)
 	}
 
-	return global
+	return nil
 }
 
 func (a *App) helpBarItems() []components.HelpItem {
@@ -224,92 +228,12 @@ func (a *App) helpBarItems() []components.HelpItem {
 	}
 
 	km := a.keymap
-	switch {
-	case a.side == sideLeft && a.leftFocus == focusIssueTabs:
-		return []components.HelpItem{
-			{Key: "j/k", Description: "issue collection"},
-			{Key: "enter", Description: "Issues"},
-			{Key: km.Keys(ActJQLSearch), Description: "search from query"},
-			{Key: km.Keys(ActHelp), Description: "help"},
-		}
-	case a.side == sideLeft && a.leftFocus == focusIssues:
-		var items []components.HelpItem
-		if a.issuesList.IsJQLTab() {
-			items = append(items, components.HelpItem{Key: km.Keys(ActCloseJQLTab), Description: "close JQL"})
-		}
-		cur := a.currentIssue()
-		items = append(items,
-			components.HelpItem{Key: km.Keys(ActOpen), Description: "detail"},
-			components.HelpItem{Key: km.Keys(ActSelect), Description: "mark"},
-			components.HelpItem{Key: km.Keys(ActFilterPicker), Description: "filter"},
-		)
-		if cur != nil {
-			if children, resolved := a.childrenForList(cur); resolved && len(children) > 0 {
-				items = append(items, components.HelpItem{Key: km.Keys(ActShowChildren), Description: "children"})
-			}
-		}
-		if cur != nil && cur.Parent != nil && cur.Parent.Key != "" {
-			items = append(items, components.HelpItem{Key: km.Keys(ActShowParent), Description: "parent"})
-		}
-		items = append(items,
-			components.HelpItem{Key: km.Keys(ActEdit), Description: "edit"},
-			components.HelpItem{Key: km.Keys(ActTransition), Description: "transition"},
-			components.HelpItem{Key: km.Keys(ActPriority), Description: "priority"},
-			components.HelpItem{Key: km.Keys(ActCopyBranchName), Description: "copy branch"},
-			components.HelpItem{Key: km.Keys(ActCreateBranch), Description: "branch"},
-			components.HelpItem{Key: km.Keys(ActCopyWorktreeName), Description: "copy worktree"},
-			components.HelpItem{Key: km.Keys(ActCreateWorktree), Description: "worktree"},
-			components.HelpItem{Key: km.Keys(ActNew), Description: "create"},
-			components.HelpItem{Key: km.Keys(ActJQLSearch), Description: "JQL search"},
-		)
-		if a.canCreateSubtask() {
-			items = append(items, components.HelpItem{Key: km.Keys(ActCreateSubtask), Description: "subtask"})
-		}
-		items = append(items, a.customCommandHelpItems(config.CtxIssues)...)
-		items = append(items, components.HelpItem{Key: km.Keys(ActHelp), Description: "help"})
-		return items
-	case a.side == sideLeft && a.leftFocus == focusInfo:
-		items := make([]components.HelpItem, 0, 6)
-		items = append(items,
-			components.HelpItem{Key: km.Keys(ActEdit), Description: "edit"},
-			components.HelpItem{Key: km.Keys(ActTransition), Description: "transition"},
-			components.HelpItem{Key: km.Keys(ActPriority), Description: "priority"},
-			components.HelpItem{Key: km.Keys(ActAssignee), Description: "assignee"},
-		)
-		items = append(items, a.customCommandHelpItems(config.CtxInfo)...)
-		items = append(items, components.HelpItem{Key: km.Keys(ActHelp), Description: "help"})
-		return items
-	case a.side == sideLeft && a.leftFocus == focusProjects:
-		return []components.HelpItem{
-			{Key: km.Keys(ActOpen), Description: "choose project"},
-			{Key: km.Keys(ActHelp), Description: "help"},
-		}
-	case a.side == sideRight:
-		items := []components.HelpItem{
-			{Key: "[]", Description: "tabs"},
-		}
-		switch a.detailView.ActiveTab() {
-		case views.TabComments:
-			items = append(items,
-				components.HelpItem{Key: km.Keys(ActEdit), Description: "edit comment"},
-				components.HelpItem{Key: km.Keys(ActNew), Description: "new comment"},
-			)
-		default:
-			items = append(items,
-				components.HelpItem{Key: km.Keys(ActEdit), Description: "edit"},
-			)
-		}
-		items = append(items,
-			components.HelpItem{Key: km.Keys(ActPriority), Description: "priority"},
-			components.HelpItem{Key: km.Keys(ActAssignee), Description: "assignee"},
-			components.HelpItem{Key: km.Keys(ActFocusLeft), Description: "back"},
-		)
-		items = append(items, a.customCommandHelpItems(config.CtxDetail)...)
-		if a.detailView.ActiveTab() == views.TabComments {
-			items = append(items, a.customCommandHelpItems(config.CtxDetailComments)...)
-		}
-		items = append(items, components.HelpItem{Key: km.Keys(ActHelp), Description: "help"})
-		return items
+	return []components.HelpItem{
+		{Key: km.Keys(ActSearch), Description: "search"},
+		{Key: km.Keys(ActJQLSearch), Description: "JQL search"},
+		{Key: km.Keys(ActIssueLookup), Description: "open by key"},
+		{Key: km.Keys(ActRefresh), Description: "refresh"},
+		{Key: km.Keys(ActHelp), Description: "keybindings"},
+		{Key: km.Keys(ActQuit), Description: "quit"},
 	}
-	return nil
 }

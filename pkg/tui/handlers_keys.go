@@ -83,6 +83,7 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case ActHelp:
 		a.showHelp = true
 		a.helpCursor = 0
+		a.helpOffset = 0
 		a.helpFilter = ""
 		a.helpSearching = false
 		return a, nil
@@ -304,7 +305,18 @@ func (a *App) clearIssueListLayer() bool {
 }
 
 func (a *App) filteredHelpBindings() []Binding {
-	bindings := a.ContextBindings()
+	bindings, _ := a.filteredHelpSections()
+	return bindings
+}
+
+// filteredHelpSections returns the help bindings matching the filter, local
+// first, and how many of them are local.
+func (a *App) filteredHelpSections() ([]Binding, int) {
+	local := a.filterHelp(boundOnly(a.localBindings()))
+	return append(local, a.filterHelp(boundOnly(a.globalBindings()))...), len(local)
+}
+
+func (a *App) filterHelp(bindings []Binding) []Binding {
 	if a.helpFilter == "" {
 		return bindings
 	}

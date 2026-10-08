@@ -589,7 +589,7 @@ Each command has:
 | Field | Description |
 |-------|-------------|
 | `key` | Key binding. Supports single letters, modifiers (`ctrl+x`, `alt+x`), and special keys (`tab`, `enter`). |
-| `name` | Label shown in the help overlay and help bar. |
+| `name` | Label shown in the help overlay. |
 | `command` | Shell command string. Rendered as a Go template before execution. |
 | `contexts` | Optional list of UI contexts the command fires in. Defaults to `[issues, info, detail]`. |
 | `suspend` | Optional. `true` (default) hands the terminal to the child process; set `false` for background commands like clipboard copies or notifications. |

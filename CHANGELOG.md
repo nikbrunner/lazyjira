@@ -14,6 +14,11 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ### Changed
 
+- Workspace — nbr <nikolaus.brunner@protonmail.ch>
+  - The `?` help popup lists the focused pane's keys under Local, then global keys under Global, and scrolls with the
+    cursor.
+  - The help bar shows only global keys in every pane.
+  - The `?` help popup leaves out actions that have no key.
 - Issues panel — nbr <nikolaus.brunner@protonmail.ch>
   - The children view tab names its parent: `Children of PLAT-1`.
 

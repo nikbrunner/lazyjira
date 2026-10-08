@@ -9,7 +9,6 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
-	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
@@ -711,61 +710,6 @@ func TestHierarchy_NavFromDifferentJQLTab_StacksUp(t *testing.T) {
 	}
 	if sel := a.issuesList.SelectedIssue(); sel == nil || sel.Key != "SUB-A" {
 		t.Errorf("SelectedIssue() = %+v, want SUB-A", sel)
-	}
-}
-
-func findHelpItem(items []components.HelpItem, desc string) (components.HelpItem, bool) {
-	for _, it := range items {
-		if it.Description == desc {
-			return it, true
-		}
-	}
-	return components.HelpItem{}, false
-}
-
-func TestHelpBar_Backspace_OnlyWhenParent(t *testing.T) {
-	t.Parallel()
-	fake := &jiratest.FakeClient{T: t}
-	a := newAppWithFake(t, fake)
-	a.keymap = DefaultKeymap()
-
-	a.issuesList.SetIssues([]jira.Issue{{Key: "A1"}})
-	if _, ok := findHelpItem(a.helpBarItems(), "parent"); ok {
-		t.Errorf("help bar shows 'parent' without a parent issue")
-	}
-
-	a.issuesList.SetIssues([]jira.Issue{{Key: "A1", Parent: &jira.Issue{Key: "P1"}}})
-	it, ok := findHelpItem(a.helpBarItems(), "parent")
-	if !ok {
-		t.Fatalf("help bar missing 'parent' entry when parent exists")
-	}
-	if it.Key != "backspace" {
-		t.Errorf("parent help key = %q, want %q", it.Key, "backspace")
-	}
-}
-
-func TestHelpBar_ChildrenOnlyWhenIssueHasChildren(t *testing.T) {
-	t.Parallel()
-	fake := &jiratest.FakeClient{T: t}
-	a := newAppWithFake(t, fake)
-	a.keymap = DefaultKeymap()
-
-	a.issuesList.SetIssues([]jira.Issue{
-		{Key: "A1", Subtasks: []jira.Issue{{Key: "S1"}}},
-	})
-	if item, ok := findHelpItem(a.helpBarItems(), "children"); !ok || item.Key != ">" {
-		t.Errorf("help bar children entry = %+v, %v; want key >", item, ok)
-	}
-	if _, ok := findHelpItem(a.helpBarItems(), "detail"); !ok {
-		t.Errorf("help bar missing 'detail' entry when subtasks exist")
-	}
-
-	a.issuesList.SetIssues([]jira.Issue{{Key: "A1"}})
-	if _, ok := findHelpItem(a.helpBarItems(), "detail"); !ok {
-		t.Errorf("help bar missing 'detail' entry for leaf issue")
-	}
-	if _, ok := findHelpItem(a.helpBarItems(), "children"); ok {
-		t.Errorf("help bar shows 'children' for leaf issue")
 	}
 }
 
