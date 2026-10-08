@@ -358,10 +358,57 @@ func TestCreateForm_TypePickerOffersFilteredTypes(t *testing.T) {
 	}
 }
 
+func epicChildrenApp(t *testing.T, epicType *jira.IssueType) *App {
+	t.Helper()
+	app := newCreateTypeApp(t, nil)
+	epic := jira.Issue{Key: "PLAT-1", Summary: "Login", IssueType: epicType, Subtasks: []jira.Issue{{Key: "PLAT-2"}}}
+	other := jira.Issue{Key: "PLAT-3", Status: &jira.Status{Name: "Done"}}
+	app.issuesList.SetStatusOrder([]string{"Done"})
+	app.issuesList.SetIssues([]jira.Issue{epic, other})
+	if !app.issuesList.SelectByKey("PLAT-1") {
+		t.Fatal("precondition: epic not listed")
+	}
+	if _, ok := app.showChildren(); !ok {
+		t.Fatal("precondition: children view did not open")
+	}
+	return app
+}
+
+func TestCreateIssue_InEpicChildrenView_ParentsToEpic(t *testing.T) {
+	t.Parallel()
+	app := epicChildrenApp(t, &jira.IssueType{Name: "Epic", HierarchyLevel: 1})
+	_, cmd := app.startCreateIssue()
+	drive(app, cmd)
+
+	if app.createCtx.parentKey != "PLAT-1" {
+		t.Fatalf("parentKey = %q, want the epic", app.createCtx.parentKey)
+	}
+	if row := typeRow(t, app); len(row.AllowedValues) != 2 {
+		t.Errorf("Type choices = %v, want the standard types", row.AllowedValues)
+	}
+	if row := app.createForm.FieldAt(1); row == nil || row.FieldID != fldParent || row.DisplayValue != "PLAT-1 Login" {
+		t.Errorf("second row = %+v, want the read-only Parent row", row)
+	}
+	fields := map[string]any{"summary": "hi"}
+	_, _ = app.handleCreateFormSubmit(components.CreateFormSubmitMsg{Fields: fields})
+	if parent, ok := fields["parent"].(map[string]string); !ok || parent["key"] != "PLAT-1" {
+		t.Errorf("parent field = %v, want the epic", fields["parent"])
+	}
+}
+
+func TestCreateIssue_InStoryChildrenView_HasNoParent(t *testing.T) {
+	t.Parallel()
+	app := epicChildrenApp(t, &jira.IssueType{Name: "Story"})
+	_, _ = app.startCreateIssue()
+	if app.createCtx.parentKey != "" {
+		t.Errorf("parentKey = %q, want none outside an epic", app.createCtx.parentKey)
+	}
+}
+
 func TestCreateSubtask_TypeRowIsReadOnly(t *testing.T) {
 	t.Parallel()
 	app := newCreateTypeApp(t, nil)
-	app.createCtx = createCtx{intent: true, projectKey: testProject, parentKey: testKey}
+	app.createCtx = createCtx{intent: true, projectKey: testProject, parentKey: testKey, subtask: true}
 	drive(app, fetchIssueTypes(app.client, "10000"))
 
 	row := typeRow(t, app)

@@ -46,7 +46,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `e` | Open the selected issue in the Issue Edit View (issues list and details pane), edit the focused field (Issue info pane), or edit the selected comment (comments tab) |
 | `p` | Change priority |
 | `a` | Change assignee |
-| `n` | Create new issue (issues list) or new comment (comments tab) |
+| `n` | Create new issue (issues list) or new comment (comments tab). In an epic's children view, the new issue becomes a child of that epic. |
 | `ctrl+n` | Duplicate issue |
 | `S` | Create a subtask under the selected issue (issues list or the info panel's Sub tab). Parent and project are taken from the selection; not available when the selection is itself a subtask or an epic. |
 | `c` | View comments |
@@ -78,6 +78,8 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 `n` opens the Issue Edit View to create an issue, and `e` opens it on the selected issue to edit it. The view shows Fields beside Summary and Description, or stacks them on narrow terminals. Its keys are fixed.
 
 Type is the first row in Fields. When creating, it starts on the type last used in the project this session, or on the first type Jira lists, and editing it switches the view to another type. A subtask's Type and an edited issue's Type can't be changed.
+
+When the new issue has a parent, a read-only Parent row below Type shows the parent's key and summary.
 
 Editing starts from the issue's current values, and saving sends only the fields you changed.
 

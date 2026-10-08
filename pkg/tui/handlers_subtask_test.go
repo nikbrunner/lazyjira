@@ -243,7 +243,7 @@ func TestHandleIssueTypesLoaded_SubtaskFilter(t *testing.T) {
 	t.Parallel()
 	app := focusApp(t)
 	app.modal.SetSize(120, 40)
-	app.createCtx = createCtx{intent: true, parentKey: testKey}
+	app.createCtx = createCtx{intent: true, parentKey: testKey, subtask: true}
 
 	_, _ = app.handleIssueTypesLoaded(issueTypesLoadedMsg{issueTypes: []jira.IssueType{
 		{ID: "1", Name: "Story"},
@@ -286,7 +286,7 @@ func TestHandleCreateFormSubmit_InjectsParent(t *testing.T) {
 		return &jira.Issue{Key: "PLAT-99"}, nil
 	}
 	app := newAppWithFake(t, fake)
-	app.createCtx = createCtx{projectKey: testProject, issueTypeID: "10001", parentKey: testKey}
+	app.createCtx = createCtx{projectKey: testProject, issueTypeID: "10001", parentKey: testKey, subtask: true}
 
 	fields := map[string]any{"summary": "hi"}
 	_, _ = app.handleCreateFormSubmit(components.CreateFormSubmitMsg{Fields: fields})

@@ -51,7 +51,7 @@ func TestFormatCreateError_NonAPIErrorFallsBackToRaw(t *testing.T) {
 func TestHandleCreatePreFormError_AbortsWithoutEmptyForm(t *testing.T) {
 	t.Parallel()
 	app := focusApp(t)
-	app.createCtx = createCtx{projectKey: "DSOTEST", parentKey: testKey}
+	app.createCtx = createCtx{projectKey: "DSOTEST", parentKey: testKey, subtask: true}
 	app.createForm.SetLoading(true) // form is visible-loading before createmeta resolves
 	if !app.createForm.IsVisible() {
 		t.Fatal("precondition: loading form should be visible")

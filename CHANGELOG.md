@@ -3,6 +3,17 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [Unreleased]
+
+### Added
+
+- Issues panel — nbr <nikolaus.brunner@protonmail.ch>
+  - `n` in an epic's children view creates the new issue as a child of that epic.
+  - The Issue Edit View shows a read-only Parent row with the parent's key and summary when it creates a child or
+    subtask.
+
+---
+
 ## `0.9.0` &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2026.10.01
 
 ### Highlights

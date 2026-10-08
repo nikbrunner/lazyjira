@@ -207,6 +207,9 @@ func (a *App) handleCreateFormPicker(msg components.CreateFormPickerMsg) (tea.Mo
 	}
 	idx := msg.FieldIndex
 
+	if field.FieldID == fldParent {
+		return a, nil
+	}
 	if field.FieldID == fldIssueType {
 		if len(msg.Items) == 0 {
 			return a, nil
@@ -404,7 +407,7 @@ func (a *App) handleCreateFormSubmit(msg components.CreateFormSubmitMsg) (tea.Mo
 	msg.Fields["project"] = map[string]string{"key": a.createCtx.projectKey}
 	msg.Fields[fldIssueType] = map[string]string{"id": a.createCtx.issueTypeID}
 	a.createCtx.attachments = msg.Attachments
-	if a.createCtx.parentKey == "" {
+	if !a.createCtx.subtask {
 		if a.lastCreateType == nil {
 			a.lastCreateType = make(map[string]string)
 		}

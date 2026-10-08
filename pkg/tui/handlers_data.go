@@ -406,7 +406,7 @@ func (a *App) handleComponentsLoaded(msg componentsLoadedMsg) (tea.Model, tea.Cm
 func (a *App) handleIssueTypesLoaded(msg issueTypesLoadedMsg) (tea.Model, tea.Cmd) {
 	if a.createCtx.intent {
 		a.createCtx.intent = false
-		subtaskOnly := a.createCtx.parentKey != ""
+		subtaskOnly := a.createCtx.subtask
 		items := make([]components.ModalItem, 0, len(msg.issueTypes))
 		for _, t := range msg.issueTypes {
 			if t.Subtask == subtaskOnly {
@@ -551,8 +551,7 @@ func (a *App) handleCreatePreFormError(msg createPreFormErrorMsg) (tea.Model, te
 	if msg.issueTypeID != a.createCtx.loadingTypeID {
 		return a, nil
 	}
-	subtask := a.createCtx.parentKey != ""
-	text := formatCreateError(msg.err, a.createCtx.projectKey, subtask)
+	text := formatCreateError(msg.err, a.createCtx.projectKey, a.createCtx.subtask)
 	if key := a.createCtx.editKey; key != "" {
 		text = "Cannot edit " + key + ": " + msg.err.Error()
 	}
@@ -584,7 +583,7 @@ func (a *App) createTypeField() components.CreateFormField {
 		Type:         components.CFFieldSingleSelect,
 		DisplayValue: a.createCtx.issueTypeName,
 	}
-	if a.createCtx.parentKey == "" && a.createCtx.editKey == "" {
+	if !a.createCtx.subtask && a.createCtx.editKey == "" {
 		f.AllowedValues = a.createCtx.issueTypes
 	}
 	return f
@@ -611,7 +610,16 @@ func (a *App) handleCreateMetaLoaded(msg createMetaLoadedMsg) (tea.Model, tea.Cm
 	if projectKey != "" && issueTypeID != "" && msg.cacheVersion == a.referenceCacheVersion && !msg.fromCache {
 		a.createMetaCache.set(projectKey+":"+issueTypeID, msg.fields)
 	}
-	fields := append([]components.CreateFormField{a.createTypeField()}, a.buildCreateFields(msg.fields)...)
+	fields := []components.CreateFormField{a.createTypeField()}
+	if a.createCtx.parentKey != "" {
+		fields = append(fields, components.CreateFormField{
+			FieldID:      fldParent,
+			Name:         "Parent",
+			Type:         components.CFFieldSingleSelect,
+			DisplayValue: a.createCtx.parentLabel,
+		})
+	}
+	fields = append(fields, a.buildCreateFields(msg.fields)...)
 
 	if a.createFormPopulated() {
 		a.createForm.ChangeType(fields, a.createCtx.issueTypeName)

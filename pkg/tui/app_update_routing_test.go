@@ -333,7 +333,7 @@ func TestUpdate_RoutesCreateAndEditMessages(t *testing.T) {
 		{
 			name: "pre-form create error aborts to status",
 			setup: func(app *App, _ *jiratest.FakeClient) {
-				app.createCtx = createCtx{projectKey: "DSOTEST", parentKey: testKey}
+				app.createCtx = createCtx{projectKey: "DSOTEST", parentKey: testKey, subtask: true}
 				app.createForm.SetLoading(true)
 			},
 			msg: createPreFormErrorMsg{err: &jira.APIError{

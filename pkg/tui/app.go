@@ -48,6 +48,7 @@ const (
 	fldName        = "name"
 	fldDescription = "description"
 	fldIssueType   = "issuetype"
+	fldParent      = "parent"
 	fldSummary     = "summary"
 )
 
@@ -83,6 +84,11 @@ type createCtx struct {
 	issueTypeID   string
 	issueTypeName string
 	parentKey     string
+	// parentLabel is the parent's key and summary, shown on the form.
+	parentLabel string
+	// subtask restricts the form to subtask types under parentKey. Without
+	// it, parentKey makes a standard issue the child of an epic.
+	subtask       bool
 	duplicateFrom *jira.Issue
 	// issueTypes are the choices of the form's Type row.
 	issueTypes []components.ModalItem

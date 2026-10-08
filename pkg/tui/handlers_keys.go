@@ -10,6 +10,7 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/git"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
@@ -644,10 +645,12 @@ func (a *App) startCreateSubtask() (tea.Model, tea.Cmd) {
 	}
 
 	a.createCtx = createCtx{
-		intent:     true,
-		projectKey: projectKey,
-		projectID:  projectID,
-		parentKey:  parent.Key,
+		intent:      true,
+		projectKey:  projectKey,
+		projectID:   projectID,
+		parentKey:   parent.Key,
+		parentLabel: issueLabel(parent),
+		subtask:     true,
 	}
 	*a.logFlag = true
 	return a, fetchIssueTypes(a.client, projectID)
@@ -683,8 +686,47 @@ func (a *App) startCreateIssue() (tea.Model, tea.Cmd) {
 		projectKey: a.projectKey,
 		projectID:  a.projectID,
 	}
+	if epic := a.childrenViewEpic(); epic != nil {
+		a.createCtx.parentKey = epic.Key
+		a.createCtx.parentLabel = issueLabel(epic)
+	}
 	*a.logFlag = true
 	return a, fetchIssueTypes(a.client, a.projectID)
+}
+
+// childrenViewEpic returns the epic whose children the active hierarchy tab
+// lists, or nil on any other tab. A standard issue's children are subtasks,
+// which the subtask flow creates.
+func (a *App) childrenViewEpic() *jira.Issue {
+	if !a.issuesList.IsHierarchyTab() {
+		return nil
+	}
+	stack := a.issuesList.HierarchyStack()
+	if stack == nil || stack.Depth() == 0 {
+		return nil
+	}
+	top := stack.Peek()
+	if top.Source != navstack.SourceFromList {
+		return nil
+	}
+	parent := a.issueCache[top.ParentKey]
+	for i := range top.Issues {
+		if top.Issues[i].Key == top.ParentKey {
+			parent = &top.Issues[i]
+			break
+		}
+	}
+	if parent == nil || parent.IssueType == nil || parent.IssueType.HierarchyLevel < 1 {
+		return nil
+	}
+	return parent
+}
+
+func issueLabel(iss *jira.Issue) string {
+	if iss.Summary == "" {
+		return iss.Key
+	}
+	return iss.Key + " " + iss.Summary
 }
 
 func (a *App) isMarkingKey(key string) bool {
