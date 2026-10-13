@@ -3,6 +3,14 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.11.0](https://github.com/nikbrunner/lazyjira/compare/v0.10.0...v0.11.0) (2026-10-13)
+
+
+### Features
+
+* **tui:** add a sprint column to the Issues list ([3982d61](https://github.com/nikbrunner/lazyjira/commit/3982d61666e47738e9ecbeec58e1b6592bba9d38))
+* **tui:** offer filter picker groups for the configured columns ([6a94e92](https://github.com/nikbrunner/lazyjira/commit/6a94e92bdd37fa0a1814e01dc6c7831ee71c179c))
+
 ## [0.10.0](https://github.com/nikbrunner/lazyjira/compare/v0.9.0...v0.10.0) (2026-10-08)
 
 ### Highlights
