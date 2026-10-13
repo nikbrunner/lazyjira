@@ -9,17 +9,36 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 )
 
-// Picker filter groups, in picker order.
+// Picker filter groups. The picker offers a group only when its column is
+// configured, in column order.
 const (
 	FilterStatus   = "status"
 	FilterType     = "type"
 	FilterPriority = "priority"
+	FilterAssignee = "assignee"
+	FilterSprint   = "sprint"
 )
 
-var filterGroups = []struct{ key, label string }{
+type filterGroup struct{ key, label string }
+
+var filterGroups = []filterGroup{
 	{FilterStatus, "Status"},
 	{FilterType, "Type"},
 	{FilterPriority, "Priority"},
+	{FilterAssignee, "Assignee"},
+	{FilterSprint, "Sprint"},
+}
+
+func (m *IssuesList) pickerGroups() []filterGroup {
+	var groups []filterGroup
+	for _, field := range m.columnFields() {
+		for _, g := range filterGroups {
+			if g.key == field {
+				groups = append(groups, g)
+			}
+		}
+	}
+	return groups
 }
 
 const filterNone = "None"
@@ -78,6 +97,14 @@ func issueFilterValue(issue jira.Issue, group string) string {
 	case FilterPriority:
 		if issue.Priority != nil {
 			name = issue.Priority.Name
+		}
+	case FilterAssignee:
+		if issue.Assignee != nil {
+			name = issue.Assignee.DisplayName
+		}
+	case FilterSprint:
+		if issue.Sprint != nil {
+			name = issue.Sprint.Name
 		}
 	}
 	if name == "" {
@@ -150,7 +177,7 @@ func (m *IssuesList) FilterPickerItems(selected map[string]bool) []components.Mo
 		}
 	}
 	var items []components.ModalItem
-	for _, g := range filterGroups {
+	for _, g := range m.pickerGroups() {
 		counts := make(map[string]int)
 		seen := make(map[string]bool)
 		var values []string

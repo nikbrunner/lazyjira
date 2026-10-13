@@ -25,6 +25,8 @@ func filterIssue(key, status, typ, prio string) jira.Issue {
 	return issue
 }
 
+var pickerTestFields = []string{"key", "status", "type", "priority", "summary"}
+
 func visibleKeys(m *IssuesList) string {
 	keys := make([]string, len(m.issues))
 	for i, issue := range m.issues {
@@ -135,6 +137,7 @@ func TestIssuesList_PickerFilterIsPerTab(t *testing.T) {
 func TestIssuesList_FilterPickerItemsKeepSelectedValuesWithoutIssues(t *testing.T) {
 	t.Parallel()
 	m := makeIssuesListWithTabs(80, 12, "All")
+	m.SetFields(pickerTestFields)
 	m.SetStatusOrder([]string{"To Do", "In Progress", "Done"})
 	m.SetIssues(filterTestIssues())
 	m.SetPickerFilter(map[string]bool{"status:QA": true})
@@ -248,6 +251,7 @@ func pickerLabels(items []components.ModalItem) (labels, disabled string) {
 func TestIssuesList_FilterPickerCountsFacetAgainstOtherGroups(t *testing.T) {
 	t.Parallel()
 	m := makeIssuesListWithTabs(80, 12, "All")
+	m.SetFields(pickerTestFields)
 	m.SetIssues(filterTestIssues())
 
 	labels, disabled := pickerLabels(m.FilterPickerItems(map[string]bool{"type:Story": true, "status:Done": true}))
@@ -266,6 +270,7 @@ func TestIssuesList_FilterPickerCountsFacetAgainstOtherGroups(t *testing.T) {
 func TestIssuesList_FilterPickerCountsRespectTextFilter(t *testing.T) {
 	t.Parallel()
 	m := makeIssuesListWithTabs(80, 12, "All")
+	m.SetFields(pickerTestFields)
 	m.SetIssues(filterTestIssues())
 	m.SetFilter("A-1")
 
@@ -273,5 +278,35 @@ func TestIssuesList_FilterPickerCountsRespectTextFilter(t *testing.T) {
 	want := "Blocked (0)|Done (1)|In Progress (0)|to do (0)|Bug (1)|Story (0)|High (1)|Low (0)|None (0)"
 	if labels != want {
 		t.Errorf("labels = %q\nwant     %q", labels, want)
+	}
+}
+
+func TestIssuesList_FilterPickerGroupsFollowColumns(t *testing.T) {
+	t.Parallel()
+	m := makeIssuesListWithTabs(80, 12, "All")
+	m.SetFields([]string{"key", "summary", "sprint", "assignee", "updated"})
+	issues := filterTestIssues()
+	issues[0].Sprint = &jira.Sprint{Name: "Sprint 7"}
+	issues[1].Sprint = &jira.Sprint{Name: "Sprint 7"}
+	issues[2].Assignee = &jira.User{DisplayName: "Alice"}
+	m.SetIssues(issues)
+
+	var groups []string
+	for _, item := range m.FilterPickerItems(nil) {
+		if item.Separator {
+			groups = append(groups, item.Label)
+		}
+	}
+	if got, want := strings.Join(groups, "|"), "Sprint|Assignee"; got != want {
+		t.Errorf("groups = %q, want %q", got, want)
+	}
+
+	m.SetPickerFilter(map[string]bool{"sprint:Sprint 7": true})
+	if got, want := visibleKeys(m), "A-1 A-2"; got != want {
+		t.Errorf("sprint filter = %q, want %q", got, want)
+	}
+	m.SetPickerFilter(map[string]bool{"assignee:None": true})
+	if got, want := visibleKeys(m), "A-1 A-2 A-4 A-5"; got != want {
+		t.Errorf("assignee None = %q, want %q", got, want)
 	}
 }

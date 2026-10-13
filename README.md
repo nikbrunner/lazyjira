@@ -117,7 +117,7 @@ downloaded in a browser; run `xattr -d com.apple.quarantine lazyjira` once to al
 - Jira rich text renders with headings, lists, tables, and highlighted code. `o` opens the browser, `u` picks a link.
 - `#` opens any issue by key, completing the project and the issue number.
 - `>` opens an issue's children in a temporary tab, `backspace` its parent.
-- `/` filters by text, `f` by status, type, and priority.
+- `/` filters by text, `f` by the status, type, priority, assignee, and sprint columns you show.
 - Opened issues and Jira reference data (boards, sprints, users) are cached in memory. `R` refreshes everything.
 - Custom commands bind shell commands to keys, with the issue's fields as template values.
 - Pick the Issues columns and group issues by your workflow's status order.

@@ -28,11 +28,15 @@ func (m *IssuesList) MinimumWidth() int {
 	return width
 }
 
-func (m *IssuesList) issueColumns(width int) []issueColumn {
-	fields := m.fields
-	if len(fields) == 0 {
-		fields = []string{"key", fieldStatus, fieldSummary}
+func (m *IssuesList) columnFields() []string {
+	if len(m.fields) == 0 {
+		return []string{"key", fieldStatus, fieldSummary}
 	}
+	return m.fields
+}
+
+func (m *IssuesList) issueColumns(width int) []issueColumn {
+	fields := m.columnFields()
 	columns := make([]issueColumn, 0, len(fields))
 	fixedWidth := 0
 	for _, field := range fields {
