@@ -218,6 +218,24 @@ func TestIssuesList_RenderIssueRow_AllFields(t *testing.T) {
 	}
 }
 
+func TestIssuesList_RenderIssueRow_Sprint(t *testing.T) {
+	t.Parallel()
+	list := listWithTabs(config.IssueTabConfig{Name: "All", JQL: "x"})
+	list.SetFields([]string{"key", "summary", "sprint"})
+	list.SetIssues([]jira.Issue{
+		{Key: testKey, Summary: "in sprint", Sprint: &jira.Sprint{Name: "WEBSDK Sprint 42 Long Name"}},
+		{Key: "PROJ-2", Summary: "no sprint"},
+	})
+	list.SetSize(120, 24)
+	output := stripANSI(list.View())
+	if !strings.Contains(output, "Sprint") {
+		t.Errorf("View() = %q, want Sprint header", output)
+	}
+	if !strings.Contains(output, "WEBSDK Sprint 4…") {
+		t.Errorf("View() = %q, want sprint name truncated to 16 cells", output)
+	}
+}
+
 func TestIssuesList_RenderIssueRow_WithIcons(t *testing.T) {
 	t.Parallel()
 	list := listWithTabs(config.IssueTabConfig{Name: "All", JQL: "x"})

@@ -68,6 +68,8 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 			column.label, column.width, column.color = "Assignee", 12, "14"
 		case "updated":
 			column.label, column.width, column.color = "Updated", 8, "12"
+		case "sprint":
+			column.label, column.width, column.color = "Sprint", 16, "13"
 		default:
 			continue
 		}
@@ -130,6 +132,10 @@ func (m *IssuesList) issueFieldValue(issue jira.Issue, field string) string {
 		}
 	case "updated":
 		return issueTimeAgo(issue.Updated)
+	case "sprint":
+		if issue.Sprint != nil {
+			return issue.Sprint.Name
+		}
 	}
 	return ""
 }
