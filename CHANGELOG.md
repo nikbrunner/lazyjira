@@ -5,6 +5,24 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [0.12.0](https://github.com/nikbrunner/lazyjira/compare/v0.11.0...v0.12.0) (2026-10-14)
 
+### Highlights
+
+#### Full-text filter
+
+Press `ctrl+g` in the Issues list to filter by description too. It opens the same filter bar as `/` and matches key,
+summary, assignee, and the issue description. The bar and the panel title show `~/query`, so you can tell the two filters
+apart. Like `/`, it searches the issues the tab has loaded, and comments are left out. Remap it with
+`keybinding.issues.bodySearch`.
+
+#### Upgrading from 0.11
+
+Jump to top is now `gg`, and a single `g` waits for the second one. To keep the single key:
+
+```diff
+ keybinding:
+   navigation:
++    top: g
+```
 
 ### Features
 
