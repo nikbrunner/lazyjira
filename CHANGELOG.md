@@ -3,6 +3,14 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.12.0](https://github.com/nikbrunner/lazyjira/compare/v0.11.0...v0.12.0) (2026-10-14)
+
+
+### Features
+
+* **tui:** filter the Issues list by description with ctrl+g ([971dfa0](https://github.com/nikbrunner/lazyjira/commit/971dfa002c3a6986ed46da873310bc64cdcc084b))
+* **tui:** jump to the top with gg ([4fb7f3c](https://github.com/nikbrunner/lazyjira/commit/4fb7f3c4084d1942a4d51435ea632d52472b3bb7))
+
 ## [0.11.0](https://github.com/nikbrunner/lazyjira/compare/v0.10.0...v0.11.0) (2026-10-13)
 
 ### Highlights
