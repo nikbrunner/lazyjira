@@ -125,6 +125,7 @@ type CreateForm struct {
 
 	fieldIndices  []int
 	fieldCursor   int
+	pendingG      bool
 	fieldOffset   int
 	fieldDblClick DblClickDetector
 
@@ -609,6 +610,8 @@ func (f *CreateForm) interceptDescription(msg tea.KeyMsg) (tea.Cmd, bool) {
 
 func (f *CreateForm) interceptFields(msg tea.KeyMsg) (tea.Cmd, bool) {
 	filtered := f.filteredFields()
+	pendingG := f.pendingG
+	f.pendingG = false
 	switch msg.String() {
 	case "j", keyDown, KeyCtrlJ:
 		if f.fieldCursor < len(filtered)-1 {
@@ -621,6 +624,10 @@ func (f *CreateForm) interceptFields(msg tea.KeyMsg) (tea.Cmd, bool) {
 			f.ensureFieldVisible()
 		}
 	case "g":
+		if !pendingG {
+			f.pendingG = true
+			break
+		}
 		f.fieldCursor = 0
 		f.fieldOffset = 0
 	case "G":

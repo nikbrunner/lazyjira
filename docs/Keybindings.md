@@ -9,7 +9,7 @@ Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspa
 | Key | Action |
 |-----|--------|
 | `j` / `k` | Move down / up in focused lists; switch collections in the Issue tabs pane |
-| `g` / `G` | Jump to top / bottom |
+| `gg` / `G` | Jump to top / bottom |
 | `ctrl+d` / `ctrl+u` | Scroll Details by one line from Issues or Info; half-page movement in Details and help |
 | `ctrl+f` / `ctrl+b` | Half-page detail scroll from Issues or Info |
 | `tab` / `shift+tab` | Switch issue collection without changing focus |
@@ -70,7 +70,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 |-----|--------|
 | `/` | Filter keybindings |
 | `j` / `k` | Navigate up / down |
-| `g` / `G` | Jump to top / bottom |
+| `gg` / `G` | Jump to top / bottom |
 | `esc` | Clear filter or close |
 | `q` / `?` | Close |
 

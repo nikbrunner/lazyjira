@@ -1039,3 +1039,34 @@ func (a *App) handleActionSearch(body bool) (tea.Model, tea.Cmd) {
 	a.searchBar.ActivateWithPrefix(views.FilterPrefix(body))
 	return a, nil
 }
+
+// resolveKeySequence holds the first key of a multi-key binding such as "gg"
+// and returns the completed sequence as one key. A key that does not complete
+// the sequence drops the held key and is handled on its own.
+func (a *App) resolveKeySequence(m tea.Msg) (tea.Msg, bool) {
+	msg, ok := m.(tea.KeyMsg)
+	if !ok || a.showHelp && a.helpSearching {
+		return m, false
+	}
+	key := msg.String()
+	if pending := a.pendingKey; pending != "" {
+		a.pendingKey = ""
+		if seq := pending + key; a.keymap.Match(seq) != "" {
+			return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(seq)}, false
+		}
+	}
+	if msg.Type == tea.KeyRunes && !msg.Alt && !a.isCustomCommandKey(key) && a.keymap.IsSequencePrefix(key) {
+		a.pendingKey = key
+		return msg, true
+	}
+	return msg, false
+}
+
+func (a *App) isCustomCommandKey(key string) bool {
+	for _, rc := range a.customCmds {
+		if rc.Key == key {
+			return true
+		}
+	}
+	return false
+}

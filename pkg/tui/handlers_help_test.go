@@ -126,8 +126,8 @@ func TestHandleHelpKeys(t *testing.T) {
 			},
 		},
 		{
-			name:         "g jumps to top",
-			key:          tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'g'}},
+			name:         "gg jumps to top",
+			key:          tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("gg")},
 			initialState: func(app *App) { app.helpCursor = 10 },
 			assert: func(t *testing.T, app *App) {
 				t.Helper()

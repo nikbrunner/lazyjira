@@ -2,6 +2,7 @@ package tui
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
@@ -124,7 +125,7 @@ func DefaultKeymap() Keymap {
 
 		ActNavDown:     {"j", "down", "ctrl+j"},
 		ActNavUp:       {"k", "up", "ctrl+k"},
-		ActNavTop:      {"g", "home"},
+		ActNavTop:      {"gg", "home"},
 		ActNavBottom:   {"G", "end"},
 		ActNavHalfDown: {"ctrl+d"},
 		ActNavHalfUp:   {"ctrl+u"},
@@ -235,6 +236,22 @@ func (km Keymap) MatchNav(key string) components.NavAction {
 		}
 	}
 	return components.NavNone
+}
+
+// IsSequencePrefix reports whether key is unbound but starts a longer bound
+// key, such as "g" for "gg".
+func (km Keymap) IsSequencePrefix(key string) bool {
+	if km.Match(key) != "" {
+		return false
+	}
+	for _, keys := range km {
+		for _, k := range keys {
+			if len(k) > len(key) && strings.HasPrefix(k, key) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Keys returns the first key bound to the action (for display in help)

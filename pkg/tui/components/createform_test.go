@@ -346,7 +346,9 @@ func TestCreateForm_InterceptFieldsGG(t *testing.T) {
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
 	testkit.AssertEqual(t, "G moves to last field", form.fieldCursor, 2)
 	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
-	testkit.AssertEqual(t, "g moves to first field", form.fieldCursor, 0)
+	testkit.AssertEqual(t, "g waits for a second g", form.fieldCursor, 2)
+	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	testkit.AssertEqual(t, "gg moves to first field", form.fieldCursor, 0)
 }
 
 func TestCreateForm_InterceptFieldsCtrlDU(t *testing.T) {

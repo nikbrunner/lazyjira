@@ -237,6 +237,7 @@ type App struct {
 	helpCursor      int
 	helpOffset      int
 	helpSearching   bool
+	pendingKey      string
 	helpSearch      components.TextInput
 	helpFilter      string
 	logFlag         *bool
@@ -517,6 +518,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if cmd, ok := a.overlays.Intercept(msg); ok {
 		return a, cmd
+	}
+
+	msg, buffered := a.resolveKeySequence(msg)
+	if buffered {
+		return a, nil
 	}
 
 	switch msg := msg.(type) {

@@ -90,7 +90,7 @@ keybinding:
     navigation:
         down: j
         up: k
-        top: g
+        top: gg
         bottom: G
         halfPageDown: ctrl+d
         halfPageUp: ctrl+u
@@ -386,6 +386,8 @@ issueTabs:
 
 Actions exposed under `keybinding` are remappable. Main-workspace `Tab`/`Shift+Tab` collection switching, uppercase `H`/`J`/`K`/`L` focus movement, and `j`/`k` collection switching in Issue tabs are fixed. See [Keybindings](Keybindings.md) for the full list of defaults.
 
+A key written as several letters, such as `gg`, is a sequence: press the letters one after another.
+
 ```yaml
 keybinding:
   universal:
@@ -395,7 +397,7 @@ keybinding:
   navigation:
     down: "j"
     up: "k"
-    top: "g"
+    top: "gg"
     bottom: "G"
     halfPageDown: "ctrl+d"
     halfPageUp: "ctrl+u"

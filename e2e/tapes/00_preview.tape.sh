@@ -10,7 +10,7 @@ Sleep 800ms
 @wait 400
 Type "G"
 Sleep 800ms
-Type "g"
+Type "gg"
 Sleep 600ms
 
 # Maximized Issue details, then step back out
@@ -53,7 +53,7 @@ Sleep 800ms
 @close
 
 # Issue details: description, then comments
-Type "g"
+Type "gg"
 Sleep 200ms
 @open
 @wait 600

@@ -34,6 +34,7 @@ type JQLModal struct {
 	input      TextInput
 	items      []string
 	cursor     int
+	pendingG   bool
 	offset     int
 	focusInput bool
 	visible    bool
@@ -248,6 +249,8 @@ func (m *JQLModal) handleEnter() (JQLModal, tea.Cmd) {
 func (m *JQLModal) handleListNav(msg tea.KeyMsg) {
 	moveDown := msg.String() == "j" || msg.Type == tea.KeyDown || msg.Type == tea.KeyCtrlJ
 	moveUp := msg.String() == "k" || msg.Type == tea.KeyUp || msg.Type == tea.KeyCtrlK
+	pendingG := m.pendingG
+	m.pendingG = false
 	switch {
 	case moveDown:
 		if m.cursor < len(m.items)-1 {
@@ -259,9 +262,11 @@ func (m *JQLModal) handleListNav(msg tea.KeyMsg) {
 			m.cursor--
 			m.adjustListOffset()
 		}
-	case msg.String() == "g":
+	case msg.String() == "g" && pendingG:
 		m.cursor = 0
 		m.offset = 0
+	case msg.String() == "g":
+		m.pendingG = true
 	case msg.String() == "G":
 		if len(m.items) > 0 {
 			m.cursor = len(m.items) - 1

@@ -277,6 +277,8 @@ func TestJQLModal_ListNavTopBottom(t *testing.T) {
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
 	testkit.AssertEqual(t, "cursor at bottom", m.cursor, 1)
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	testkit.AssertEqual(t, "cursor waits after g", m.cursor, 1)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
 	testkit.AssertEqual(t, "cursor at top", m.cursor, 0)
 }
 
