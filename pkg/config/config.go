@@ -206,6 +206,7 @@ type IssueKeys struct {
 	VisualSelect     string `yaml:"visualSelect"`
 	ShowChildren     string `yaml:"showChildren"`
 	FilterPicker     string `yaml:"filterPicker"`
+	BodySearch       string `yaml:"bodySearch"`
 }
 
 type ProjectKeys struct {

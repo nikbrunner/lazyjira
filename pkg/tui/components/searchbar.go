@@ -11,6 +11,7 @@ import (
 type SearchBar struct {
 	input  TextInput
 	active bool
+	prefix string
 }
 
 func NewSearchBar() SearchBar {
@@ -20,8 +21,15 @@ func NewSearchBar() SearchBar {
 func (s *SearchBar) SetWidth(w int) { s.input.SetWidth(w) }
 func (s *SearchBar) IsActive() bool { return s.active }
 func (s *SearchBar) Query() string  { return s.input.Value() }
-func (s *SearchBar) Activate()      { s.active = true; s.input.SetValue("") }
+func (s *SearchBar) Activate()      { s.ActivateWithPrefix("/") }
 func (s *SearchBar) Deactivate()    { s.active = false; s.input.SetValue("") }
+
+// ActivateWithPrefix opens the bar with prefix shown before the query.
+func (s *SearchBar) ActivateWithPrefix(prefix string) {
+	s.active = true
+	s.prefix = prefix
+	s.input.SetValue("")
+}
 
 // SearchChangedMsg is sent when the search query changes
 type SearchChangedMsg struct{ Query string }
@@ -63,14 +71,18 @@ func (s *SearchBar) View() string {
 	if !s.active {
 		return ""
 	}
-	return RenderFilterBarInput(&s.input)
+	return renderFilterBar(s.prefix, &s.input)
 }
 
 // RenderFilterBarInput renders filter bar using TextInput (with cursor positioning)
 func RenderFilterBarInput(input *TextInput) string {
+	return renderFilterBar("/", input)
+}
+
+func renderFilterBar(prefix string, input *TextInput) string {
 	prefixStyle := lipgloss.NewStyle().
 		Foreground(theme.ColorCyan).
 		Bold(true)
 
-	return prefixStyle.Render(" /") + input.View()
+	return prefixStyle.Render(" "+prefix) + input.View()
 }

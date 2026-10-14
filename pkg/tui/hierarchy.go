@@ -166,6 +166,7 @@ func (a *App) pushNav(title, parentKey string, src navstack.Source, issues []jir
 		ParentKey:    parentKey,
 		OriginTabIdx: a.issuesList.GetTabIndex(),
 		Filter:       a.issuesList.Filter(),
+		FilterBody:   a.issuesList.FilterBody(),
 		PickerFilter: a.issuesList.PickerFilter(),
 	}
 
@@ -214,6 +215,7 @@ func (a *App) restoreFromFrame(popped navstack.NavFrame, stack *navstack.NavStac
 		newTopTitle := titleForNavFrame(stack.Peek())
 		a.issuesList.ReplaceHierarchyTabContent(newTopTitle, popped.Issues)
 	}
+	a.issuesList.SetFilterBody(popped.FilterBody)
 	a.issuesList.SetFilter(popped.Filter)
 	a.issuesList.SetPickerFilter(popped.PickerFilter)
 	a.issuesList.Cursor = popped.SelectedIdx

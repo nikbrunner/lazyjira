@@ -85,6 +85,7 @@ func (a *App) localBindings() []Binding {
 			a.bind(ActShowChildren, "show children"),
 			a.bind(ActShowParent, "show parent"),
 			a.bind(ActFilterPicker, "filter by status, type, priority"),
+			a.bind(ActBodySearch, "filter including descriptions"),
 			a.bind(ActCopySummary, "copy key and summary, or marked rows"),
 			a.bind(ActCopyMarkdownLink, "copy Markdown link"),
 			a.bind(ActCopyURL, "copy URL"),

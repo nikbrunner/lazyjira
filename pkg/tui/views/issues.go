@@ -32,6 +32,7 @@ type IssuesList struct {
 	issues           []jira.Issue
 	allIssues        []jira.Issue
 	filter           string
+	filterBody       bool
 	pickerFilters    map[int]map[string]bool
 	statusRank       map[string]int
 	pageInfo         map[int]pageInfo
@@ -409,6 +410,16 @@ func (m *IssuesList) SetFilter(query string) {
 
 func (m *IssuesList) IsFiltered() bool { return m.filter != "" }
 func (m *IssuesList) Filter() string   { return m.filter }
+func (m *IssuesList) FilterBody() bool { return m.filterBody }
+
+// SetFilterBody switches whether the text filter also matches descriptions.
+func (m *IssuesList) SetFilterBody(body bool) {
+	if m.filterBody == body {
+		return
+	}
+	m.filterBody = body
+	m.applyFilterKeepCursor()
+}
 
 // ClearFilter removes the search filter and preserves cursor position
 func (m *IssuesList) ClearFilter() {
@@ -482,7 +493,7 @@ func (m *IssuesList) applyFilter() {
 		q := strings.ToLower(m.filter)
 		var filtered []jira.Issue
 		for _, issue := range source {
-			if matchesText(issue, q) && m.matchesPickerFilter(issue) {
+			if matchesText(issue, q, m.filterBody) && m.matchesPickerFilter(issue) {
 				filtered = append(filtered, issue)
 			}
 		}
@@ -494,11 +505,14 @@ func (m *IssuesList) applyFilter() {
 }
 
 // matchesText reports whether the issue's key, summary, or assignee contains
-// the lowercased query.
-func matchesText(issue jira.Issue, q string) bool {
+// the lowercased query; with body, the description counts too.
+func matchesText(issue jira.Issue, q string, body bool) bool {
 	haystack := strings.ToLower(issue.Key + " " + issue.Summary)
 	if issue.Assignee != nil {
 		haystack += " " + strings.ToLower(issue.Assignee.DisplayName)
+	}
+	if body {
+		haystack += " " + strings.ToLower(issue.Description)
 	}
 	return strings.Contains(haystack, q)
 }
@@ -628,6 +642,14 @@ func (m *IssuesList) buildTitle(maxTitleW int) string {
 	return title + m.filterTitleSegment(maxTitleW-lipgloss.Width(title))
 }
 
+// FilterPrefix is the marker shown before a text filter query.
+func FilterPrefix(body bool) string {
+	if body {
+		return "~/"
+	}
+	return "/"
+}
+
 // filterTitleSegment renders " ─ /query status: A (key to clear)", truncating
 // the filters to fit available cells. It follows the maximize button so the
 // button's click target keeps its position.
@@ -635,7 +657,7 @@ func (m *IssuesList) filterTitleSegment(available int) string {
 	var parts []string
 	lead := ""
 	if m.filter != "" {
-		lead = "/"
+		lead = FilterPrefix(m.filterBody)
 		parts = append(parts, m.filter)
 	}
 	if label := m.pickerFilterLabel(); label != "" {

@@ -172,7 +172,7 @@ func (m *IssuesList) FilterPickerItems(selected map[string]bool) []components.Mo
 	q := strings.ToLower(m.filter)
 	var textMatches []jira.Issue
 	for _, issue := range m.allIssues {
-		if matchesText(issue, q) {
+		if matchesText(issue, q, m.filterBody) {
 			textMatches = append(textMatches, issue)
 		}
 	}
@@ -224,7 +224,7 @@ func (m *IssuesList) FilterPickerItems(selected map[string]bool) []components.Mo
 func (m *IssuesList) PickerResultCount(selected map[string]bool) (matching, loaded int) {
 	q := strings.ToLower(m.filter)
 	for _, issue := range m.allIssues {
-		if matchesText(issue, q) && matchesSelection(issue, selected, "") {
+		if matchesText(issue, q, m.filterBody) && matchesSelection(issue, selected, "") {
 			matching++
 		}
 	}

@@ -44,7 +44,7 @@
 | **Issue tab** | A named issue collection shown in the Issue tabs pane, usually defined by a JQL query. | Column, panel |
 | **Issue tabs pane** | The focusable vertical pane listing issue tabs beside the Issues panel. Focusing it leaves the active issue tab unchanged. | Issues panel, issue list |
 | **JQL query** | A Jira Query Language expression defining which issues Jira returns and their ordering. | Local filter |
-| **Local filter** | A text filter applied to issues already loaded for the active issue tab. | JQL query, search without qualification |
+| **Local filter** | A text filter applied to issues already loaded for the active issue tab. It matches key, summary, and assignee, and descriptions when opened with the body search key. | JQL query, search without qualification |
 | **Issue lookup** | The prompt opened with `#` that completes a project key, then an issue key, and opens that issue in the maximized Issue details pane. | Quick open, go to issue |
 | **Picker filter** | A per-tab selection of statuses, issue types, and priorities that narrows the loaded issues. Values in one group are alternatives; groups combine with each other and with the local filter. | Local filter, JQL query |
 | **Status order** | The configured `statusOrder` list that groups issue lists by status while keeping JQL order within each status. | JQL ordering, sort without qualification |

@@ -106,6 +106,7 @@ keybinding:
         visualSelect: v
         showChildren: ">"
         filterPicker: f
+        bodySearch: ctrl+g
         closeJQLTab: x
         copyBranchName: b
         createBranch: B

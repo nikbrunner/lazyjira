@@ -310,3 +310,34 @@ func TestIssuesList_FilterPickerGroupsFollowColumns(t *testing.T) {
 		t.Errorf("assignee None = %q, want %q", got, want)
 	}
 }
+
+func TestIssuesList_BodyFilterMatchesDescription(t *testing.T) {
+	t.Parallel()
+	m := makeIssuesListWithTabs(80, 12, "All")
+	issues := filterTestIssues()
+	issues[1].Description = "Crash in the Camera picker"
+	m.SetIssues(issues)
+
+	m.SetFilter("camera")
+	if got := visibleKeys(m); got != "" {
+		t.Errorf("plain filter = %q, want no description matches", got)
+	}
+
+	m.SetFilterBody(true)
+	if got, want := visibleKeys(m), issues[1].Key; got != want {
+		t.Errorf("body filter = %q, want %q", got, want)
+	}
+}
+
+func TestIssuesList_TitleMarksBodyFilter(t *testing.T) {
+	t.Parallel()
+	m := makeIssuesListWithTabs(80, 8, "Sprint")
+	m.SetIssues(filterTestIssues())
+	m.SetFilterBody(true)
+	m.SetFilter("A")
+
+	plain := stripANSI(topBorderLine(m))
+	if !strings.Contains(plain, "─ ~/A") {
+		t.Errorf("title = %q, want body filter marker", plain)
+	}
+}

@@ -88,8 +88,9 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.helpSearching = false
 		return a, nil
 	case ActSearch:
-		a.searchBar.Activate()
-		return a, nil
+		return a.handleActionSearch(false)
+	case ActBodySearch:
+		return a.handleActionSearch(true)
 	case ActSelect:
 		return a.handleActionSelect()
 	case ActOpen:
@@ -1022,5 +1023,19 @@ func (a *App) handleActionCreateBranch() (tea.Model, tea.Cmd) {
 			a.inputModal.SetHints(hints)
 		}
 	}
+	return a, nil
+}
+
+// handleActionSearch opens the search bar; body search applies to the Issues
+// list only and also matches descriptions.
+func (a *App) handleActionSearch(body bool) (tea.Model, tea.Cmd) {
+	inIssues := a.side == sideLeft && a.leftFocus == focusIssues
+	if body && !inIssues {
+		return a, nil
+	}
+	if inIssues {
+		a.issuesList.SetFilterBody(body)
+	}
+	a.searchBar.ActivateWithPrefix(views.FilterPrefix(body))
 	return a, nil
 }

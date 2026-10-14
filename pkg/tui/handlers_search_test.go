@@ -167,3 +167,27 @@ func TestRouteToPanel_ForwardsToFocusedPanel(t *testing.T) {
 		}
 	})
 }
+
+func TestBodySearchKeyFiltersDescriptions(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	app.keymap = DefaultKeymap()
+	app.issuesList.SetIssues([]jira.Issue{{Key: testKey, Summary: "alpha"}, {Key: testKey2, Summary: "beta", Description: "needle"}})
+	app.side = sideLeft
+	app.leftFocus = focusIssues
+
+	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyCtrlG})
+	if !app.searchBar.IsActive() || !app.issuesList.FilterBody() {
+		t.Fatal("ctrl+g should open the search bar in body mode")
+	}
+	_, _ = app.handleSearchChanged(components.SearchChangedMsg{Query: "needle"})
+	if sel := app.issuesList.SelectedIssue(); app.issuesList.ItemCount() != 1 || sel == nil || sel.Key != testKey2 {
+		t.Errorf("body filter selection = %v, want only %s", sel, testKey2)
+	}
+
+	app.searchBar.Deactivate()
+	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	if app.issuesList.FilterBody() {
+		t.Error("/ should switch the filter back to plain mode")
+	}
+}

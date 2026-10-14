@@ -56,6 +56,7 @@ const (
 	ActShowChildren     Action = "showChildren"
 	ActVisualSelect     Action = "visualSelect"
 	ActFilterPicker     Action = "filterPicker"
+	ActBodySearch       Action = "bodySearch"
 
 	ActNavDown     Action = "navDown"
 	ActNavUp       Action = "navUp"
@@ -119,6 +120,7 @@ func DefaultKeymap() Keymap {
 		ActShowChildren:     {">"},
 		ActVisualSelect:     {"v"},
 		ActFilterPicker:     {"f"},
+		ActBodySearch:       {"ctrl+g"},
 
 		ActNavDown:     {"j", "down", "ctrl+j"},
 		ActNavUp:       {"k", "up", "ctrl+k"},
@@ -184,6 +186,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActVisualSelect, kcfg.Issues.VisualSelect)
 	set(ActShowChildren, kcfg.Issues.ShowChildren)
 	set(ActFilterPicker, kcfg.Issues.FilterPicker)
+	set(ActBodySearch, kcfg.Issues.BodySearch)
 	// Detail
 	set(ActFocusLeft, kcfg.Detail.FocusLeft)
 	set(ActInfoTab, kcfg.Detail.InfoTab)
