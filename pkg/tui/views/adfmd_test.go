@@ -129,6 +129,7 @@ func TestMarkdownToADF_BlockTypes(t *testing.T) {
 		{"heading", "# Title", adfHeading},
 		{"bullet list", "- item", adfBulletList},
 		{"ordered list", "1. item", adfOrderedList},
+		{"task list", "- [ ] item", adfTaskList},
 		{"code block", "```go\ncode\n```", adfCodeBlock},
 		{"blockquote", "> quote", adfBlockquote},
 		{"rule", "---", adfRule},
@@ -181,6 +182,8 @@ func TestMarkdownADFRoundTrip(t *testing.T) {
 		{"mention", "[@Ann](accountid:123)"},
 		{"bullet list", "- a\n- b"},
 		{"ordered list", "1. a\n2. b"},
+		{"task list", "- [x] done\n- [ ] **open**\n  - [ ] nested\n- [ ] after"},
+		{"bullet list then task list", "- a\n\n- [ ] b"},
 		{"rule", "---"},
 	}
 
@@ -190,6 +193,24 @@ func TestMarkdownADFRoundTrip(t *testing.T) {
 			roundTripped := ADFToMarkdown(MarkdownToADF(tt.md))
 			testkit.AssertEqual(t, "round trip", roundTripped, tt.md)
 		})
+	}
+}
+
+func TestMarkdownToADF_TaskItemState(t *testing.T) {
+	t.Parallel()
+	blocks := mdBlocks(t, "- [X] done\n- [ ]")
+	list, _ := blocks[0].(map[string]any)
+	items, _ := list["content"].([]any)
+	if len(items) != 2 {
+		t.Fatalf("items = %d, want 2", len(items))
+	}
+	for i, want := range []string{"DONE", "TODO"} {
+		item, _ := items[i].(map[string]any)
+		attrs, _ := item["attrs"].(map[string]any)
+		testkit.AssertEqual(t, "state", attrs["state"], any(want))
+		if id, _ := attrs["localId"].(string); id == "" {
+			t.Errorf("item %d has no localId", i)
+		}
 	}
 }
 

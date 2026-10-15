@@ -251,6 +251,36 @@ func TestRenderListItem_Branches(t *testing.T) {
 	})
 }
 
+func TestRenderTaskList(t *testing.T) {
+	t.Parallel()
+
+	taskItem := func(state, text string) map[string]any {
+		return map[string]any{
+			"type":    "taskItem",
+			"attrs":   map[string]any{"localId": text, "state": state},
+			"content": []any{adfTextNode(text)},
+		}
+	}
+	doc := adfDoc(map[string]any{
+		"type": adfTaskList,
+		"content": []any{
+			taskItem("DONE", "Scroll Area"),
+			taskItem("TODO", "Alert Dialog"),
+			map[string]any{"type": adfTaskList, "content": []any{taskItem("TODO", "nested")}},
+			"junk",
+		},
+	})
+	lines := strings.Split(renderBuiltinPlain(t, doc, 60), "\n")
+	for i, line := range lines {
+		lines[i] = strings.TrimRight(line, " ")
+	}
+	got := strings.Join(lines, "\n")
+	want := "[x] Scroll Area\n[ ] Alert Dialog\n    [ ] nested"
+	if got != want {
+		t.Errorf("task list = %q, want %q", got, want)
+	}
+}
+
 func TestRenderInline_NodeTypes(t *testing.T) {
 	t.Parallel()
 	renderer := &adfRenderer{width: 60}

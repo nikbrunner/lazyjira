@@ -1,6 +1,7 @@
 package views
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -22,6 +23,8 @@ const (
 	adfHardBreak   = "hardBreak"
 	adfInlineCard  = "inlineCard"
 	adfListItem    = "listItem"
+	adfTaskList    = "taskList"
+	adfTaskItem    = "taskItem"
 )
 
 // ADFToMarkdown converts an ADF document to Markdown text
@@ -89,6 +92,27 @@ func blockToMarkdown(node any, indent int) string {
 		for i, item := range content {
 			marker := fmt.Sprintf("%d. ", i+1)
 			items = append(items, listItemToMarkdown(item, indent, marker))
+		}
+		return strings.Join(items, "\n")
+
+	case adfTaskList:
+		var items []string
+		for _, child := range content {
+			item, ok := child.(map[string]any)
+			if !ok {
+				continue
+			}
+			switch item["type"] {
+			case adfTaskList:
+				items = append(items, blockToMarkdown(item, indent+2))
+			case adfTaskItem:
+				marker := "- [ ] "
+				if attrs, ok := item["attrs"].(map[string]any); ok && attrs["state"] == "DONE" {
+					marker = "- [x] "
+				}
+				itemContent, _ := item["content"].([]any)
+				items = append(items, prefix+marker+inlineToMarkdown(itemContent))
+			}
 		}
 		return strings.Join(items, "\n")
 
@@ -358,6 +382,10 @@ func markdownToADF(md string) any {
 			continue
 		}
 
+		if taskItemRe.MatchString(line) {
+			blocks = append(blocks, parseTaskList(lines, &i))
+			continue
+		}
 		if strings.HasPrefix(trimmed, "- ") {
 			blocks = append(blocks, parseList(lines, &i, "bullet"))
 			continue
@@ -468,6 +496,7 @@ func isBlockBreak(trimmed string) bool {
 var (
 	headingRe     = regexp.MustCompile(`^(#{1,6})\s+(.+)$`)
 	orderedListRe = regexp.MustCompile(`^\d+\.\s+`)
+	taskItemRe    = regexp.MustCompile(`^( *)- \[([ xX])\](?:\s+(.*))?$`)
 	boldRe        = regexp.MustCompile(`\*\*(.+?)\*\*`)
 	italicRe      = regexp.MustCompile(`(?:^|[^*])\*([^*]+?)\*(?:[^*]|$)`)
 	codeRe        = regexp.MustCompile("`([^`]+)`")
@@ -612,6 +641,9 @@ func parseList(lines []string, idx *int, listType string) map[string]any {
 			break
 		}
 
+		if taskItemRe.MatchString(line) {
+			break
+		}
 		m := markerRe.FindStringSubmatch(line)
 		if m == nil {
 			break
@@ -631,7 +663,8 @@ func parseList(lines []string, idx *int, listType string) map[string]any {
 			nextLine := lines[*idx]
 			nextTrimmed := strings.TrimSpace(nextLine)
 			nextIndent := len(nextLine) - len(strings.TrimLeft(nextLine, " "))
-			if nextIndent > baseIndent && (strings.HasPrefix(nextTrimmed, "- ") || orderedListRe.MatchString(nextTrimmed)) {
+			if nextIndent > baseIndent && !taskItemRe.MatchString(nextLine) &&
+				(strings.HasPrefix(nextTrimmed, "- ") || orderedListRe.MatchString(nextTrimmed)) {
 				nestedType := "bullet"
 				if orderedListRe.MatchString(nextTrimmed) {
 					nestedType = "ordered"
@@ -651,6 +684,49 @@ func parseList(lines []string, idx *int, listType string) map[string]any {
 		"type":    adfType,
 		"content": items,
 	}
+}
+
+func parseTaskList(lines []string, idx *int) map[string]any {
+	baseIndent := len(lines[*idx]) - len(strings.TrimLeft(lines[*idx], " "))
+	var items []any
+	for *idx < len(lines) {
+		m := taskItemRe.FindStringSubmatch(lines[*idx])
+		if m == nil || len(m[1]) < baseIndent {
+			break
+		}
+		if len(m[1]) > baseIndent {
+			items = append(items, parseTaskList(lines, idx))
+			continue
+		}
+		state := "TODO"
+		if m[2] != " " {
+			state = "DONE"
+		}
+		content := parseInline(m[3])
+		if content == nil {
+			content = []any{}
+		}
+		items = append(items, map[string]any{
+			"type":    adfTaskItem,
+			"attrs":   map[string]any{"localId": newLocalID(), "state": state},
+			"content": content,
+		})
+		*idx++
+	}
+	return map[string]any{
+		"type":    adfTaskList,
+		"attrs":   map[string]any{"localId": newLocalID()},
+		"content": items,
+	}
+}
+
+// newLocalID returns a random UUIDv4, the format Jira uses for ADF localId attributes.
+func newLocalID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	b[6] = b[6]&0x0f | 0x40
+	b[8] = b[8]&0x3f | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
 func parseTable(lines []string) map[string]any {

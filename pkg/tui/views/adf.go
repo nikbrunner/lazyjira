@@ -146,6 +146,24 @@ func (r *adfRenderer) renderBlock(node any, indent int) {
 			r.renderListItem(item, indent, fmt.Sprintf("%d. ", i+1))
 		}
 
+	case adfTaskList:
+		for _, child := range content {
+			item, ok := child.(map[string]any)
+			if !ok {
+				continue
+			}
+			if itemType, _ := item["type"].(string); itemType == adfTaskList {
+				r.renderBlock(item, indent+4)
+				continue
+			}
+			marker := "[ ] "
+			if attrs, ok := item["attrs"].(map[string]any); ok && attrs["state"] == "DONE" {
+				marker = "[x] "
+			}
+			itemContent, _ := item["content"].([]any)
+			r.appendWrapped(r.collectInline(itemContent), indent, marker)
+		}
+
 	case adfCodeBlock:
 		lang := ""
 		if attrs, ok := block["attrs"].(map[string]any); ok {
