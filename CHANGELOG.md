@@ -3,6 +3,38 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.14.0](https://github.com/nikbrunner/lazyjira/compare/v0.13.0...v0.14.0) (2026-10-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* **tui:** with marks, y copies key and summary per issue. The padded rows it copied are on alt+y.
+
+### Features
+
+* **config:** show issue tabs only for their configured projects ([086d2d5](https://github.com/nikbrunner/lazyjira/commit/086d2d5d50e488d44146d0c6b0133b5dfc038c3a))
+* **tui:** add and remove issue links from the Links tab ([86bcc4d](https://github.com/nikbrunner/lazyjira/commit/86bcc4d112c0ea9871a3c0879c2cea12d3fbe0ef))
+* **tui:** complete the parent key when editing Parent ([e799774](https://github.com/nikbrunner/lazyjira/commit/e79977437cc073a5a2d480dbb1fa2be6871fa44b))
+* **tui:** copy and open marked issues like a single issue ([269a9ce](https://github.com/nikbrunner/lazyjira/commit/269a9ce9917634e9a66168038ef48857d74accb5))
+* **tui:** copy through the terminal with OSC 52 as well ([280c55b](https://github.com/nikbrunner/lazyjira/commit/280c55b234ffb16c6cedf181206ac22f03372133))
+* **tui:** follow light and dark switches of the terminal while running ([729defb](https://github.com/nikbrunner/lazyjira/commit/729defb245885628013324159ede63bf1dd9911e))
+* **tui:** insert a new line with shift+enter in the Description ([4cadba7](https://github.com/nikbrunner/lazyjira/commit/4cadba7ee7f5e6dccfa860c70141fa4050b6a7ab))
+* **tui:** name a new worktree in a modal that previews path and branch ([c400343](https://github.com/nikbrunner/lazyjira/commit/c4003437e66dd90a73cd781344a9a9d44592f4df))
+* **tui:** show the project in the terminal title and progress while dialogs load ([8521233](https://github.com/nikbrunner/lazyjira/commit/852123344e52238fa5caf2e2451eb5f66b0dea8f))
+* **tui:** show what esc clears in the help bar ([5402f2e](https://github.com/nikbrunner/lazyjira/commit/5402f2e7f34f15bc7c0d5335cc6eaed83c221449))
+* **tui:** toggle the command log with @ ([9ca4455](https://github.com/nikbrunner/lazyjira/commit/9ca44556f617e42b89b06b17a7a5506aa8976047))
+
+
+### Refactors
+
+* **tui:** move to Bubble Tea v2, Lip Gloss v2 and Bubbles v2 ([4513644](https://github.com/nikbrunner/lazyjira/commit/45136440ec778a86c8102cf4d480ce82fa1c5e6d)), closes [#25](https://github.com/nikbrunner/lazyjira/issues/25)
+
+
+### Bug Fixes
+
+* report the release version after go install ([11b8108](https://github.com/nikbrunner/lazyjira/commit/11b8108817564463cd45005310699616a20104b7))
+* **tui:** draw the confirmation above other open dialogs ([a16ff48](https://github.com/nikbrunner/lazyjira/commit/a16ff48049f82fd5a868700a415a8817eae566d8))
+
 ## [0.13.0](https://github.com/nikbrunner/lazyjira/compare/v0.12.0...v0.13.0) (2026-10-15)
 
 ### Highlights
