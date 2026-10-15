@@ -55,6 +55,7 @@ gui:
         - status
         - summary
     selectCreatedIssue: true
+    showCommandLog: true
     typeIcons:
         Bug: "🐞"
         Story: "📖"
@@ -87,6 +88,7 @@ keybinding:
         toggleMaximize: "+"
         jqlSearch: s
         issueLookup: "#"
+        toggleCommandLog: "@"
     navigation:
         down: j
         up: k
@@ -203,7 +205,7 @@ gui:
 
 `borders` sets the border shape of panels, modals, and toasts: `rounded` (default, `╭─╮`) or `sharp` (`┌─┐`). Any other value is an error.
 
-The Project selector and App status panel share the top row. Issue tabs and Issues share the upper workspace row; Issue info and Issue details share the lower row. The command log and help bar stay along the bottom. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
+The Project selector and App status panel share the top row. Issue tabs and Issues share the upper workspace row; Issue info and Issue details share the lower row. The Command log and help bar stay along the bottom; hiding the Command log gives its rows to the Issues and Details panes. Focus changes do not resize the panes. `collapsedPanelHeight` is retained for existing config files and does not affect this layout.
 
 ### Colors
 
@@ -274,6 +276,13 @@ gui:
 ```yaml
 gui:
   selectCreatedIssue: true
+```
+
+`showCommandLog` controls whether the Command log starts visible. Enabled by default. The `toggleCommandLog` key (`@`) shows or hides it for the session. Errors do not reveal a hidden Command log.
+
+```yaml
+gui:
+  showCommandLog: true
 ```
 
 `typeIcons` replaces issue type names with the icons you set. Mappings are case-sensitive and accept emoji or plain text. Add `type` to `issueListFields` to show these icons.

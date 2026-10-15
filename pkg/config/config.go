@@ -184,6 +184,7 @@ type UniversalKeys struct {
 	ToggleMaximize string `yaml:"toggleMaximize"`
 	JQLSearch      string `yaml:"jqlSearch"`
 	IssueLookup    string `yaml:"issueLookup"`
+	ToggleLog      string `yaml:"toggleCommandLog"`
 }
 
 type IssueKeys struct {
@@ -289,6 +290,7 @@ type GUIConfig struct {
 	IssueListFields      []string          `yaml:"issueListFields"`
 	PrefillFromTab       *bool             `yaml:"prefillFromTab"`
 	SelectCreatedIssue   *bool             `yaml:"selectCreatedIssue"`
+	ShowCommandLog       *bool             `yaml:"showCommandLog"`
 	TypeIcons            map[string]string `yaml:"typeIcons"`
 	StatusIcons          map[string]string `yaml:"statusIcons"`
 	PriorityIcons        map[string]string `yaml:"priorityIcons"`
@@ -302,6 +304,11 @@ func (g GUIConfig) ShouldPrefillFromTab() bool {
 // ShouldSelectCreatedIssue returns true when the app should auto-select a newly created issue
 func (g GUIConfig) ShouldSelectCreatedIssue() bool {
 	return g.SelectCreatedIssue == nil || *g.SelectCreatedIssue
+}
+
+// ShouldShowCommandLog reports whether the Command log starts visible.
+func (g GUIConfig) ShouldShowCommandLog() bool {
+	return g.ShowCommandLog == nil || *g.ShowCommandLog
 }
 
 type CacheConfig struct {

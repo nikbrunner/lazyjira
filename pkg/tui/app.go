@@ -198,6 +198,7 @@ type App struct {
 	projectList *views.ProjectList
 	detailView  *views.DetailView
 	logPanel    *views.LogPanel
+	logHidden   bool
 
 	keymap          Keymap
 	helpBar         components.HelpBar
@@ -410,6 +411,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		projectList:        projectList,
 		detailView:         detailView,
 		logPanel:           logPanel,
+		logHidden:          !cfg.GUI.ShouldShowCommandLog(),
 		helpBar:            helpBar,
 		searchBar:          searchBar,
 		modal:              modal,
@@ -907,8 +909,11 @@ func (a *App) View() string {
 			a.renderIssueTabs(layout.tabs.width, layout.tabs.height), a.issuesList.View())
 		workspaceBottom := lipgloss.JoinHorizontal(lipgloss.Top,
 			a.infoPanel.View(), a.detailView.View())
-		content = lipgloss.JoinVertical(lipgloss.Left,
-			top, workspaceTop, workspaceBottom, a.logPanel.View())
+		rows := []string{top, workspaceTop, workspaceBottom}
+		if !a.logHidden {
+			rows = append(rows, a.logPanel.View())
+		}
+		content = lipgloss.JoinVertical(lipgloss.Left, rows...)
 	}
 
 	a.helpBar.SetItems(a.helpBarItems())

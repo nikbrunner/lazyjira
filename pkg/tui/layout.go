@@ -74,9 +74,13 @@ func (a *App) geometry() appLayout {
 	mainWidth := a.width - sideWidth
 	layout.projects = rect{0, 0, sideWidth, statusHeight}
 	layout.status = rect{sideWidth, 0, mainWidth, statusHeight}
-	layout.log = rect{0, a.height - helpHeight - logHeight, a.width, logHeight}
 	bodyY := statusHeight
-	bodyHeight := layout.log.y - bodyY
+	bodyEnd := a.height - helpHeight
+	if !a.logHidden {
+		layout.log = rect{0, bodyEnd - logHeight, a.width, logHeight}
+		bodyEnd = layout.log.y
+	}
+	bodyHeight := bodyEnd - bodyY
 	issuesHeight := bodyHeight * 2 / 5
 	detailHeight := bodyHeight - issuesHeight
 	layout.tabs = rect{0, bodyY, sideWidth, issuesHeight}

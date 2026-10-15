@@ -105,3 +105,14 @@ func TestKeymap_MatchUnknownReturnsEmpty(t *testing.T) {
 	testkit.AssertEqual(t, "unknown key", keymap.Match("this-key-is-unbound"), Action(""))
 	testkit.AssertEqual(t, "unknown nav key", keymap.MatchNav("this-key-is-unbound"), components.NavNone)
 }
+
+func TestKeymap_ToggleCommandLog(t *testing.T) {
+	t.Parallel()
+	testkit.AssertEqual(t, "default @", DefaultKeymap().Match("@"), ActToggleCommandLog)
+
+	var kcfg config.KeybindingConfig
+	kcfg.Universal.ToggleLog = "L"
+	keymap := KeymapFromConfig(kcfg)
+	testkit.AssertEqual(t, "remapped", keymap.Match("L"), ActToggleCommandLog)
+	testkit.AssertEqual(t, "@ freed", keymap.Match("@"), Action(""))
+}

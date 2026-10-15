@@ -8,6 +8,7 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
@@ -140,5 +141,66 @@ func TestApp_GeometryMaximizeAndTooSmallResize(t *testing.T) {
 	layout = app.geometry()
 	if layout.issues != (rect{0, 0, 100, 23}) || layout.detail.width != 0 || layout.help != (rect{0, 23, 100, 1}) {
 		t.Fatalf("maximized geometry = %+v", layout)
+	}
+}
+
+func TestApp_GeometryHiddenCommandLogGivesRowsToBody(t *testing.T) {
+	t.Parallel()
+	app := &App{width: 80, height: 24, cfg: &config.Config{}, issuesList: views.NewIssuesList()}
+	visible := app.geometry()
+	app.logHidden = true
+	hidden := app.geometry()
+
+	if hidden.log != (rect{}) {
+		t.Errorf("hidden log rect = %+v, want empty", hidden.log)
+	}
+	if hidden.help != visible.help {
+		t.Errorf("help bar moved: got %+v, want %+v", hidden.help, visible.help)
+	}
+	if got := hidden.issues.height + hidden.detail.height; got != 24-statusHeight-helpHeight {
+		t.Errorf("body height = %d, want %d", got, 24-statusHeight-helpHeight)
+	}
+	if hidden.detail.y+hidden.detail.height != hidden.help.y {
+		t.Errorf("body does not reach the help bar: %+v", hidden)
+	}
+	if got := hidden.issues.height + hidden.detail.height - (visible.issues.height + visible.detail.height); got != logHeight {
+		t.Errorf("body grew by %d rows, want %d", got, logHeight)
+	}
+}
+
+func TestApp_ToggleCommandLogAction(t *testing.T) {
+	t.Parallel()
+	app := focusApp(t)
+	app.layoutPanels()
+	if app.geometry().log.height != logHeight {
+		t.Fatalf("log should start visible")
+	}
+
+	app.Update(runeKey('@'))
+	if !app.logHidden || app.geometry().log.height != 0 {
+		t.Errorf("first @ should hide the Command log")
+	}
+	app.Update(runeKey('@'))
+	if app.logHidden || app.geometry().log.height != logHeight {
+		t.Errorf("second @ should show the Command log")
+	}
+}
+
+func TestNewApp_ShowCommandLogConfig(t *testing.T) {
+	t.Parallel()
+	hidden := false
+	for _, tc := range []struct {
+		name  string
+		value *bool
+		want  bool
+	}{{"unset starts visible", nil, false}, {"false starts hidden", &hidden, true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cfg := &config.Config{}
+			cfg.GUI.ShowCommandLog = tc.value
+			if got := NewApp(cfg, &jiratest.FakeClient{T: t, SetOnRequestFunc: func(func(jira.RequestLog)) {}}).logHidden; got != tc.want {
+				t.Errorf("logHidden = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }

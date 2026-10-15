@@ -582,3 +582,24 @@ func TestSave_FailsWhenConfigDirIsFile(t *testing.T) {
 		t.Fatal("Save() into a file path should error")
 	}
 }
+
+func TestGUIConfig_ShouldShowCommandLog(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name  string
+		value *bool
+		want  bool
+	}{
+		{"nil defaults to true", nil, true},
+		{"explicit true", pointerTo(true), true},
+		{"explicit false", pointerTo(false), false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := (GUIConfig{ShowCommandLog: tc.value}).ShouldShowCommandLog(); got != tc.want {
+				t.Errorf("ShouldShowCommandLog() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

@@ -34,6 +34,7 @@
 | **App status panel** | The display-only panel showing app version, account, authentication method, host, and connection state. | Account status panel, Info |
 | **Issue info pane** | The interactive pane for an issue's fields, links, and subtasks. | Account info, Info without qualification |
 | **Issue details pane** | The interactive pane for an issue's description, comments, and history. | Issue info pane |
+| **Command log** | The display-only panel along the bottom of the workspace listing the Jira requests the app made. `@` toggles it; `gui.showCommandLog` sets whether it starts visible. | Request log, log panel |
 | **Issue Edit View** | The full-screen view for writing an issue's type, summary, description, fields, and images. `n` opens it to create an issue, `e` to edit one. | Create form, create issue form, edit form |
 
 ## Issue-list layout

@@ -65,6 +65,7 @@ func (a *App) globalBindings() []Binding {
 		a.bind(ActRefreshAll, "refresh all data"),
 		a.bind(ActJQLSearch, "JQL search"),
 		a.bind(ActIssueLookup, "open issue by key"),
+		a.bind(ActToggleCommandLog, "toggle Command log"),
 		{km.Keys(ActHelp), "show all keybindings"},
 	}
 }

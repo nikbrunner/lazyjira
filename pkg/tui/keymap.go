@@ -37,6 +37,7 @@ const (
 	ActTransition       Action = "transition"
 	ActRefresh          Action = "refresh"
 	ActRefreshAll       Action = "refreshAll"
+	ActToggleCommandLog Action = "toggleCommandLog"
 	ActInfoTab          Action = "infoTab" // legacy: now focuses Info panel
 	ActEdit             Action = "edit"
 	ActComments         Action = "comments"
@@ -102,6 +103,7 @@ func DefaultKeymap() Keymap {
 		ActTransition:       {"t"},
 		ActRefresh:          {"r"},
 		ActRefreshAll:       {"R"},
+		ActToggleCommandLog: {"@"},
 		ActInfoTab:          {"i"},
 		ActEdit:             {"e"},
 		ActComments:         {"c"},
@@ -167,6 +169,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActToggleMaximize, kcfg.Universal.ToggleMaximize)
 	set(ActJQLSearch, kcfg.Universal.JQLSearch)
 	set(ActIssueLookup, kcfg.Universal.IssueLookup)
+	set(ActToggleCommandLog, kcfg.Universal.ToggleLog)
 	// Issues (Select, Open, FocusRight are shared with Projects panel)
 	set(ActSelect, kcfg.Issues.Select)
 	set(ActOpen, kcfg.Issues.Open)

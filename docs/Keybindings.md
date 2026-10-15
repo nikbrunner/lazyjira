@@ -16,6 +16,7 @@ Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspa
 | `H` / `J` / `K` / `L` | Move focus according to the pane map below |
 | `0` `1` `2` `3` `4` | Focus Project selector, Issue tabs, Issues, Issue info, Issue details |
 | `+` | Maximize or restore focused Issues or Details pane; `enter` in maximized Issues opens maximized Details, and `esc` steps back to maximized Issues, then to the split layout |
+| `@` | Show or hide the Command log for the session; the Issues and Details panes take the freed rows |
 | `enter` in Issue tabs | Focus Issues without changing collection |
 | `s` in Issue tabs | Open JQL search starting from the focused tab's query |
 | `#` | Open an issue by key. The prompt starts with the active project key, completes project keys and issue numbers, and opens the issue in maximized Issue details; `esc` returns to the previous layout |

@@ -87,6 +87,10 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		a.helpFilter = ""
 		a.helpSearching = false
 		return a, nil
+	case ActToggleCommandLog:
+		a.logHidden = !a.logHidden
+		a.layoutPanels()
+		return a, nil
 	case ActSearch:
 		return a.handleActionSearch(false)
 	case ActBodySearch:
