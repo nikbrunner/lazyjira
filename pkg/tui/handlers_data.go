@@ -56,8 +56,8 @@ func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
 		case a.issuesList.SelectByKey(detectedKey):
 			cmds = append(cmds, a.previewSelectedIssue(), fetchIssueDetail(a.client, detectedKey))
 			a.gitDetectedKey = ""
-		case a.issuesList.GetTabIndex() != 0:
-			a.setIssueTabIndex(0)
+		case a.issuesList.GetTabIndex() != a.issuesList.FirstTabIndex():
+			a.setIssueTabIndex(a.issuesList.FirstTabIndex())
 			cmds = append(cmds, a.fetchActiveTab())
 		default:
 			a.gitDetectedKey = ""
@@ -525,6 +525,9 @@ func (a *App) handleProjectsLoaded(msg projectsLoadedMsg) (tea.Model, tea.Cmd) {
 		a.projectID = projects[0].ID
 		a.statusPanel.SetProject(a.projectKey)
 		a.projectList.SetActiveKey(a.projectKey)
+		a.issuesList.SetProject(a.projectKey)
+		a.issuesList.SetTabIndex(a.issuesList.FirstTabIndex())
+		a.ensureActiveIssueTabVisible()
 		return a, a.fetchActiveTab()
 	}
 	return a, nil

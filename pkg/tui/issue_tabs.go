@@ -39,7 +39,7 @@ func (a *App) ensureActiveIssueTabVisible() {
 		a.tabOffset = 0
 		return
 	}
-	index := a.issuesList.GetTabIndex()
+	index := a.issuesList.TabPosition()
 	lastOffset := max(0, len(tabs)-visible)
 	a.tabOffset = min(max(a.tabOffset, 0), lastOffset)
 	a.tabOffset = min(a.tabOffset, index)
@@ -75,7 +75,7 @@ func (a *App) renderIssueTabs(width, height int) string {
 			for row := range min(visible, innerHeight, len(tabs)-a.tabOffset) {
 				index := a.tabOffset + row
 				label := "  " + tabs[index].Name
-				if index == a.issuesList.GetTabIndex() {
+				if index == a.issuesList.TabPosition() {
 					label = theme.Default.Title.Render("› " + tabs[index].Name)
 				}
 				rows[row] = ansi.Truncate(label, innerWidth, "…")
@@ -92,7 +92,7 @@ func (a *App) renderIssueTabs(width, height int) string {
 		}
 		for i := a.tabOffset; i < min(len(tabs), a.tabOffset+visible) && row < innerHeight; i++ {
 			label := "  " + tabs[i].Name
-			if i == a.issuesList.GetTabIndex() {
+			if i == a.issuesList.TabPosition() {
 				label = theme.Default.Title.Render("› " + tabs[i].Name)
 			}
 			rows[row] = ansi.Truncate(label, innerWidth, "…")

@@ -350,9 +350,14 @@ issueTabs:
   - name: "Recent"
     jql: "project = {{.ProjectKey}} AND updated >= -7d ORDER BY updated DESC"
     maxResults: 100
+  - name: "Web SDK releases"
+    jql: "project = WEBSDK AND fixVersion in unreleasedVersions()"
+    projects: [WEBSDK]
 ```
 
 You can also create temporary JQL tabs at runtime with the `s` key.
+
+Set `projects` on a tab to list it only while one of those projects is active. Keys match case-insensitively. Tabs without `projects` are listed for every project, and JQL search tabs and children tabs are listed regardless. When a project switch hides the active tab, the first listed tab becomes active and loads.
 
 Set `maxResults` on a tab to choose its page size. See [Page size](#page-size-maxresults) below.
 

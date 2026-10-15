@@ -209,6 +209,36 @@ func TestLoad_ProjectsAcceptsStringShorthand(t *testing.T) {
 	}
 }
 
+func TestLoad_IssueTabProjects(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("LAZYJIRA_CONFIG_DIR", dir)
+
+	cfgYAML := `issueTabs:
+  - name: Web
+    jql: project = WEBSDK
+    projects: [WEBSDK, web]
+  - name: All
+    jql: project = {{.ProjectKey}}
+`
+	if err := os.WriteFile(filepath.Join(dir, "config.yml"), []byte(cfgYAML), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	web, all := cfg.IssueTabs[0], cfg.IssueTabs[1]
+	for key, want := range map[string]bool{"WEBSDK": true, "websdk": true, "WEB": true, "PLAT": false, "": false} {
+		if got := web.ShowsInProject(key); got != want {
+			t.Errorf("Web.ShowsInProject(%q) = %v, want %v", key, got, want)
+		}
+		if !all.ShowsInProject(key) {
+			t.Errorf("All.ShowsInProject(%q) = false, want true", key)
+		}
+	}
+}
+
 func TestValidateConverter(t *testing.T) {
 	t.Parallel()
 	cases := []struct {

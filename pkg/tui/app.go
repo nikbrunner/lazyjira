@@ -349,6 +349,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	}
 	issuesList.SetSanitizer(cfg.Sanitize.Apply)
 	issuesList.SetTabs(cfg.IssueTabs)
+	issuesList.SetProject(projectKey)
 	issuesList.SetStatusOrder(cfg.StatusOrder)
 	issuesList.SetFocused(true)
 	issuesList.SetUserEmail(cfg.Jira.Email)

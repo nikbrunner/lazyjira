@@ -88,6 +88,8 @@ func (a *App) selectProject(p *jira.Project) tea.Cmd {
 	a.statusPanel.SetProject(p.Key)
 	a.projectList.SetActiveKey(p.Key)
 	a.issuesList.InvalidateTabCache()
+	a.issuesList.SetProject(p.Key)
+	a.ensureActiveIssueTabVisible()
 	a.issueCache = make(map[string]*jira.Issue)
 	a.childrenCache = make(map[string][]jira.Issue)
 	a.invalidateInFlight()

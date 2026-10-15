@@ -38,6 +38,7 @@ type IssuesList struct {
 	pageInfo         map[int]pageInfo
 	tabs             []config.IssueTabConfig
 	tab              int
+	project          string
 	tabCache         map[int][]jira.Issue
 	userEmail        string
 	keyColWidth      int
@@ -113,8 +114,72 @@ func (m *IssuesList) SetPriorityIcons(icons map[string]string) {
 	m.priorityIconCols = max
 }
 func (m *IssuesList) SetTabs(tabs []config.IssueTabConfig) { m.tabs = tabs }
-func (m *IssuesList) Tabs() []config.IssueTabConfig        { return m.tabs }
 func (m *IssuesList) SetUserEmail(email string)            { m.userEmail = email }
+
+// Tabs returns the tabs listed for the active project, in display order.
+func (m *IssuesList) Tabs() []config.IssueTabConfig {
+	var tabs []config.IssueTabConfig
+	for i, tab := range m.tabs {
+		if m.tabVisible(i) {
+			tabs = append(tabs, tab)
+		}
+	}
+	return tabs
+}
+
+// SetProject lists the tabs configured for key. When the active tab is no
+// longer listed, the first listed tab becomes active.
+func (m *IssuesList) SetProject(key string) {
+	m.project = key
+	if first := m.FirstTabIndex(); !m.tabVisible(m.tab) && m.tab != first {
+		m.tab = first
+		m.loadFromCache()
+	}
+}
+
+// Tab indices address all tabs, including tabs hidden for the active project,
+// so per-tab state and fetch results stay with their tab across project switches.
+func (m *IssuesList) tabVisible(idx int) bool {
+	return idx >= 0 && idx < len(m.tabs) && m.tabs[idx].ShowsInProject(m.project)
+}
+
+// FirstTabIndex returns the index of the first listed tab, or -1 without one.
+func (m *IssuesList) FirstTabIndex() int {
+	for i := range m.tabs {
+		if m.tabVisible(i) {
+			return i
+		}
+	}
+	return -1
+}
+
+// TabPosition returns the active tab's position among the listed tabs, or -1.
+func (m *IssuesList) TabPosition() int {
+	if !m.tabVisible(m.tab) {
+		return -1
+	}
+	pos := 0
+	for i := range m.tab {
+		if m.tabVisible(i) {
+			pos++
+		}
+	}
+	return pos
+}
+
+// SetTabPosition switches to the listed tab at pos.
+func (m *IssuesList) SetTabPosition(pos int) {
+	for i := range m.tabs {
+		if !m.tabVisible(i) {
+			continue
+		}
+		if pos == 0 {
+			m.SetTabIndex(i)
+			return
+		}
+		pos--
+	}
+}
 func (m *IssuesList) ActiveTab() config.IssueTabConfig {
 	if m.tab >= 0 && m.tab < len(m.tabs) {
 		return m.tabs[m.tab]
@@ -145,7 +210,7 @@ func (m *IssuesList) RemoveJQLTab() {
 	m.removeTab(m.jqlTabIdx)
 	m.jqlTabIdx = -1
 	m.jqlQuery = ""
-	m.tab = 0
+	m.tab = m.FirstTabIndex()
 	m.loadFromCache()
 }
 
@@ -212,7 +277,7 @@ func (m *IssuesList) RemoveHierarchyTab() {
 	m.hierarchyTabIdx = -1
 	m.hierarchyTitle = ""
 	m.hierarchyStack = nil
-	m.tab = 0
+	m.tab = m.FirstTabIndex()
 	m.loadFromCache()
 }
 
@@ -266,20 +331,21 @@ func (m *IssuesList) HierarchyStack() *navstack.NavStack {
 	return m.hierarchyStack
 }
 
-func (m *IssuesList) NextTab() {
-	if len(m.tabs) == 0 {
-		return
-	}
-	m.tab = (m.tab + 1) % len(m.tabs)
-	m.loadFromCache()
-}
+func (m *IssuesList) NextTab() { m.stepTab(1) }
 
-func (m *IssuesList) PrevTab() {
-	if len(m.tabs) == 0 {
-		return
+func (m *IssuesList) PrevTab() { m.stepTab(-1) }
+
+// stepTab moves to the next listed tab in direction, wrapping around.
+func (m *IssuesList) stepTab(direction int) {
+	count := len(m.tabs)
+	for step := 1; step <= count; step++ {
+		idx := ((m.tab+direction*step)%count + count) % count
+		if m.tabVisible(idx) {
+			m.tab = idx
+			m.loadFromCache()
+			return
+		}
 	}
-	m.tab = (m.tab + len(m.tabs) - 1) % len(m.tabs)
-	m.loadFromCache()
 }
 
 func (m *IssuesList) loadFromCache() {
@@ -302,7 +368,7 @@ func (m *IssuesList) CurrentIssues() []jira.Issue { return m.allIssues }
 
 // SetTabIndex switches to the given tab and loads from cache if available
 func (m *IssuesList) SetTabIndex(idx int) {
-	if idx < 0 || idx >= len(m.tabs) {
+	if !m.tabVisible(idx) {
 		return
 	}
 	m.tab = idx
@@ -398,8 +464,8 @@ func (m *IssuesList) InvalidateTabCache() {
 	m.hierarchyTabIdx = -1
 	m.hierarchyTitle = ""
 	m.hierarchyStack = nil
-	if m.tab >= len(m.tabs) {
-		m.tab = 0
+	if !m.tabVisible(m.tab) {
+		m.tab = m.FirstTabIndex()
 	}
 }
 
@@ -446,7 +512,7 @@ func (m *IssuesList) FindInAnyTab(key string) (int, bool) {
 		}
 	}
 	for tab, issues := range m.tabCache {
-		if tab == m.tab {
+		if tab == m.tab || !m.tabVisible(tab) {
 			continue
 		}
 		for _, issue := range issues {
@@ -458,18 +524,19 @@ func (m *IssuesList) FindInAnyTab(key string) (int, bool) {
 	return -1, false
 }
 
-// InjectIssue adds an issue to tab 0 cache if not already present
+// InjectIssue adds an issue to the first listed tab's cache if not already present
 func (m *IssuesList) InjectIssue(issue jira.Issue) {
 	if m.tabCache == nil {
 		m.tabCache = make(map[int][]jira.Issue)
 	}
-	cached := m.tabCache[0]
+	first := m.FirstTabIndex()
+	cached := m.tabCache[first]
 	for _, iss := range cached {
 		if iss.Key == issue.Key {
 			return
 		}
 	}
-	m.tabCache[0] = append([]jira.Issue{issue}, cached...)
+	m.tabCache[first] = append([]jira.Issue{issue}, cached...)
 }
 
 // SelectByKey moves cursor to the issue with the given key and returns true if found

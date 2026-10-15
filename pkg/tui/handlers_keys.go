@@ -934,7 +934,7 @@ func (a *App) navigateToLinkedIssue() (tea.Model, tea.Cmd) {
 		}
 	} else if cached, ok := a.issueCache[key]; ok {
 		a.issuesList.InjectIssue(*cached)
-		a.setIssueTabIndex(0)
+		a.setIssueTabIndex(a.issuesList.FirstTabIndex())
 	}
 	a.issuesList.SelectByKey(key)
 	a.leftFocus = focusIssues

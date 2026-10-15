@@ -114,8 +114,8 @@ func (a *App) navigateToIssue(key string) {
 		return
 	}
 	// Switch to first tab (typically "All") and try again.
-	if a.issuesList.GetTabIndex() != 0 {
-		a.setIssueTabIndex(0)
+	if first := a.issuesList.FirstTabIndex(); a.issuesList.GetTabIndex() != first {
+		a.setIssueTabIndex(first)
 		if a.issuesList.SelectByKey(key) {
 			a.side = sideLeft
 			a.leftFocus = focusIssues

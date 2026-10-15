@@ -42,7 +42,7 @@
 | Term | Definition | Aliases to avoid |
 | --- | --- | --- |
 | **Issues panel** | The bordered screen region containing the column header row, issue rows, and footer for the active issue tab. | Issue list when referring to the whole panel |
-| **Issue tab** | A named issue collection shown in the Issue tabs pane, usually defined by a JQL query. | Column, panel |
+| **Issue tab** | A named issue collection shown in the Issue tabs pane, usually defined by a JQL query. A configured tab can be limited to certain projects. | Column, panel |
 | **Issue tabs pane** | The focusable vertical pane listing issue tabs beside the Issues panel. Focusing it leaves the active issue tab unchanged. | Issues panel, issue list |
 | **JQL query** | A Jira Query Language expression defining which issues Jira returns and their ordering. | Local filter |
 | **Local filter** | A text filter applied to issues already loaded for the active issue tab. It matches key, summary, and assignee, and descriptions when opened with the body search key. | JQL query, search without qualification |

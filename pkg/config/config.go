@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -132,15 +134,24 @@ type BranchFormatCondition struct {
 }
 
 type IssueTabConfig struct {
-	Name         string `yaml:"name"`
-	JQL          string `yaml:"jql"`
-	MaxResults   *int   `yaml:"maxResults"`
-	SortByStatus *bool  `yaml:"sortByStatus,omitempty"`
+	Name         string   `yaml:"name"`
+	JQL          string   `yaml:"jql"`
+	MaxResults   *int     `yaml:"maxResults"`
+	SortByStatus *bool    `yaml:"sortByStatus,omitempty"`
+	Projects     []string `yaml:"projects,omitempty"`
 }
 
 // SortsByStatus reports whether the tab applies statusOrder (default: true).
 func (t IssueTabConfig) SortsByStatus() bool {
 	return t.SortByStatus == nil || *t.SortByStatus
+}
+
+// ShowsInProject reports whether the tab is listed while projectKey is active.
+// Tabs without projects are listed for every project.
+func (t IssueTabConfig) ShowsInProject(projectKey string) bool {
+	return len(t.Projects) == 0 || slices.ContainsFunc(t.Projects, func(key string) bool {
+		return strings.EqualFold(key, projectKey)
+	})
 }
 
 type FieldConfig struct {

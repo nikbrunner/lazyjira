@@ -117,8 +117,9 @@ func (a *App) mouseClick(panel panelID, relY int, x int) (tea.Model, tea.Cmd) {
 		a.updateFocusState()
 		if index, overflow := a.issueTabAtRow(relY); overflow != 0 {
 			a.scrollIssueTabs(overflow)
-		} else if index >= 0 && index != a.issuesList.GetTabIndex() {
-			a.setIssueTabIndex(index)
+		} else if index >= 0 && index != a.issuesList.TabPosition() {
+			a.issuesList.SetTabPosition(index)
+			a.ensureActiveIssueTabVisible()
 			return a, a.activateIssueCollection()
 		}
 
