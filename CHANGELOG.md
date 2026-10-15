@@ -5,6 +5,14 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [0.13.0](https://github.com/nikbrunner/lazyjira/compare/v0.12.0...v0.13.0) (2026-10-15)
 
+### Highlights
+
+#### Transition several issues at once
+
+Mark issues with `space` or a `v` range and press `t` to move them all in one go. The picker lists only the statuses every
+marked issue can reach, and each issue takes its own workflow transition to get there. When a transition fails, the error
+names the issue and only that issue stays marked, so a second `t` retries just the failures. While issues are marked, `t`
+keeps this behavior even if a custom command is bound to it.
 
 ### Features
 
