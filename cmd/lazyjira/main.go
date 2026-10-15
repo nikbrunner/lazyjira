@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -21,6 +22,27 @@ import (
 
 // version is set at build time via ldflags
 var version = "dev"
+
+func currentVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	return resolveVersion(version, info, ok)
+}
+
+func resolveVersion(ldflags string, info *debug.BuildInfo, ok bool) string {
+	if ldflags != "dev" || !ok {
+		return ldflags
+	}
+	for _, s := range info.Settings {
+		if strings.HasPrefix(s.Key, "vcs") {
+			return ldflags
+		}
+	}
+	v := info.Main.Version
+	if v == "" || v == "(devel)" {
+		return ldflags
+	}
+	return strings.TrimPrefix(v, "v")
+}
 
 func main() {
 	os.Exit(dispatch(os.Args[1:], os.Stdout, os.Stderr))
@@ -43,7 +65,7 @@ func dispatch(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stdout, "Credentials cleared.")
 			return 0
 		case "--version", "version":
-			fmt.Fprintf(stdout, "lazyjira %s\n", version)
+			fmt.Fprintf(stdout, "lazyjira %s\n", currentVersion())
 			return 0
 		}
 	}
@@ -123,7 +145,7 @@ func run() error {
 		client = jiraClient
 	}
 
-	tui.Version = version
+	tui.Version = currentVersion()
 	app := tui.NewAppWithAuth(cfg, client, authMethod)
 	defer app.Shutdown()
 
