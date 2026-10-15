@@ -5,6 +5,56 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [0.14.0](https://github.com/nikbrunner/lazyjira/compare/v0.13.0...v0.14.0) (2026-10-15)
 
+### Highlights
+
+#### Marked issues work like a single issue
+
+Mark issues with `space` or a `v` range, and the copy keys act on each one: `y` copies `KEY Summary`, `ctrl+y` a Markdown
+link and `Y` the URL, one line per issue. `o` opens every marked issue in the browser and asks first above 10. The padded
+table of the visible columns is now on `alt+y`, and works on the cursor row without marks. On macOS, `alt+y` needs the
+terminal's Option-as-Alt setting.
+
+#### Links and parents from the Issue info pane
+
+On the Links tab, `n` adds a link: pick the link type and direction, then the target issue with the same lookup as `#`.
+`d` removes the selected link after a confirmation. Editing Parent opens that lookup too, prefilled with the project
+key, and an empty prompt clears the parent.
+
+#### One name for a new worktree
+
+`W` opens a small dialog with the worktree name, prefilled from the issue. It shows the folder under
+`worktree.defaultPath` and the branch while you type, and the name sets both, so folder and branch always match. A branch
+that already exists is marked and gets checked out.
+
+#### Issue tabs for one project
+
+An issue tab with `projects` appears only while one of those projects is active:
+
+```yaml
+issueTabs:
+  - name: "Web SDK releases"
+    jql: "project = WEBSDK AND fixVersion in unreleasedVersions()"
+    projects: [WEBSDK]
+```
+
+#### A closer fit with the terminal
+
+lazyjira now runs on Bubble Tea v2. The colors follow light and dark theme switches while it runs, the terminal title
+shows the active project, and `shift+enter` adds a line in the Description. Copies also go through the terminal (OSC 52),
+so `y` and friends work over SSH. Your keybindings keep working; `space` and `" "` both name the space key.
+
+#### Smaller changes
+
+- `@` hides or shows the Command log, and `gui.showCommandLog` sets how it starts.
+- While issues are marked or the list is filtered, the help bar starts with what `esc` clears next.
+- `lazyjira --version` reports the release after `go install`.
+
+#### Upgrading from 0.13
+
+With marks, `y` copies `KEY Summary` per issue. The padded rows it copied before are on `alt+y`. While issues are marked,
+custom commands bound to `ctrl+y`, `Y`, `alt+y` or `o` give way to the built-in action, as for `y` and `t`.
+
+Building from source needs Go 1.26. Release binaries are not affected.
 
 ### ⚠ BREAKING CHANGES
 
@@ -24,11 +74,9 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 * **tui:** show what esc clears in the help bar ([5402f2e](https://github.com/nikbrunner/lazyjira/commit/5402f2e7f34f15bc7c0d5335cc6eaed83c221449))
 * **tui:** toggle the command log with @ ([9ca4455](https://github.com/nikbrunner/lazyjira/commit/9ca44556f617e42b89b06b17a7a5506aa8976047))
 
-
 ### Refactors
 
 * **tui:** move to Bubble Tea v2, Lip Gloss v2 and Bubbles v2 ([4513644](https://github.com/nikbrunner/lazyjira/commit/45136440ec778a86c8102cf4d480ce82fa1c5e6d)), closes [#25](https://github.com/nikbrunner/lazyjira/issues/25)
-
 
 ### Bug Fixes
 
