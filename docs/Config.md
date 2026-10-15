@@ -212,7 +212,9 @@ The Project selector and App status panel share the top row. Issue tabs and Issu
 
 lazyjira takes its colors from your terminal. Everything uses the 16 ANSI colors and the terminal's default foreground and background, so the app follows whatever color scheme the terminal has. Syntax highlighting in code blocks maps onto the same 16 colors.
 
-Selection backgrounds are derived from the terminal background at startup: 8% lighter on dark backgrounds, or 8% darker on light backgrounds. If the terminal cannot report its background, detection uses `COLORFGBG` where available, otherwise black. Terminals without truecolor approximate the derived shade with their available palette.
+Selection backgrounds are derived from the terminal background: 8% lighter on dark backgrounds, or 8% darker on light backgrounds. If the terminal cannot report its background at startup, detection uses `COLORFGBG` where available, otherwise black. Terminals without truecolor approximate the derived shade with their available palette.
+
+When the terminal window regains focus, lazyjira asks for the background again and switches between dark and light when the terminal's color scheme changed, along with `themeDark`, `themeLight` and the `auto` renderer style. This needs a terminal that reports focus and its background color. Inside tmux, it needs `focus-events on` and tmux 3.4 or later.
 
 lazyjira ignores `gui.theme` and shows a warning in App status when it holds any value other than `default`.
 

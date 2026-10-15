@@ -274,3 +274,97 @@ func TestColorFGBG(t *testing.T) {
 		}
 	}
 }
+
+func TestSetBackgroundSwitchesDarkToLight(t *testing.T) {
+	t.Cleanup(func() { Init(Options{}) })
+	Init(Options{Background: lipgloss.Color("#20262c")})
+	held := Default
+
+	if !SetBackground(lipgloss.Color("#e0e0e0")) {
+		t.Fatal("dark to light should re-init the theme")
+	}
+	if IsDark() {
+		t.Error("IsDark after switching to a light background")
+	}
+	if ColorHighlight != lipgloss.Color("#cecece") {
+		t.Errorf("highlight = %v, want #cecece", ColorHighlight)
+	}
+	if held.SelectedItem.GetBackground() != lipgloss.Color("#cecece") {
+		t.Error("a view holding Default still renders the old selection background")
+	}
+}
+
+func TestSetBackgroundIgnoresTheSameColor(t *testing.T) {
+	t.Cleanup(func() { Init(Options{}) })
+	Init(Options{Background: lipgloss.Color("#20262c")})
+	theme := *Default
+
+	for _, same := range []color.Color{
+		lipgloss.Color("#20262c"),
+		ansi.XParseColor("rgb:2020/2626/2c2c"),
+	} {
+		if SetBackground(same) {
+			t.Errorf("SetBackground(%v) re-initialized an unchanged theme", same)
+		}
+	}
+	if SetBackground(nil) {
+		t.Error("SetBackground(nil) re-initialized the theme")
+	}
+	if Default.SelectedItem.GetBackground() != theme.SelectedItem.GetBackground() {
+		t.Error("selection background changed")
+	}
+}
+
+func TestSetBackgroundKeepsOverrides(t *testing.T) {
+	t.Cleanup(func() { Init(Options{}) })
+	Init(Options{
+		Colors:      map[string]string{"green": "#00ff00"},
+		ColorsLight: map[string]string{"red": "#aa0000"},
+		Borders:     "sharp",
+		Background:  lipgloss.Color("#20262c"),
+	})
+
+	SetBackground(lipgloss.Color("#e0e0e0"))
+	if ColorGreen != lipgloss.Color("#00ff00") || Default.Title.GetForeground() != lipgloss.Color("#00ff00") {
+		t.Errorf("green = %v, want the themeColors override", ColorGreen)
+	}
+	if ColorRed != lipgloss.Color("#aa0000") {
+		t.Errorf("red = %v, want the themeLight override", ColorRed)
+	}
+	if Default.Border != lipgloss.NormalBorder() {
+		t.Error("border shape reset after the switch")
+	}
+}
+
+func TestSetBackgroundFirstAnswerAfterFallback(t *testing.T) {
+	t.Cleanup(func() { Init(Options{}) })
+	Init(Options{})
+
+	if SetBackground(lipgloss.Color("#20262c")) {
+		t.Error("a dark answer after the black fallback re-initialized the theme")
+	}
+	if ColorHighlight != lipgloss.Color("#141414") {
+		t.Errorf("highlight = %v, want the startup #141414", ColorHighlight)
+	}
+	if !SetBackground(lipgloss.Color("#30363c")) {
+		t.Error("a later change of the dark background should re-init")
+	}
+
+	Init(Options{})
+	if !SetBackground(lipgloss.Color("#e0e0e0")) {
+		t.Error("a light answer after the black fallback should re-init")
+	}
+
+	Init(Options{Background: ansi.IndexedColor(0)})
+	if SetBackground(lipgloss.Color("#20262c")) {
+		t.Error("a dark answer after the COLORFGBG fallback re-initialized the theme")
+	}
+}
+
+func TestSetBackgroundFirstAnswerAfterStartupAnswer(t *testing.T) {
+	t.Cleanup(func() { Init(Options{}) })
+	Init(Options{Background: lipgloss.Color("#20262c")})
+	if !SetBackground(lipgloss.Color("#30363c")) {
+		t.Error("another dark background after a real startup answer should re-init")
+	}
+}

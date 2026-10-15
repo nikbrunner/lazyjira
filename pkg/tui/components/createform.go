@@ -168,13 +168,24 @@ func newDescArea() textarea.Model {
 	ta.KeyMap.WordBackward.SetKeys("alt+left", "alt+b")
 	ta.KeyMap.DeleteWordBackward.SetKeys("alt+backspace", "ctrl+w")
 	ta.KeyMap.DeleteWordForward.SetKeys("alt+delete", "alt+d")
+	ta.SetStyles(descStyles())
+	ta.Blur()
+	return ta
+}
+
+func descStyles() textarea.Styles {
 	styles := textarea.DefaultStyles(theme.IsDark())
 	styles.Focused.CursorLine = lipgloss.NewStyle()
 	styles.Blurred = styles.Focused
 	styles.Cursor = textarea.CursorStyle{Color: theme.ColorCyan, Shape: tea.CursorBlock}
-	ta.SetStyles(styles)
-	ta.Blur()
-	return ta
+	return styles
+}
+
+// RefreshStyles reapplies the theme to an open Description.
+func (f *CreateForm) RefreshStyles() {
+	if f.desc != nil {
+		f.desc.SetStyles(descStyles())
+	}
 }
 
 // Pause stops intercepting keys so sub-overlays can receive input

@@ -35,14 +35,19 @@ func (BuiltinRenderer) Render(node any, width int) []string {
 }
 
 // GlamourRenderer pipes ADF through adf-converter's display module.
-// Style is the Glamour style name (e.g. "dark", "light", "notty").
+// Style is the configured rendererStyle ("auto", "dark", "light", "notty");
+// "auto" and "" follow the theme's dark/light state on every render.
 type GlamourRenderer struct {
 	Style string
 }
 
 // Render implements ADFRenderer.
 func (g GlamourRenderer) Render(node any, width int) []string {
-	return renderADFGlamour(node, width, g.Style)
+	return renderADFGlamour(node, width, g.style())
+}
+
+func (g GlamourRenderer) style() string {
+	return ResolveGlamourStyle(g.Style)
 }
 
 func renderADFBuiltin(node any, width int) []string {

@@ -216,6 +216,10 @@ type Options struct {
 // dark reports whether the terminal background Init received is dark.
 var dark = true
 
+// current holds the options of the last Init, so SetBackground can rebuild
+// the theme with a new background and the same overrides.
+var current Options
+
 // IsDark reports whether the terminal background is dark.
 func IsDark() bool { return dark }
 
@@ -241,8 +245,10 @@ func colorFGBG(fgbg string) color.Color {
 
 // Init applies any user overrides to the ANSI palette and refreshes the
 // global Default theme plus the package-level color variables. Must be
-// called before the TUI starts.
+// called before the TUI starts. Default is updated in place, so holders of
+// the pointer see the new styles.
 func Init(opts Options) {
+	current = opts
 	palette := defaultPalette()
 	palette.Highlight = selectionBackground(opts.Background)
 	palette = applyOverrides(palette, opts.Colors, "themeColors")
@@ -253,11 +259,39 @@ func Init(opts Options) {
 		palette = applyOverrides(palette, opts.ColorsLight, "themeLight")
 	}
 
-	Default = buildTheme(palette, defaultAuthorPalette())
+	*Default = *buildTheme(palette, defaultAuthorPalette())
 	if opts.Borders == "sharp" {
 		Default.Border = lipgloss.NormalBorder()
 	}
 	syncColors()
+}
+
+// SetBackground rebuilds the theme for a terminal background reported
+// while the TUI runs, keeping the overrides of the last Init. It reports
+// whether the theme changed: a switch between dark and light, or a new
+// selection highlight. While the background is still a startup fallback
+// (no answer, or COLORFGBG), only a dark/light switch counts, so the first
+// real answer does not shift the highlight of an unchanged terminal. nil is
+// ignored.
+func SetBackground(bg color.Color) bool {
+	if bg == nil {
+		return false
+	}
+	changed := isDark(bg) != dark ||
+		!isFallback(current.Background) && selectionHex(bg) != selectionHex(current.Background)
+	if !changed {
+		current.Background = bg
+		return false
+	}
+	opts := current
+	opts.Background = bg
+	Init(opts)
+	return true
+}
+
+func isFallback(background color.Color) bool {
+	_, indexed := background.(ansi.IndexedColor)
+	return background == nil || indexed
 }
 
 // IgnoredThemeWarning returns the startup warning for a gui.theme value, or
@@ -284,6 +318,10 @@ func isDark(background color.Color) bool {
 }
 
 func selectionBackground(background color.Color) color.Color {
+	return lipgloss.Color(selectionHex(background))
+}
+
+func selectionHex(background color.Color) string {
 	rgb := toRGB(background)
 	_, _, lightness := rgb.Hsl()
 	target := 1.0
@@ -293,7 +331,7 @@ func selectionBackground(background color.Color) color.Color {
 	rgb.R += (target - rgb.R) * 0.08
 	rgb.G += (target - rgb.G) * 0.08
 	rgb.B += (target - rgb.B) * 0.08
-	return lipgloss.Color(rgb.Hex())
+	return rgb.Hex()
 }
 
 // Color returns the color for a config value that ValidColor accepts. "-1"

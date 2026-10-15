@@ -314,11 +314,10 @@ const (
 
 // newADFRenderer selects the ADF renderer impl based on cfg.Renderer.
 // cfg.Renderer is validated at load time; "" and "builtin" both map to
-// BuiltinRenderer. cfg.RendererStyle is resolved to a concrete Glamour
-// style name here so terminal background detection happens once.
+// BuiltinRenderer.
 func newADFRenderer(cfg *config.Config) views.ADFRenderer {
 	if cfg.Renderer == config.RendererGlamour {
-		return views.GlamourRenderer{Style: views.ResolveGlamourStyle(cfg.RendererStyle)}
+		return views.GlamourRenderer{Style: cfg.RendererStyle}
 	}
 	return views.BuiltinRenderer{}
 }
@@ -551,6 +550,20 @@ func (a *App) interceptSearchBar(msg tea.Msg) (tea.Cmd, bool) {
 	return cmd, true
 }
 
+// handleTerminalColors asks for the terminal background whenever the window
+// regains focus and switches the theme when the answer changes it.
+func (a *App) handleTerminalColors(msg tea.Msg) tea.Cmd {
+	switch msg := msg.(type) {
+	case tea.FocusMsg:
+		return tea.RequestBackgroundColor
+	case tea.BackgroundColorMsg:
+		if theme.SetBackground(msg.Color) {
+			a.createForm.RefreshStyles()
+		}
+	}
+	return nil
+}
+
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyPressMsg); ok {
 		msg = keyname.Fold(key)
@@ -571,6 +584,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		return a.handleResize(msg)
+	case tea.FocusMsg, tea.BackgroundColorMsg:
+		return a, a.handleTerminalColors(msg)
 	case tea.MouseMsg:
 		return a.handleMouse(msg)
 	case tea.PasteMsg:
@@ -937,6 +952,7 @@ func (a *App) View() tea.View {
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 	v.WindowTitle = a.windowTitle()
+	v.ReportFocus = true
 	if a.isLoading() {
 		v.ProgressBar = tea.NewProgressBar(tea.ProgressBarIndeterminate, 0)
 	}
