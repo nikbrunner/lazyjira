@@ -3,6 +3,13 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.15.0](https://github.com/nikbrunner/lazyjira/compare/v0.14.0...v0.15.0) (2026-10-15)
+
+
+### Features
+
+* **tui:** show and edit Jira checklists ([a474757](https://github.com/nikbrunner/lazyjira/commit/a474757b74ed8d747af159623d4e1ed627081e6b))
+
 ## [0.14.0](https://github.com/nikbrunner/lazyjira/compare/v0.13.0...v0.14.0) (2026-10-15)
 
 ### Highlights
