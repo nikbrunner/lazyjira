@@ -47,6 +47,18 @@ func (m *IssuesList) HasMarks() bool {
 	return len(m.MarkedIssues()) > 0
 }
 
+// SetMarks replaces the marks with the given issue keys and ends any active
+// range.
+func (m *IssuesList) SetMarks(keys []string) {
+	m.ClearMarks()
+	for _, key := range keys {
+		if m.marked == nil {
+			m.marked = make(map[string]bool)
+		}
+		m.marked[key] = true
+	}
+}
+
 func (m *IssuesList) ClearMarks() {
 	m.marked = nil
 	m.visualAnchor = ""

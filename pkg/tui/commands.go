@@ -3,6 +3,7 @@ package tui
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -177,6 +178,39 @@ func doTransition(client jira.ClientInterface, key, transitionID string) tea.Cmd
 			return errorMsg{err: err}
 		}
 		return transitionDoneMsg{}
+	}
+}
+
+type issueTransition struct {
+	key          string
+	transitionID string
+}
+
+func fetchBulkTransitions(client jira.ClientInterface, keys []string) tea.Cmd {
+	return func() tea.Msg {
+		byKey := make(map[string][]jira.Transition, len(keys))
+		for _, key := range keys {
+			transitions, err := client.GetTransitions(context.Background(), key)
+			if err != nil {
+				return errorMsg{err: err}
+			}
+			byKey[key] = transitions
+		}
+		return bulkTransitionsLoadedMsg{keys: keys, transitions: byKey}
+	}
+}
+
+func doBulkTransition(client jira.ClientInterface, targets []issueTransition) tea.Cmd {
+	return func() tea.Msg {
+		var errs []error
+		var failed []string
+		for _, t := range targets {
+			if err := client.DoTransition(context.Background(), t.key, t.transitionID); err != nil {
+				errs = append(errs, err)
+				failed = append(failed, t.key)
+			}
+		}
+		return bulkTransitionDoneMsg{count: len(targets), failed: failed, err: errors.Join(errs...)}
 	}
 }
 

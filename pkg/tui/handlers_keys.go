@@ -502,13 +502,7 @@ func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 		return a, nil, true
 
 	case ActTransition:
-		if a.side == sideLeft && (a.leftFocus == focusIssues || a.leftFocus == focusInfo) {
-			if cur := a.currentIssue(); cur != nil {
-				*a.logFlag = true
-				return a, fetchTransitions(a.client, cur.Key), true
-			}
-		}
-		return a, nil, true
+		return a, a.startTransition(), true
 
 	case ActComments:
 		cur := a.currentIssue()
@@ -742,12 +736,35 @@ func issueLabel(iss *jira.Issue) string {
 	return iss.Key + " " + iss.Summary
 }
 
+// startTransition fetches the transitions of the marked issues, or else of
+// the current issue.
+func (a *App) startTransition() tea.Cmd {
+	if a.side != sideLeft || (a.leftFocus != focusIssues && a.leftFocus != focusInfo) {
+		return nil
+	}
+	if a.leftFocus == focusIssues && a.issuesList.HasMarks() {
+		marked := a.issuesList.MarkedIssues()
+		keys := make([]string, len(marked))
+		for i, issue := range marked {
+			keys[i] = issue.Key
+		}
+		*a.logFlag = true
+		return fetchBulkTransitions(a.client, keys)
+	}
+	cur := a.currentIssue()
+	if cur == nil {
+		return nil
+	}
+	*a.logFlag = true
+	return fetchTransitions(a.client, cur.Key)
+}
+
 func (a *App) isMarkingKey(key string) bool {
 	if a.side != sideLeft || a.leftFocus != focusIssues || !a.issuesList.HasMarks() {
 		return false
 	}
 	switch a.keymap.Match(key) { //nolint:exhaustive
-	case ActSelect, ActVisualSelect, ActCopySummary, ActFocusLeft:
+	case ActSelect, ActVisualSelect, ActCopySummary, ActTransition, ActFocusLeft:
 		return true
 	}
 	return false

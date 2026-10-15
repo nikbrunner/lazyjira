@@ -570,7 +570,7 @@ sanitize:
 
 ## Custom commands
 
-Bind shell commands to keys, with Go template access to the focused issue, project, or comment. Custom bindings take precedence over built-in keys, so they can be used to override any action. While issues are marked in the Issues panel, the marking keys (`select`, `visualSelect`, `copySummary`, `focusLeft`) keep their built-in behavior.
+Bind shell commands to keys, with Go template access to the focused issue, project, or comment. Custom bindings take precedence over built-in keys, so they can be used to override any action. While issues are marked in the Issues panel, the marking keys (`select`, `visualSelect`, `copySummary`, `transition`, `focusLeft`) keep their built-in behavior.
 
 ```yaml
 customCommands:

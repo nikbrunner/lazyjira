@@ -137,6 +137,72 @@ func (a *App) handleTransitionsLoaded(msg transitionsLoadedMsg) (tea.Model, tea.
 	return a, nil
 }
 
+// handleBulkTransitionsLoaded shows the target statuses every marked issue
+// can reach. Each issue moves through its own transition to that status.
+func (a *App) handleBulkTransitionsLoaded(msg bulkTransitionsLoadedMsg) (tea.Model, tea.Cmd) {
+	if len(msg.keys) == 0 {
+		return a, nil
+	}
+	targets := make(map[string][]issueTransition)
+	var items []components.ModalItem
+	for _, t := range msg.transitions[msg.keys[0]] {
+		if t.To == nil || targets[t.To.ID] != nil {
+			continue
+		}
+		var perIssue []issueTransition
+		for _, key := range msg.keys {
+			id, ok := transitionTo(msg.transitions[key], t.To.ID)
+			if !ok {
+				perIssue = nil
+				break
+			}
+			perIssue = append(perIssue, issueTransition{key: key, transitionID: id})
+		}
+		if perIssue == nil {
+			continue
+		}
+		targets[t.To.ID] = perIssue
+		items = append(items, components.ModalItem{ID: t.To.ID, Label: "→ " + t.To.Name, Hint: t.To.Description})
+	}
+	if len(items) == 0 {
+		a.helpBar.SetStatusMsg(fmt.Sprintf("No transition common to the %d marked issues", len(msg.keys)))
+		return a, nil
+	}
+	a.onSelect = func(item components.ModalItem) tea.Cmd {
+		return doBulkTransition(a.client, targets[item.ID])
+	}
+	a.modal.Show("Transition "+countIssues(len(msg.keys)), items)
+	return a, nil
+}
+
+func transitionTo(transitions []jira.Transition, statusID string) (string, bool) {
+	for _, t := range transitions {
+		if t.To != nil && t.To.ID == statusID {
+			return t.ID, true
+		}
+	}
+	return "", false
+}
+
+// handleBulkTransitionDone leaves only the issues whose transition failed
+// marked, reports the failures, and re-fetches data.
+func (a *App) handleBulkTransitionDone(msg bulkTransitionDoneMsg) (tea.Model, tea.Cmd) {
+	_, refresh := a.handleTransitionDone()
+	a.issuesList.SetMarks(msg.failed)
+	if msg.err != nil {
+		return a, tea.Batch(refresh, func() tea.Msg { return errorMsg{err: msg.err} })
+	}
+	a.helpBar.SetStatusMsg("Transitioned " + countIssues(msg.count))
+	return a, refresh
+}
+
+func countIssues(n int) string {
+	if n == 1 {
+		return "1 issue"
+	}
+	return fmt.Sprintf("%d issues", n)
+}
+
 // handlePrioritiesLoaded shows the priority picker modal
 func (a *App) handlePrioritiesLoaded(msg prioritiesLoadedMsg) (tea.Model, tea.Cmd) {
 	if len(msg.priorities) == 0 {

@@ -89,7 +89,7 @@ func (a *App) localBindings() []Binding {
 			a.bind(ActCopySummary, "copy key and summary, or marked rows"),
 			a.bind(ActCopyMarkdownLink, "copy Markdown link"),
 			a.bind(ActCopyURL, "copy URL"),
-			a.bind(ActTransition, "transition issue status"),
+			a.bind(ActTransition, "transition issue status, or marked issues"),
 			a.bind(ActEdit, "edit issue"),
 			a.bind(ActComments, "go to comments"),
 			a.bind(ActPriority, "change priority"),

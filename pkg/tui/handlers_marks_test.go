@@ -1,12 +1,17 @@
 package tui
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
+	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 )
 
 func keyRunes(s string) tea.KeyMsg { return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)} }
@@ -148,4 +153,67 @@ func TestEsc_ClearsMarksBeforeFilter(t *testing.T) {
 	if !app.issuesList.IsFiltered() {
 		t.Fatal("first esc cleared the filter too")
 	}
+}
+
+func bulkTransitionApp(t *testing.T, fake *jiratest.FakeClient) *App {
+	t.Helper()
+	app := marksApp(t)
+	app.client = fake
+	fake.GetTransitionsFunc = func(_ context.Context, key string) ([]jira.Transition, error) {
+		done := &jira.Status{ID: "3", Name: "Done"}
+		if key == "A-1" {
+			return []jira.Transition{
+				{ID: "11", Name: "Start", To: &jira.Status{ID: "2", Name: "In Progress"}},
+				{ID: "31", Name: "Finish", To: done},
+			}, nil
+		}
+		return []jira.Transition{{ID: "41", Name: "Close", To: done}}, nil
+	}
+	app.handleKeyMsg(keyRunes("v"))
+	app.issuesList.Cursor = 1
+	app.handleKeyMsg(keyRunes("v"))
+	_, cmd := app.handleKeyMsg(keyRunes("t"))
+	app.Update(cmd())
+	return app
+}
+
+func TestTransition_MarkedIssuesOfferCommonTargets(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.DoTransitionFunc = func(context.Context, string, string) error { return nil }
+	app := bulkTransitionApp(t, fake)
+
+	testkit.AssertEqual(t, "modal title", app.modal.Title(), "Transition 2 issues")
+
+	msg := app.onSelect(components.ModalItem{ID: "3"})()
+	want := []jiratest.DoTransitionCall{{Key: "A-1", TransitionID: "31"}, {Key: "A-2", TransitionID: "41"}}
+	for i, call := range fake.DoTransitionCalls {
+		call.Ctx = nil
+		testkit.AssertEqual(t, "transition call", call, want[i])
+	}
+	testkit.AssertEqual(t, "transition calls", len(fake.DoTransitionCalls), 2)
+
+	app.Update(msg)
+	if app.issuesList.HasMarks() {
+		t.Fatal("marks remain after transition")
+	}
+}
+
+func TestTransition_MarkedIssueFailureKeepsFailedMarked(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.DoTransitionFunc = func(_ context.Context, key, _ string) error {
+		if key == "A-2" {
+			return errors.New("forbidden")
+		}
+		return nil
+	}
+	app := bulkTransitionApp(t, fake)
+
+	app.Update(app.onSelect(components.ModalItem{ID: "3"})())
+
+	testkit.AssertEqual(t, "transition calls", len(fake.DoTransitionCalls), 2)
+	marked := app.issuesList.MarkedIssues()
+	testkit.AssertEqual(t, "marked issues", len(marked), 1)
+	testkit.AssertEqual(t, "marked issue", marked[0].Key, "A-2")
 }

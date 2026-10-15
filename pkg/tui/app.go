@@ -177,6 +177,15 @@ type transitionsLoadedMsg struct {
 	issueKey    string
 	transitions []jira.Transition
 }
+type bulkTransitionsLoadedMsg struct {
+	keys        []string
+	transitions map[string][]jira.Transition
+}
+type bulkTransitionDoneMsg struct {
+	count  int
+	failed []string
+	err    error
+}
 
 type App struct {
 	cfg        *config.Config
@@ -573,6 +582,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleTransitionDone()
 	case transitionsLoadedMsg:
 		return a.handleTransitionsLoaded(msg)
+	case bulkTransitionsLoadedMsg:
+		return a.handleBulkTransitionsLoaded(msg)
+	case bulkTransitionDoneMsg:
+		return a.handleBulkTransitionDone(msg)
 	case prioritiesLoadedMsg:
 		return a.handlePrioritiesLoaded(msg)
 	case myselfLoadedMsg:
