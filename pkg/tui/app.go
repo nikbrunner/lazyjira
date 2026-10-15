@@ -212,6 +212,7 @@ type App struct {
 	projectPicker   components.ProjectPicker
 	issueLookup     components.IssueLookup
 	parentLookupFor string
+	linkLookup      *pendingLink
 	lookupReturn    *lookupReturn
 	overlays        components.OverlayStack
 
@@ -263,6 +264,7 @@ type App struct {
 	issueCache      map[string]*jira.Issue
 	childrenCache   map[string][]jira.Issue
 	createMetaCache ttlCache[[]jira.CreateMetaField]
+	linkTypesCache  ttlCache[[]jira.IssueLinkType]
 	// previewKey identifies the issue displayed in the right-side views.
 	// Empty means nothing is displayed.
 	previewKey string
@@ -436,6 +438,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		issueCache:         make(map[string]*jira.Issue),
 		childrenCache:      make(map[string][]jira.Issue),
 		createMetaCache:    newTTLCache[[]jira.CreateMetaField](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
+		linkTypesCache:     newTTLCache[[]jira.IssueLinkType](cfg.Cache.Enabled, cacheTTL(cfg.Cache.TTL)),
 		converter:          BuiltinConverter{},
 		readClipboardImage: readClipboardImage,
 	}
@@ -586,6 +589,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, a.handleIssueLookupSelected(msg.Key)
 	case components.IssueLookupCancelledMsg:
 		a.parentLookupFor = ""
+		a.linkLookup = nil
+		return a, nil
+	case linkTypesLoadedMsg:
+		a.handleLinkTypesLoaded(msg)
 		return a, nil
 
 	case transitionDoneMsg:

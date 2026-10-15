@@ -71,6 +71,13 @@ type RemoveIssueParentCall struct {
 	Key string
 }
 
+type CreateIssueLinkCall struct {
+	Ctx        context.Context
+	TypeName   string
+	InwardKey  string
+	OutwardKey string
+}
+
 type UpdateIssueCall struct {
 	Ctx    context.Context
 	Key    string
@@ -168,6 +175,9 @@ type FakeClient struct {
 	UpdateIssueFunc                   func(ctx context.Context, key string, fields map[string]any) error
 	RemoveIssueParentFunc             func(ctx context.Context, key string) error
 	GetPrioritiesFunc                 func(ctx context.Context) ([]jira.Priority, error)
+	GetIssueLinkTypesFunc             func(ctx context.Context) ([]jira.IssueLinkType, error)
+	CreateIssueLinkFunc               func(ctx context.Context, typeName, inwardKey, outwardKey string) error
+	DeleteIssueLinkFunc               func(ctx context.Context, linkID string) error
 	SuggestIssuesFunc                 func(ctx context.Context, query string) ([]jira.IssueSuggestion, error)
 	CreateIssueFunc                   func(ctx context.Context, fields map[string]any) (*jira.Issue, error)
 	AddAttachmentFunc                 func(ctx context.Context, key, filename string, data []byte) error
@@ -204,6 +214,9 @@ type FakeClient struct {
 	UpdateIssueCalls                   []UpdateIssueCall
 	RemoveIssueParentCalls             []RemoveIssueParentCall
 	GetPrioritiesCalls                 []context.Context
+	GetIssueLinkTypesCalls             []context.Context
+	CreateIssueLinkCalls               []CreateIssueLinkCall
+	DeleteIssueLinkCalls               []string
 	SuggestIssuesCalls                 []string
 	CreateIssueCalls                   []CreateIssueCall
 	AddAttachmentCalls                 []AddAttachmentCall
@@ -365,6 +378,33 @@ func (f *FakeClient) SuggestIssues(ctx context.Context, query string) ([]jira.Is
 		return nil, nil
 	}
 	return f.SuggestIssuesFunc(ctx, query)
+}
+
+func (f *FakeClient) GetIssueLinkTypes(ctx context.Context) ([]jira.IssueLinkType, error) {
+	f.GetIssueLinkTypesCalls = append(f.GetIssueLinkTypesCalls, ctx)
+	if f.GetIssueLinkTypesFunc == nil {
+		f.fatal("GetIssueLinkTypes")
+		return nil, nil
+	}
+	return f.GetIssueLinkTypesFunc(ctx)
+}
+
+func (f *FakeClient) CreateIssueLink(ctx context.Context, typeName, inwardKey, outwardKey string) error {
+	f.CreateIssueLinkCalls = append(f.CreateIssueLinkCalls, CreateIssueLinkCall{Ctx: ctx, TypeName: typeName, InwardKey: inwardKey, OutwardKey: outwardKey})
+	if f.CreateIssueLinkFunc == nil {
+		f.fatal("CreateIssueLink")
+		return nil
+	}
+	return f.CreateIssueLinkFunc(ctx, typeName, inwardKey, outwardKey)
+}
+
+func (f *FakeClient) DeleteIssueLink(ctx context.Context, linkID string) error {
+	f.DeleteIssueLinkCalls = append(f.DeleteIssueLinkCalls, linkID)
+	if f.DeleteIssueLinkFunc == nil {
+		f.fatal("DeleteIssueLink")
+		return nil
+	}
+	return f.DeleteIssueLinkFunc(ctx, linkID)
 }
 
 func (f *FakeClient) GetPriorities(ctx context.Context) ([]jira.Priority, error) {

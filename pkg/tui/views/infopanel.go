@@ -223,12 +223,28 @@ func (p *InfoPanel) SelectedLinkKey() string {
 // whatever fields the parent payload carried, typically key + summary +
 // status), or nil when no link is selected.
 func (p *InfoPanel) SelectedLinkIssue() *jira.Issue {
+	if row, ok := p.SelectedLinkRow(); ok {
+		return row.Issue
+	}
+	return nil
+}
+
+// LinkRow is one Lnk tab row: a link read from the shown issue, phrased the
+// way Jira labels it, such as "blocks" SHOP-12.
+type LinkRow struct {
+	LinkID string
+	Phrase string
+	Issue  *jira.Issue
+}
+
+// SelectedLinkRow returns the Lnk tab row under the cursor.
+func (p *InfoPanel) SelectedLinkRow() (LinkRow, bool) {
 	if p.issue == nil || p.activeTab != InfoTabLinks {
-		return nil
+		return LinkRow{}, false
 	}
 	target := p.resolveOriginalIndex()
 	if target < 0 {
-		return nil
+		return LinkRow{}, false
 	}
 	idx := 0
 	for _, link := range p.issue.IssueLinks {
@@ -237,18 +253,18 @@ func (p *InfoPanel) SelectedLinkIssue() *jira.Issue {
 		}
 		if link.OutwardIssue != nil {
 			if idx == target {
-				return link.OutwardIssue
+				return LinkRow{LinkID: link.ID, Phrase: link.Type.Outward, Issue: link.OutwardIssue}, true
 			}
 			idx++
 		}
 		if link.InwardIssue != nil {
 			if idx == target {
-				return link.InwardIssue
+				return LinkRow{LinkID: link.ID, Phrase: link.Type.Inward, Issue: link.InwardIssue}, true
 			}
 			idx++
 		}
 	}
-	return nil
+	return LinkRow{}, false
 }
 
 // SelectedSubtaskKey returns the issue key of the selected subtask

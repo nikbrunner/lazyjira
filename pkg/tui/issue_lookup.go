@@ -27,11 +27,13 @@ type issueSuggestionsLoadedMsg struct {
 
 func (a *App) openIssueLookup() tea.Cmd {
 	a.parentLookupFor = ""
+	a.linkLookup = nil
 	return a.showIssueLookup("Open issue", false)
 }
 
 func (a *App) openParentLookup(issueKey string) tea.Cmd {
 	a.parentLookupFor = issueKey
+	a.linkLookup = nil
 	return a.showIssueLookup("Edit Parent", true)
 }
 
@@ -103,6 +105,10 @@ func (a *App) loadedLookupSuggestions(query string, items []components.LookupSug
 }
 
 func (a *App) handleIssueLookupSelected(key string) tea.Cmd {
+	if pending := a.linkLookup; pending != nil {
+		a.linkLookup = nil
+		return a.createLink(*pending, key)
+	}
 	if issueKey := a.parentLookupFor; issueKey != "" {
 		a.parentLookupFor = ""
 		return a.applyParentEdit(issueKey, key)

@@ -111,7 +111,11 @@ func (a *App) localBindings() []Binding {
 		}, a.customCommandBindings(config.CtxIssues), a.navBindings(), a.detailScrollBindings())
 
 	case a.side == sideLeft && a.leftFocus == focusInfo:
-		return slices.Concat([]Binding{
+		var linkBindings []Binding
+		if a.infoPanel.ActiveTab() == views.InfoTabLinks {
+			linkBindings = []Binding{a.bind(ActNew, "add link"), a.bind(ActDeleteLink, "remove link")}
+		}
+		return slices.Concat(linkBindings, []Binding{
 			{"[]", "switch tab (Info/Lnk/Sub)"},
 			a.bind(ActEdit, "edit field"),
 			a.bind(ActTransition, "transition issue status"),

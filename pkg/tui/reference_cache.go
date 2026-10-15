@@ -56,6 +56,7 @@ func (a *App) invalidateReferenceCaches() {
 	a.sprintsCache.clear()
 	a.usersCache.clear()
 	a.createMetaCache.clear()
+	a.linkTypesCache.clear()
 }
 
 func cacheTTL(value string) time.Duration {

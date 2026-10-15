@@ -31,6 +31,9 @@ type ClientInterface interface {
 	UpdateIssue(ctx context.Context, issueKey string, fields map[string]any) error
 	RemoveIssueParent(ctx context.Context, issueKey string) error
 	GetPriorities(ctx context.Context) ([]Priority, error)
+	GetIssueLinkTypes(ctx context.Context) ([]IssueLinkType, error)
+	CreateIssueLink(ctx context.Context, typeName, inwardKey, outwardKey string) error
+	DeleteIssueLink(ctx context.Context, linkID string) error
 	SuggestIssues(ctx context.Context, query string) ([]IssueSuggestion, error)
 	CreateIssue(ctx context.Context, fields map[string]any) (*Issue, error)
 	AddAttachment(ctx context.Context, issueKey, filename string, data []byte) error
@@ -578,6 +581,37 @@ func (c *Client) GetPriorities(ctx context.Context) ([]Priority, error) {
 		return nil, fmt.Errorf("get priorities: %w", err)
 	}
 	return raw, nil
+}
+
+func (c *Client) GetIssueLinkTypes(ctx context.Context) ([]IssueLinkType, error) {
+	var raw struct {
+		IssueLinkTypes []IssueLinkType `json:"issueLinkTypes"`
+	}
+	if err := c.do(ctx, http.MethodGet, "/issueLinkType", nil, &raw); err != nil {
+		return nil, fmt.Errorf("get issue link types: %w", err)
+	}
+	return raw.IssueLinkTypes, nil
+}
+
+// CreateIssueLink links two issues. The outward issue is the one the type's
+// outward phrase describes: for Blocks, outwardKey blocks inwardKey.
+func (c *Client) CreateIssueLink(ctx context.Context, typeName, inwardKey, outwardKey string) error {
+	body := map[string]any{
+		"type":         map[string]string{"name": typeName},
+		"inwardIssue":  map[string]string{"key": inwardKey},
+		"outwardIssue": map[string]string{"key": outwardKey},
+	}
+	if err := c.do(ctx, http.MethodPost, "/issueLink", body, nil); err != nil {
+		return fmt.Errorf("link %s %s %s: %w", outwardKey, typeName, inwardKey, err)
+	}
+	return nil
+}
+
+func (c *Client) DeleteIssueLink(ctx context.Context, linkID string) error {
+	if err := c.do(ctx, http.MethodDelete, "/issueLink/"+url.PathEscape(linkID), nil, nil); err != nil {
+		return fmt.Errorf("delete issue link %s: %w", linkID, err)
+	}
+	return nil
 }
 
 // SuggestIssues returns issues matching a partial key or summary from Jira's

@@ -19,6 +19,7 @@ type DemoClient struct {
 	comments   map[string][]Comment // issueKey → comments
 	changelog  map[string][]ChangelogEntry
 	onRequest  func(RequestLog)
+	linkSeq    int
 }
 
 // Compile-time check
@@ -459,6 +460,72 @@ func (d *DemoClient) RemoveIssueParent(_ context.Context, issueKey string) error
 	iss.Updated = time.Now()
 	return nil
 }
+
+var demoLinkTypes = []IssueLinkType{
+	{Name: "Blocks", Inward: "is blocked by", Outward: "blocks"},
+	{Name: "Cloners", Inward: "is cloned by", Outward: "clones"},
+	{Name: "Duplicate", Inward: "is duplicated by", Outward: "duplicates"},
+	{Name: "Relates", Inward: "relates to", Outward: "relates to"},
+}
+
+func (d *DemoClient) GetIssueLinkTypes(_ context.Context) ([]IssueLinkType, error) {
+	d.logRequest("GET", "/issueLinkType")
+	return append([]IssueLinkType(nil), demoLinkTypes...), nil
+}
+
+// CreateIssueLink stores the link on both issues, the way Jira reports it:
+// the outward issue lists the inward one under OutwardIssue, and vice versa.
+func (d *DemoClient) CreateIssueLink(_ context.Context, typeName, inwardKey, outwardKey string) error {
+	d.logRequest("POST", "/issueLink")
+	var linkType *IssueLinkType
+	for i := range demoLinkTypes {
+		if demoLinkTypes[i].Name == typeName {
+			lt := demoLinkTypes[i]
+			linkType = &lt
+		}
+	}
+	if linkType == nil {
+		return fmt.Errorf("no issue link type named %s", typeName)
+	}
+	inward, ok := d.issueIndex[inwardKey]
+	if !ok {
+		return fmt.Errorf("issue %s not found", inwardKey)
+	}
+	outward, ok := d.issueIndex[outwardKey]
+	if !ok {
+		return fmt.Errorf("issue %s not found", outwardKey)
+	}
+	d.linkSeq++
+	id := "demo-lnk" + strconv.Itoa(d.linkSeq)
+	outward.IssueLinks = append(outward.IssueLinks, IssueLink{ID: id, Type: linkType, OutwardIssue: demoLinkedIssue(inward)})
+	inward.IssueLinks = append(inward.IssueLinks, IssueLink{ID: id, Type: linkType, InwardIssue: demoLinkedIssue(outward)})
+	return nil
+}
+
+func (d *DemoClient) DeleteIssueLink(_ context.Context, linkID string) error {
+	d.logRequest("DELETE", "/issueLink/"+linkID)
+	found := false
+	for _, iss := range d.issueIndex {
+		var kept []IssueLink
+		for _, link := range iss.IssueLinks {
+			if link.ID == linkID {
+				found = true
+				continue
+			}
+			kept = append(kept, link)
+		}
+		iss.IssueLinks = kept
+	}
+	if !found {
+		return fmt.Errorf("issue link %s not found", linkID)
+	}
+	return nil
+}
+
+func demoLinkedIssue(iss *Issue) *Issue {
+	return &Issue{Key: iss.Key, Summary: iss.Summary, Status: iss.Status, IssueType: iss.IssueType}
+}
+
 func (d *DemoClient) AddAttachment(_ context.Context, issueKey, _ string, _ []byte) error {
 	d.logRequest("POST", "/issue/"+issueKey+"/attachments")
 	return nil

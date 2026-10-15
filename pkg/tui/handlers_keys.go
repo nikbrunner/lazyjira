@@ -517,6 +517,12 @@ func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 		m, cmd := a.startCreateIssue()
 		return m, cmd, true
 
+	case ActDeleteLink:
+		if a.onLinksTab() {
+			a.confirmRemoveLink()
+		}
+		return a, nil, true
+
 	case ActCreateSubtask:
 		if a.canCreateSubtask() {
 			m, cmd := a.startCreateSubtask()
@@ -525,6 +531,9 @@ func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 		return a, nil, true
 
 	case ActNew:
+		if a.onLinksTab() {
+			return a, a.startAddLink(), true
+		}
 		if a.side == sideLeft && a.leftFocus == focusIssues && a.projectKey != "" {
 			m, cmd := a.startCreateIssue()
 			return m, cmd, true

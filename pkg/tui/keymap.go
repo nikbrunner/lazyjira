@@ -43,6 +43,7 @@ const (
 	ActEdit             Action = "edit"
 	ActComments         Action = "comments"
 	ActNew              Action = "new"
+	ActDeleteLink       Action = "deleteLink"
 	ActPriority         Action = "editPriority"
 	ActAssignee         Action = "editAssignee"
 	ActJQLSearch        Action = "jqlSearch"
@@ -110,6 +111,7 @@ func DefaultKeymap() Keymap {
 		ActEdit:             {"e"},
 		ActComments:         {"c"},
 		ActNew:              {"n"},
+		ActDeleteLink:       {"d"},
 		ActPriority:         {"p"},
 		ActAssignee:         {"a"},
 		ActJQLSearch:        {"s"},

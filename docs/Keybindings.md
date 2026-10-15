@@ -48,7 +48,8 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `e` | Open the selected issue in the Issue Edit View (issues list and details pane), edit the focused field (Issue info pane), or edit the selected comment (comments tab) |
 | `p` | Change priority |
 | `a` | Change assignee |
-| `n` | Create new issue (issues list) or new comment (comments tab). In an epic's children view, the new issue becomes a child of that epic. |
+| `n` | Create new issue (issues list), new comment (comments tab), or new link (the info panel's Lnk tab). In an epic's children view, the new issue becomes a child of that epic. A new link starts with a picker of every link type in both directions, such as `blocks` and `is blocked by`, then the `#` issue picker selects the other issue by key, number, or summary; `enter` creates the link. |
+| `d` | Remove the selected link after confirmation (the info panel's Lnk tab) |
 | `ctrl+n` | Duplicate issue |
 | `S` | Create a subtask under the selected issue (issues list or the info panel's Sub tab). Parent and project are taken from the selection; not available when the selection is itself a subtask or an epic. |
 | `c` | View comments |

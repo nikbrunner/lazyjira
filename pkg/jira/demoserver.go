@@ -99,6 +99,12 @@ func (s *DemoServer) handle(w http.ResponseWriter, r *http.Request) {
 		} else {
 			s.handleIssue(w, key)
 		}
+	case path == "/issueLinkType":
+		s.handleIssueLinkTypes(w)
+	case path == "/issueLink" && r.Method == http.MethodPost:
+		s.handleCreateIssueLink(w, r)
+	case strings.HasPrefix(path, "/issueLink/") && r.Method == http.MethodDelete:
+		s.handleDeleteIssueLink(w, strings.TrimPrefix(path, "/issueLink/"))
 	case path == "/priority":
 		s.handlePriorities(w)
 	case strings.HasPrefix(path, "/user/assignable/search"):
@@ -385,6 +391,40 @@ func (s *DemoServer) handleIssuePicker(w http.ResponseWriter, r *http.Request) {
 		issues[i] = map[string]any{"key": suggestion.Key, "summaryText": suggestion.Summary}
 	}
 	writeJSON(w, map[string]any{"sections": []any{map[string]any{"issues": issues}}})
+}
+
+func (s *DemoServer) handleIssueLinkTypes(w http.ResponseWriter) {
+	types, _ := s.data.GetIssueLinkTypes(context.Background())
+	result := make([]any, len(types))
+	for i, t := range types {
+		result[i] = map[string]any{"id": strconv.Itoa(1000 + i), "name": t.Name, "inward": t.Inward, "outward": t.Outward}
+	}
+	writeJSON(w, map[string]any{"issueLinkTypes": result})
+}
+
+func (s *DemoServer) handleCreateIssueLink(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Type         struct{ Name string } `json:"type"`
+		InwardIssue  struct{ Key string }  `json:"inwardIssue"`
+		OutwardIssue struct{ Key string }  `json:"outwardIssue"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if err := s.data.CreateIssueLink(context.Background(), body.Type.Name, body.InwardIssue.Key, body.OutwardIssue.Key); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (s *DemoServer) handleDeleteIssueLink(w http.ResponseWriter, linkID string) {
+	if err := s.data.DeleteIssueLink(context.Background(), linkID); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *DemoServer) handlePriorities(w http.ResponseWriter) {

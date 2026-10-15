@@ -147,7 +147,7 @@ sanitize:
     remove: ["[", "]"]
 ```
 
-`cache.enabled` and `cache.ttl` control in-memory TTL caching for Jira boards, sprint options, project users, and issue-creation metadata. The app-wide Refresh All binding (`R` by default) clears these entries. Close an open picker before using Refresh All. Issue details and child issues use their own freshness behavior.
+`cache.enabled` and `cache.ttl` control in-memory TTL caching for Jira boards, sprint options, project users, issue-creation metadata, and issue link types. The app-wide Refresh All binding (`R` by default) clears these entries. Close an open picker before using Refresh All. Issue details and child issues use their own freshness behavior.
 
 ## Server type
 
