@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -478,4 +479,22 @@ func TestTransition_MarkedIssueFailureKeepsFailedMarked(t *testing.T) {
 	marked := app.issuesList.MarkedIssues()
 	testkit.AssertEqual(t, "marked issues", len(marked), 1)
 	testkit.AssertEqual(t, "marked issue", marked[0].Key, "A-2")
+}
+
+func TestConfirm_DrawnAboveLaterOverlays(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.SetOnRequestFunc = func(func(jira.RequestLog)) {}
+	app := NewApp(&config.Config{}, fake)
+	app.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	app.confirm("Remove link: blocks SHOP-12?", func() tea.Cmd { return nil })
+	items := make([]components.ModalItem, 0, 12)
+	for i := range 12 {
+		items = append(items, components.ModalItem{ID: strconv.Itoa(i), Label: strings.Repeat("blocks ", 8)})
+	}
+	app.modal.Show("Link type", items)
+
+	if !strings.Contains(app.View(), "Remove link: blocks SHOP-12?") {
+		t.Fatal("confirmation hidden under a later overlay")
+	}
 }

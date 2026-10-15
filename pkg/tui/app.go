@@ -959,6 +959,9 @@ func (a *App) View() string {
 		a.createForm.SetHeader(a.renderCreateHeader())
 	}
 	full = a.overlays.Render(full, a.width, a.height)
+	if a.confirmModal.IsVisible() {
+		full = a.confirmModal.Render(full, a.width, a.height)
+	}
 	if a.showHelp {
 		full = a.renderHelpOverlay(full)
 	}
