@@ -240,12 +240,28 @@ func (a *App) helpBarItems() []components.HelpItem {
 	}
 
 	km := a.keymap
-	return []components.HelpItem{
-		{Key: km.Keys(ActSearch), Description: "search"},
-		{Key: km.Keys(ActJQLSearch), Description: "JQL search"},
-		{Key: km.Keys(ActIssueLookup), Description: "open by key"},
-		{Key: km.Keys(ActRefresh), Description: "refresh"},
-		{Key: km.Keys(ActHelp), Description: "keybindings"},
-		{Key: km.Keys(ActQuit), Description: "quit"},
+	return append(a.issueListStateHints(),
+		components.HelpItem{Key: km.Keys(ActSearch), Description: "search"},
+		components.HelpItem{Key: km.Keys(ActJQLSearch), Description: "JQL search"},
+		components.HelpItem{Key: km.Keys(ActIssueLookup), Description: "open by key"},
+		components.HelpItem{Key: km.Keys(ActRefresh), Description: "refresh"},
+		components.HelpItem{Key: km.Keys(ActQuit), Description: "quit"},
+		components.HelpItem{Key: km.Keys(ActHelp), Description: "keybindings", Pinned: true},
+	)
+}
+
+// issueListStateHints names what the next esc clears in the Issues panel,
+// in clearIssueListLayer order.
+func (a *App) issueListStateHints() []components.HelpItem {
+	key := a.keymap.Keys(ActFocusLeft)
+	if key == "" || a.side != sideLeft || a.leftFocus != focusIssues {
+		return nil
 	}
+	switch {
+	case a.issuesList.HasMarks():
+		return []components.HelpItem{{Key: key, Description: "clear marks"}}
+	case a.issuesList.IsFiltered(), a.issuesList.IsPickerFiltered():
+		return []components.HelpItem{{Key: key, Description: "clear filter"}}
+	}
+	return nil
 }

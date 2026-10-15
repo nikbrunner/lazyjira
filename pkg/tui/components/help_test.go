@@ -102,3 +102,33 @@ func TestHelpBar_InitReturnsNil(t *testing.T) {
 	cmd := bar.Init()
 	testkit.AssertEqual(t, "Init returns nil", cmd == nil, true)
 }
+
+func TestHelpBar_PinnedItemSurvivesTruncation(t *testing.T) {
+	t.Parallel()
+	bar := NewHelpBar([]HelpItem{
+		{Key: "/", Description: "search"},
+		{Key: "s", Description: "JQL search"},
+		{Key: "r", Description: "refresh"},
+		{Key: "?", Description: "keybindings", Pinned: true},
+	})
+	bar.SetWidth(40)
+	out := stripANSI(bar.View())
+	if !strings.HasSuffix(out, "keybindings: ?") {
+		t.Errorf("pinned item missing at the end: %q", out)
+	}
+	if !strings.Contains(out, "search: /") || strings.Contains(out, "refresh") {
+		t.Errorf("expected leading hints kept and later ones dropped: %q", out)
+	}
+	testkit.AssertEqual(t, "fits width", lipgloss.Width(out) <= 40, true)
+}
+
+func TestHelpBar_PinnedItemAloneWhenNothingElseFits(t *testing.T) {
+	t.Parallel()
+	bar := NewHelpBar([]HelpItem{
+		{Key: "/", Description: "search"},
+		{Key: "?", Description: "keybindings", Pinned: true},
+	})
+	bar.SetWidth(22)
+	out := stripANSI(bar.View())
+	testkit.AssertEqual(t, "only pinned", strings.TrimSpace(out), "... | keybindings: ?")
+}

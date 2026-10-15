@@ -13,6 +13,8 @@ import (
 type HelpItem struct {
 	Key         string
 	Description string
+	// Pinned keeps a final item visible when the bar truncates.
+	Pinned bool
 }
 
 // HelpBar displays context-sensitive keybinding hints at the bottom of the screen.
@@ -65,19 +67,29 @@ func (h HelpBar) View() string {
 	}
 	availW := h.width - lipgloss.Width(prefix)
 
+	items := h.items
+	pinned := ""
+	if n := len(items); n > 0 && items[n-1].Pinned {
+		pinned = blueStyle.Render(items[n-1].Description + ": " + items[n-1].Key)
+		items = items[:n-1]
+		if availW > 0 {
+			availW = max(availW-lipgloss.Width(sep)-lipgloss.Width(pinned), 1)
+		}
+	}
+
 	var parts []string
 	totalWidth := 0
 	truncated := false
 	ellipsis := blueStyle.Render(" ...")
 	ellipsisWidth := lipgloss.Width(ellipsis)
-	for i, item := range h.items {
+	for i, item := range items {
 		part := blueStyle.Render(item.Description + ": " + item.Key)
 		separatorWidth := 0
 		if len(parts) > 0 {
 			separatorWidth = lipgloss.Width(sep)
 		}
 		nextWidth := totalWidth + separatorWidth + lipgloss.Width(part)
-		if availW > 0 && (nextWidth > availW || (i < len(h.items)-1 && nextWidth+ellipsisWidth > availW)) {
+		if availW > 0 && (nextWidth > availW || (i < len(items)-1 && nextWidth+ellipsisWidth > availW)) {
 			truncated = true
 			break
 		}
@@ -92,6 +104,12 @@ func (h HelpBar) View() string {
 		} else {
 			result += ellipsis
 		}
+	}
+	if pinned != "" {
+		if result != "" {
+			result += sep
+		}
+		result += pinned
 	}
 	return prefix + result
 }

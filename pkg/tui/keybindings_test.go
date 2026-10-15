@@ -5,8 +5,10 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
@@ -180,6 +182,58 @@ func TestBind_ReturnsBindingWithDescription(t *testing.T) {
 	}
 	if b.Key == "" {
 		t.Error("key should not be empty for ActQuit")
+	}
+}
+
+func TestHelpBarItems_HelpPinnedLast(t *testing.T) {
+	t.Parallel()
+	app := appForKeybindings(t)
+	items := app.helpBarItems()
+	last := items[len(items)-1]
+	testkit.AssertEqual(t, "last item", last, components.HelpItem{Key: "?", Description: "keybindings", Pinned: true})
+}
+
+func TestHelpBarItems_StateHintFirstInIssuesPanel(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name  string
+		setup func(app *App)
+		want  string
+	}{
+		{"marks", func(app *App) { app.issuesList.ToggleMark() }, "clear marks"},
+		{"filter", func(app *App) { app.issuesList.SetFilter("One") }, "clear filter"},
+		{"marks before filter", func(app *App) {
+			app.issuesList.ToggleMark()
+			app.issuesList.SetFilter("One")
+		}, "clear marks"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			app := appForKeybindings(t)
+			app.side, app.leftFocus = sideLeft, focusIssues
+			app.issuesList.SetIssues([]jira.Issue{{Key: "A-1", Summary: "One"}})
+			tc.setup(app)
+			esc := app.keymap.Keys(ActFocusLeft)
+			testkit.AssertEqual(t, "first item", app.helpBarItems()[0], components.HelpItem{Key: esc, Description: tc.want})
+
+			app.leftFocus = focusInfo
+			if app.helpBarItems()[0].Key == esc {
+				t.Error("state hint shown outside the Issues panel")
+			}
+		})
+	}
+}
+
+func TestHelpBarItems_NoStateHintWithoutState(t *testing.T) {
+	t.Parallel()
+	app := appForKeybindings(t)
+	app.side, app.leftFocus = sideLeft, focusIssues
+	app.issuesList.SetIssues([]jira.Issue{{Key: "A-1", Summary: "One"}})
+	for _, item := range app.helpBarItems() {
+		if item.Key == app.keymap.Keys(ActFocusLeft) {
+			t.Fatalf("unexpected state hint %v", item)
+		}
 	}
 }
 
