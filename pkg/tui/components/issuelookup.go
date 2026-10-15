@@ -33,6 +33,8 @@ var issueKeyPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*-[0-9]+$`)
 
 // IssueLookup is a prompt that completes a project key, then an issue key.
 type IssueLookup struct {
+	title       string
+	allowEmpty  bool
 	projects    []ProjectChoice
 	issues      []LookupSuggestion
 	issueQuery  string
@@ -50,6 +52,14 @@ func NewIssueLookup() IssueLookup { return IssueLookup{} }
 // Show opens the lookup with prefill as the query. The returned command asks
 // for issue suggestions when prefill already contains a dash.
 func (l *IssueLookup) Show(prefill string, projects []ProjectChoice) tea.Cmd {
+	return l.ShowTitled("Open issue", false, prefill, projects)
+}
+
+// ShowTitled opens the lookup under title. With allowEmpty, enter on an empty
+// query confirms an empty key.
+func (l *IssueLookup) ShowTitled(title string, allowEmpty bool, prefill string, projects []ProjectChoice) tea.Cmd {
+	l.title = title
+	l.allowEmpty = allowEmpty
 	l.projects = append([]ProjectChoice(nil), projects...)
 	l.issues = nil
 	l.issueQuery = ""
@@ -119,6 +129,8 @@ func (l *IssueLookup) Update(msg tea.Msg) (IssueLookup, tea.Cmd) {
 func (l *IssueLookup) confirm() tea.Cmd {
 	s, hasSelection := l.selected()
 	switch {
+	case l.allowEmpty && l.query == "":
+		return l.selectKey("")
 	case hasSelection && l.navigated:
 		return l.choose(s)
 	case issueKeyPattern.MatchString(l.query):
@@ -241,7 +253,7 @@ func (l *IssueLookup) View() string {
 		}
 		lines = append(lines, lipgloss.NewStyle().Foreground(theme.ColorGray).Render(hint))
 	}
-	return RenderPanel("Open issue", strings.Join(lines, "\n"), width, len(lines), true)
+	return RenderPanel(l.title, strings.Join(lines, "\n"), width, len(lines), true)
 }
 
 // Intercept routes all input to the lookup while it is open.

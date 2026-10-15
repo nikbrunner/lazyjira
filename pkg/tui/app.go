@@ -199,18 +199,19 @@ type App struct {
 	detailView  *views.DetailView
 	logPanel    *views.LogPanel
 
-	keymap        Keymap
-	helpBar       components.HelpBar
-	searchBar     components.SearchBar
-	modal         components.Modal
-	jqlModal      components.JQLModal
-	diffView      components.DiffView
-	inputModal    components.InputModal
-	createForm    components.CreateForm
-	projectPicker components.ProjectPicker
-	issueLookup   components.IssueLookup
-	lookupReturn  *lookupReturn
-	overlays      components.OverlayStack
+	keymap          Keymap
+	helpBar         components.HelpBar
+	searchBar       components.SearchBar
+	modal           components.Modal
+	jqlModal        components.JQLModal
+	diffView        components.DiffView
+	inputModal      components.InputModal
+	createForm      components.CreateForm
+	projectPicker   components.ProjectPicker
+	issueLookup     components.IssueLookup
+	parentLookupFor string
+	lookupReturn    *lookupReturn
+	overlays        components.OverlayStack
 
 	jqlFields []jira.AutocompleteField
 
@@ -574,8 +575,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.handleIssueSuggestionsLoaded(msg)
 		return a, nil
 	case components.IssueLookupSelectedMsg:
-		return a, a.openLookupIssue(msg.Key)
+		return a, a.handleIssueLookupSelected(msg.Key)
 	case components.IssueLookupCancelledMsg:
+		a.parentLookupFor = ""
 		return a, nil
 
 	case transitionDoneMsg:
@@ -1002,6 +1004,9 @@ func (a *App) editInfoField(sel *jira.Issue) (tea.Model, tea.Cmd) {
 			}
 		}
 	case views.FieldSingleText:
+		if field.FieldID == fldParent {
+			return a, a.openParentLookup(sel.Key)
+		}
 		if isCustomField(field.FieldID) {
 			return a.fetchCustomFieldOptionsForEdit(sel, field)
 		}

@@ -202,21 +202,6 @@ func TestHandleInputConfirmed(t *testing.T) {
 		}
 	})
 
-	t.Run("parent field with invalid key surfaces error", func(t *testing.T) {
-		t.Parallel()
-		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
-		app.editContext = editCtx{kind: editField, issueKey: testKey, fieldID: "parent"}
-
-		_, cmd := app.handleInputConfirmed(components.InputConfirmedMsg{Text: "not a key"})
-
-		if cmd == nil {
-			t.Fatal("expected error command")
-		}
-		if _, ok := cmd().(errorMsg); !ok {
-			t.Error("expected errorMsg for invalid parent key")
-		}
-	})
-
 	t.Run("empty text is noop", func(t *testing.T) {
 		t.Parallel()
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})

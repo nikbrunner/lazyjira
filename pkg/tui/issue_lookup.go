@@ -26,6 +26,16 @@ type issueSuggestionsLoadedMsg struct {
 }
 
 func (a *App) openIssueLookup() tea.Cmd {
+	a.parentLookupFor = ""
+	return a.showIssueLookup("Open issue", false)
+}
+
+func (a *App) openParentLookup(issueKey string) tea.Cmd {
+	a.parentLookupFor = issueKey
+	return a.showIssueLookup("Edit Parent", true)
+}
+
+func (a *App) showIssueLookup(title string, allowEmpty bool) tea.Cmd {
 	if a.searchBar.IsActive() {
 		updated, cancelCmd := a.searchBar.Update(tea.KeyMsg{Type: tea.KeyEsc})
 		a.searchBar = updated
@@ -41,7 +51,7 @@ func (a *App) openIssueLookup() tea.Cmd {
 	if a.projectKey != "" {
 		prefill = a.projectKey + "-"
 	}
-	cmd := a.issueLookup.Show(prefill, choices)
+	cmd := a.issueLookup.ShowTitled(title, allowEmpty, prefill, choices)
 	a.overlays.SetSize(a.width, a.height)
 	return cmd
 }
@@ -90,6 +100,14 @@ func (a *App) loadedLookupSuggestions(query string, items []components.LookupSug
 		return loaded[i].Key < loaded[j].Key
 	})
 	return append(items, loaded...)
+}
+
+func (a *App) handleIssueLookupSelected(key string) tea.Cmd {
+	if issueKey := a.parentLookupFor; issueKey != "" {
+		a.parentLookupFor = ""
+		return a.applyParentEdit(issueKey, key)
+	}
+	return a.openLookupIssue(key)
 }
 
 // openLookupIssue shows key in the maximized Issue details pane.

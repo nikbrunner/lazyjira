@@ -124,3 +124,39 @@ func TestIssueLookupTruncatesLongSummaries(t *testing.T) {
 		}
 	}
 }
+
+func TestIssueLookupEmptyQueryConfirmsEmptyKeyWhenAllowed(t *testing.T) {
+	t.Parallel()
+	l := NewIssueLookup()
+	_ = l.ShowTitled("Edit Parent", true, "PLAT-", lookupProjects)
+	l, _ = l.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
+
+	_, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if got, ok := lookupMsg(t, cmd).(IssueLookupSelectedMsg); !ok || got.Key != "" {
+		t.Fatalf("msg = %#v, want IssueLookupSelectedMsg with an empty key", got)
+	}
+}
+
+func TestIssueLookupEmptyQueryCompletesProjectByDefault(t *testing.T) {
+	t.Parallel()
+	l := NewIssueLookup()
+	_ = l.Show("", lookupProjects)
+
+	l, _ = l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if l.Query() != "PLAT-" {
+		t.Fatalf("query = %q, want PLAT-", l.Query())
+	}
+}
+
+func TestIssueLookupShowsTitle(t *testing.T) {
+	t.Parallel()
+	l := NewIssueLookup()
+	_ = l.ShowTitled("Edit Parent", true, "PLAT-", lookupProjects)
+	l.SetSize(120, 40)
+
+	if view := ansi.Strip(l.View()); !strings.Contains(view, "Edit Parent") {
+		t.Errorf("view is missing the title:\n%s", view)
+	}
+}

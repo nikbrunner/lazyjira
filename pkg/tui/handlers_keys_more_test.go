@@ -674,8 +674,8 @@ func TestHandleActionSelect_MoreBranches(t *testing.T) {
 
 		_, _ = app.handleActionSelect()
 
-		if !app.inputModal.IsVisible() {
-			t.Error("editing the parent field should open the input modal")
+		if !app.issueLookup.IsVisible() {
+			t.Error("editing the parent field should open the issue lookup")
 		}
 	})
 
@@ -749,8 +749,8 @@ func TestHandleActionOpen_MoreBranches(t *testing.T) {
 
 		_, _ = app.handleActionOpen()
 
-		if !app.inputModal.IsVisible() {
-			t.Error("editing the parent field should open the input modal")
+		if !app.issueLookup.IsVisible() {
+			t.Error("editing the parent field should open the issue lookup")
 		}
 	})
 

@@ -15,7 +15,7 @@ import (
 
 var parentKeyRegex = regexp.MustCompile(`^[A-Z][A-Z0-9_]+-\d+$`)
 
-// applyParentEdit dispatches a parent-field submission from the input modal.
+// applyParentEdit dispatches a parent-field submission from the issue lookup.
 // Empty input clears the parent; non-empty input must match the issue-key
 // shape, otherwise the API call is skipped and an inline error is surfaced.
 func (a *App) applyParentEdit(issueKey, text string) tea.Cmd {
@@ -134,9 +134,6 @@ func (a *App) handleInputConfirmed(msg components.InputConfirmedMsg) (tea.Model,
 			return a, updateIssueField(a.client, ctx.issueKey, "summary", msg.Text)
 		}
 	case editField:
-		if ctx.fieldID == "parent" {
-			return a, a.applyParentEdit(ctx.issueKey, strings.TrimSpace(msg.Text))
-		}
 		if msg.Text != "" {
 			a.optimisticFieldUpdate(ctx.issueKey, ctx.fieldID, msg.Text)
 			return a, updateIssueField(a.client, ctx.issueKey, ctx.fieldID, msg.Text)
