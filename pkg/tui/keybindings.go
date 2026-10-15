@@ -87,15 +87,16 @@ func (a *App) localBindings() []Binding {
 			a.bind(ActShowParent, "show parent"),
 			a.bind(ActFilterPicker, "filter by status, type, priority"),
 			a.bind(ActBodySearch, "filter including descriptions"),
-			a.bind(ActCopySummary, "copy key and summary, or marked rows"),
-			a.bind(ActCopyMarkdownLink, "copy Markdown link"),
-			a.bind(ActCopyURL, "copy URL"),
+			a.bind(ActCopySummary, "copy key and summary, one per marked issue"),
+			a.bind(ActCopyMarkdownLink, "copy Markdown link, one per marked issue"),
+			a.bind(ActCopyURL, "copy URL, one per marked issue"),
+			a.bind(ActCopyRows, "copy padded issue row, one per marked issue"),
 			a.bind(ActTransition, "transition issue status, or marked issues"),
 			a.bind(ActEdit, "edit issue"),
 			a.bind(ActComments, "go to comments"),
 			a.bind(ActPriority, "change priority"),
 			a.bind(ActAssignee, "change assignee"),
-			a.bind(ActBrowser, "open issue in browser"),
+			a.bind(ActBrowser, "open issue in browser, or each marked issue"),
 			a.bind(ActURLPicker, "open URL picker"),
 			a.bind(ActCopyBranchName, "copy branch name"),
 			a.bind(ActCreateBranch, "create branch"),
@@ -199,6 +200,11 @@ func (a *App) helpBarItems() []components.HelpItem {
 		return []components.HelpItem{
 			{Key: "/", Description: "filter"},
 			{Key: "esc", Description: "close"},
+		}
+	case a.confirmModal.IsVisible():
+		return []components.HelpItem{
+			{Key: "y", Description: "yes"},
+			{Key: "n", Description: "no"},
 		}
 	case a.diffView.IsVisible():
 		return []components.HelpItem{

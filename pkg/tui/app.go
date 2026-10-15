@@ -207,6 +207,7 @@ type App struct {
 	jqlModal        components.JQLModal
 	diffView        components.DiffView
 	inputModal      components.InputModal
+	confirmModal    components.ConfirmModal
 	createForm      components.CreateForm
 	projectPicker   components.ProjectPicker
 	issueLookup     components.IssueLookup
@@ -231,6 +232,7 @@ type App struct {
 	lastCreateType map[string]string
 
 	onSelect              onSelectFunc
+	onConfirm             func() tea.Cmd
 	onChecklist           onChecklistFunc
 	sprintFetchID         uint64
 	sprintLoadingID       uint64
@@ -363,6 +365,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	modal := components.NewModal()
 	diffView := components.NewDiffView()
 	inputModal := components.NewInputModal()
+	confirmModal := components.NewConfirmModal()
 	jqlModal := components.NewJQLModal()
 	createForm := components.NewCreateForm()
 
@@ -418,6 +421,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		jqlModal:           jqlModal,
 		diffView:           diffView,
 		inputModal:         inputModal,
+		confirmModal:       confirmModal,
 		createForm:         createForm,
 		side:               sideLeft,
 		leftFocus:          focusIssues,
@@ -460,6 +464,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 	}
 
 	app.overlays = components.OverlayStack{
+		&app.confirmModal,
 		&app.projectPicker,
 		&app.issueLookup,
 		&app.createForm,
@@ -684,6 +689,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleInputConfirmed(msg)
 	case components.InputCancelledMsg:
 		return a.handleInputCancelled()
+	case components.ConfirmAcceptedMsg:
+		return a.handleConfirmAccepted()
+	case components.ConfirmCancelledMsg:
+		a.onConfirm = nil
+		return a, nil
 
 	case components.JQLSubmitMsg:
 		return a.handleJQLSubmit(msg)

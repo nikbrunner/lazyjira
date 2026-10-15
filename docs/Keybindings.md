@@ -52,11 +52,12 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `ctrl+n` | Duplicate issue |
 | `S` | Create a subtask under the selected issue (issues list or the info panel's Sub tab). Parent and project are taken from the selection; not available when the selection is itself a subtask or an epic. |
 | `c` | View comments |
-| `o` | Open in browser |
+| `o` | Open in browser. With marks, open each marked issue in its own browser tab and clear the marks; above 10 marked issues, ask first |
 | `u` | Pick URL from description |
-| `y` | Copy the issue key and summary. With marks, copy the marked issue rows as plain text, one per line, and clear the marks. `sanitize.remove` applies to both |
-| `ctrl+y` | Copy the issue as a Markdown link, `[KEY Summary](URL)`, with `sanitize.remove` applied to the summary |
-| `Y` | Copy the issue URL |
+| `y` | Copy the issue key and summary, with `sanitize.remove` applied to the summary. With marks, copy one line per marked issue and clear the marks |
+| `ctrl+y` | Copy the issue as a Markdown link, `[KEY Summary](URL)`, with `sanitize.remove` applied to the summary. With marks, copy one link per marked issue and clear the marks |
+| `Y` | Copy the issue URL. With marks, copy one URL per marked issue and clear the marks |
+| `alt+y` | Copy the issue row as plain text with its columns padded to width, with `sanitize.remove` applied to each cell. With marks, copy the marked issue rows, one per line, and clear the marks. On macOS, `alt+y` needs the terminal to send Option as Alt |
 | `b` | Copy branch name (issues, info, or detail panel) |
 | `B` | Create branch from issue using the same name as `b` |
 | `w` | Copy repository-prefixed worktree name (issues, info, or detail panel) |

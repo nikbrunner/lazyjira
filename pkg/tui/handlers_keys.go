@@ -471,38 +471,23 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 	switch action { //nolint:exhaustive
 	case ActCopySummary:
-		if a.side == sideLeft && a.leftFocus == focusIssues && a.issuesList.HasMarks() {
-			n := len(a.issuesList.MarkedIssues())
-			copyToClipboard(a.issuesList.MarkedRowsText())
-			a.issuesList.ClearMarks()
-			rows := "rows"
-			if n == 1 {
-				rows = "row"
-			}
-			a.helpBar.SetStatusMsg(fmt.Sprintf("Copied %d issue %s", n, rows))
-			return a, nil, true
-		}
-		if cur := a.currentIssue(); cur != nil {
-			a.copyIssueText(cur.Key + " " + a.cfg.Sanitize.Apply(cur.Summary))
-		}
+		a.copyIssueLines(a.summaryLine, "issue")
 		return a, nil, true
 
 	case ActCopyMarkdownLink:
-		if cur := a.currentIssue(); cur != nil {
-			a.copyIssueText(fmt.Sprintf("[%s %s](%s)", cur.Key, a.cfg.Sanitize.Apply(cur.Summary), a.issueURL(cur.Key)))
-		}
+		a.copyIssueLines(a.markdownLink, "Markdown link")
 		return a, nil, true
 
 	case ActCopyURL:
-		if cur := a.currentIssue(); cur != nil {
-			a.copyIssueText(a.issueURL(cur.Key))
-		}
+		a.copyIssueLines(func(issue jira.Issue) string { return a.issueURL(issue.Key) }, "URL")
+		return a, nil, true
+
+	case ActCopyRows:
+		a.copyIssueRows()
 		return a, nil, true
 
 	case ActBrowser:
-		if cur := a.currentIssue(); cur != nil {
-			openBrowser(a.cfg.Jira.Host + "/browse/" + cur.Key)
-		}
+		a.openIssuesInBrowser()
 		return a, nil, true
 
 	case ActTransition:
@@ -764,14 +749,105 @@ func (a *App) startTransition() tea.Cmd {
 }
 
 func (a *App) isMarkingKey(key string) bool {
-	if a.side != sideLeft || a.leftFocus != focusIssues || !a.issuesList.HasMarks() {
+	if a.markedIssues() == nil {
 		return false
 	}
 	switch a.keymap.Match(key) { //nolint:exhaustive
-	case ActSelect, ActVisualSelect, ActCopySummary, ActTransition, ActFocusLeft:
+	case ActSelect, ActVisualSelect, ActCopySummary, ActCopyMarkdownLink, ActCopyURL, ActCopyRows,
+		ActBrowser, ActTransition, ActFocusLeft:
 		return true
 	}
 	return false
+}
+
+// markedIssues returns the marked issues while the Issues panel has focus.
+func (a *App) markedIssues() []jira.Issue {
+	if a.side != sideLeft || a.leftFocus != focusIssues {
+		return nil
+	}
+	return a.issuesList.MarkedIssues()
+}
+
+func (a *App) summaryLine(issue jira.Issue) string {
+	return issue.Key + " " + a.cfg.Sanitize.Apply(issue.Summary)
+}
+
+func (a *App) markdownLink(issue jira.Issue) string {
+	return fmt.Sprintf("[%s %s](%s)", issue.Key, a.cfg.Sanitize.Apply(issue.Summary), a.issueURL(issue.Key))
+}
+
+// copyIssueLines copies one formatted line per marked issue and clears the
+// marks, or else copies the current issue.
+func (a *App) copyIssueLines(format func(jira.Issue) string, noun string) {
+	if marked := a.markedIssues(); marked != nil {
+		lines := make([]string, len(marked))
+		for i, issue := range marked {
+			lines[i] = format(issue)
+		}
+		copyToClipboard(strings.Join(lines, "\n"))
+		a.issuesList.ClearMarks()
+		a.helpBar.SetStatusMsg("Copied " + countOf(len(marked), noun))
+		return
+	}
+	if cur := a.currentIssue(); cur != nil {
+		a.copyIssueText(format(*cur))
+	}
+}
+
+// copyIssueRows copies the marked issue rows, or else the selected row, as
+// padded plain text.
+func (a *App) copyIssueRows() {
+	if a.side != sideLeft || a.leftFocus != focusIssues {
+		return
+	}
+	if marked := a.markedIssues(); marked != nil {
+		copyToClipboard(a.issuesList.MarkedRowsText())
+		a.issuesList.ClearMarks()
+		a.helpBar.SetStatusMsg("Copied " + countOf(len(marked), "issue row"))
+		return
+	}
+	if row := a.issuesList.SelectedRowText(); row != "" {
+		copyToClipboard(row)
+		a.helpBar.SetStatusMsg("Copied " + countOf(1, "issue row"))
+	}
+}
+
+const maxBrowserTabsWithoutConfirm = 10
+
+// openIssuesInBrowser opens each marked issue in its own tab, asking first
+// above maxBrowserTabsWithoutConfirm, or else opens the current issue.
+func (a *App) openIssuesInBrowser() {
+	marked := a.markedIssues()
+	if marked == nil {
+		if cur := a.currentIssue(); cur != nil {
+			openBrowser(a.issueURL(cur.Key))
+		}
+		return
+	}
+	urls := make([]string, len(marked))
+	for i, issue := range marked {
+		urls[i] = a.issueURL(issue.Key)
+	}
+	open := func() tea.Cmd {
+		for _, url := range urls {
+			openBrowser(url)
+		}
+		a.issuesList.ClearMarks()
+		a.helpBar.SetStatusMsg("Opened " + countOf(len(urls), "issue"))
+		return nil
+	}
+	if len(urls) <= maxBrowserTabsWithoutConfirm {
+		open()
+		return
+	}
+	a.confirm(fmt.Sprintf("Open %d browser tabs?", len(urls)), open)
+}
+
+func countOf(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }
 
 func (a *App) handleActionSelect() (tea.Model, tea.Cmd) {

@@ -32,6 +32,7 @@ const (
 	ActCopyURL          Action = "copyURL"
 	ActCopySummary      Action = "copySummary"
 	ActCopyMarkdownLink Action = "copyMarkdownLink"
+	ActCopyRows         Action = "copyRows"
 	ActBrowser          Action = "browser"
 	ActURLPicker        Action = "urlPicker"
 	ActTransition       Action = "transition"
@@ -98,6 +99,7 @@ func DefaultKeymap() Keymap {
 		ActCopyURL:          {"Y"},
 		ActCopySummary:      {"y"},
 		ActCopyMarkdownLink: {"ctrl+y"},
+		ActCopyRows:         {"alt+y"},
 		ActBrowser:          {"o"},
 		ActURLPicker:        {"u"},
 		ActTransition:       {"t"},
@@ -180,6 +182,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	set(ActCopyURL, kcfg.Issues.CopyURL)
 	set(ActCopySummary, kcfg.Issues.CopySummary)
 	set(ActCopyMarkdownLink, kcfg.Issues.CopyMarkdownLink)
+	set(ActCopyRows, kcfg.Issues.CopyRows)
 	set(ActCloseJQLTab, kcfg.Issues.CloseJQLTab)
 	set(ActCreateBranch, kcfg.Issues.CreateBranch)
 	set(ActCopyBranchName, kcfg.Issues.CopyBranchName)

@@ -101,10 +101,23 @@ func (m *IssuesList) MarkedIssues() []jira.Issue {
 // line, with the Summary column fitted to the longest summary in the issue list.
 // Each value passes through the configured sanitizer.
 func (m *IssuesList) MarkedRowsText() string {
+	return m.rowsText(m.MarkedIssues())
+}
+
+// SelectedRowText renders the selected issue like MarkedRowsText, or returns
+// "" when no issue is selected.
+func (m *IssuesList) SelectedRowText() string {
+	sel := m.SelectedIssue()
+	if sel == nil {
+		return ""
+	}
+	return m.rowsText([]jira.Issue{*sel})
+}
+
+func (m *IssuesList) rowsText(issues []jira.Issue) string {
 	columns := m.issueColumns(math.MaxInt32)
-	marked := m.MarkedIssues()
-	lines := make([]string, 0, len(marked))
-	for _, issue := range marked {
+	lines := make([]string, 0, len(issues))
+	for _, issue := range issues {
 		cells := make([]string, len(columns))
 		for i, column := range columns {
 			value := components.TruncateEnd(m.issueFieldValue(issue, column.field), column.width)

@@ -197,6 +197,7 @@ type IssueKeys struct {
 	CopyURL          string `yaml:"copyURL"`
 	CopySummary      string `yaml:"copySummary"`
 	CopyMarkdownLink string `yaml:"copyMarkdownLink"`
+	CopyRows         string `yaml:"copyRows"`
 	CopyBranchName   string `yaml:"copyBranchName"`
 	CopyWorktreeName string `yaml:"copyWorktreeName"`
 	CloseJQLTab      string `yaml:"closeJQLTab"`

@@ -105,6 +105,7 @@ keybinding:
         copySummary: "y"
         copyMarkdownLink: ctrl+y
         copyURL: "Y"
+        copyRows: alt+y
         visualSelect: v
         showChildren: ">"
         filterPicker: f
@@ -570,7 +571,7 @@ Any other value causes lazyjira to exit on startup with an error naming the inva
 
 ## Sanitizing copied text (`sanitize`)
 
-`sanitize.remove` lists strings removed from copied text: each cell of yanked issue rows, the summary copied by `copySummary` and `copyMarkdownLink`, and every value passed through the `sanitize` custom command helper. The default removes square brackets, so pasted summaries such as `[web-ui] Release` do not form Markdown links. A configured list replaces the default; `remove: []` keeps copied text unchanged.
+`sanitize.remove` lists strings removed from copied text: each cell of issue rows copied by `copyRows`, the summary copied by `copySummary` and `copyMarkdownLink`, and every value passed through the `sanitize` custom command helper. The default removes square brackets, so pasted summaries such as `[web-ui] Release` do not form Markdown links. A configured list replaces the default; `remove: []` keeps copied text unchanged.
 
 ```yaml
 sanitize:
@@ -579,11 +580,11 @@ sanitize:
 
 ## Custom commands
 
-Bind shell commands to keys, with Go template access to the focused issue, project, or comment. Custom bindings take precedence over built-in keys, so they can be used to override any action. While issues are marked in the Issues panel, the marking keys (`select`, `visualSelect`, `copySummary`, `transition`, `focusLeft`) keep their built-in behavior.
+Bind shell commands to keys, with Go template access to the focused issue, project, or comment. Custom bindings take precedence over built-in keys, so they can be used to override any action. While issues are marked in the Issues panel, the marking keys (`select`, `visualSelect`, `copySummary`, `copyMarkdownLink`, `copyURL`, `copyRows`, `browser`, `transition`, `focusLeft`) keep their built-in behavior.
 
 ```yaml
 customCommands:
-  - key: "alt+y"
+  - key: "alt+k"
     name: "Copy issue key"
     command: "printf %s {{.Key}} | wl-copy"
     suspend: false

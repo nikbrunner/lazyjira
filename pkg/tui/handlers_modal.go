@@ -67,6 +67,21 @@ func (a *App) handleModalCancelled() (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
+// confirm asks a yes/no question and runs onConfirm on yes.
+func (a *App) confirm(question string, onConfirm func() tea.Cmd) {
+	a.onConfirm = onConfirm
+	a.confirmModal.Show(question)
+}
+
+func (a *App) handleConfirmAccepted() (tea.Model, tea.Cmd) {
+	onConfirm := a.onConfirm
+	a.onConfirm = nil
+	if onConfirm == nil {
+		return a, nil
+	}
+	return a, onConfirm()
+}
+
 // handleEditorFinished processes $EDITOR exit and shows diff view
 func (a *App) handleEditorFinished(msg editorFinishedMsg) (tea.Model, tea.Cmd) {
 	cmds := []tea.Cmd{tea.EnableMouseCellMotion}
