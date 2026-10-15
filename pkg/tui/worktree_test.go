@@ -17,12 +17,19 @@ import (
 
 const worktreeMainBranch = "main"
 
+func worktreeApp(t *testing.T) *App {
+	t.Helper()
+	app := focusApp(t)
+	app.overlays = components.OverlayStack{&app.worktreeModal}
+	return app
+}
+
 func TestCreateWorktreeGuards(t *testing.T) {
 	t.Parallel()
 	for _, scenario := range []string{"no repo", "no issue", "projects panel", "invalid format"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
-			app := focusApp(t)
+			app := worktreeApp(t)
 			app.side = sideLeft
 			app.leftFocus = focusIssues
 			app.gitRepoPath = gitTestRepo(t)
@@ -38,7 +45,7 @@ func TestCreateWorktreeGuards(t *testing.T) {
 				app.cfg.Git.WorktreeFormat = "{{.Unknown}}"
 			}
 			_, cmd := app.handleKeyMsg(runeKey('W'))
-			if cmd != nil || app.inputModal.IsVisible() {
+			if cmd != nil || app.worktreeModal.IsVisible() {
 				t.Error("invalid context must not start creation")
 			}
 			if (scenario == "no repo" || scenario == "invalid format") && app.statusPanel.ErrorMessage() == "" {
@@ -53,14 +60,15 @@ func TestCreateWorktreeCancelAndFailure(t *testing.T) {
 	for _, scenario := range []string{"cancel", "occupied branch", "occupied path"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
-			app := focusApp(t)
+			app := worktreeApp(t)
 			app.side = sideLeft
 			app.leftFocus = focusIssues
 			app.gitRepoPath = gitTestRepo(t)
 			app.gitBranch = worktreeMainBranch
 			app.issuesList.SetIssues([]jira.Issue{{Key: "PROJ-1", Summary: "Task"}})
 			repo := app.gitRepoPath
-			path := filepath.Join(t.TempDir(), "new-worktree")
+			parent := t.TempDir()
+			app.cfg.Worktree.DefaultPath = parent
 
 			app.cfg.Git.WorktreeFormat = "proj-1-task"
 			if scenario == "occupied branch" {
@@ -68,18 +76,22 @@ func TestCreateWorktreeCancelAndFailure(t *testing.T) {
 			}
 			_, _ = app.handleKeyMsg(runeKey('W'))
 			if scenario == "cancel" {
-				_, cancel := app.inputModal.Update(keytest.Press("esc"))
-				_, _ = app.Update(cancel())
+				_, cancel := app.Update(keytest.Press("esc"))
+				_, cmd := app.Update(cancel())
+				if cmd != nil || app.worktreeModal.IsVisible() {
+					t.Error("cancel must close the modal without a command")
+				}
+				if entries, _ := os.ReadDir(parent); len(entries) != 0 {
+					t.Error("cancel created a directory")
+				}
 			} else {
 				if scenario == "occupied path" {
-					if err := os.Mkdir(path, 0o755); err != nil {
+					if err := os.Mkdir(filepath.Join(parent, "proj-1-task"), 0o755); err != nil {
 						t.Fatal(err)
 					}
 				}
-				_, confirm := app.inputModal.Update(keytest.Press("enter"))
-				msg := confirm().(components.InputConfirmedMsg)
-				msg.Text = path
-				_, cmd := app.Update(msg)
+				_, confirm := app.Update(keytest.Press("enter"))
+				_, cmd := app.Update(confirm())
 				if cmd == nil {
 					t.Fatal("expected creation command")
 				}
@@ -115,27 +127,27 @@ func TestCreateWorktreeConfiguredNamesFromLinkedCheckout(t *testing.T) {
 	if out, err := exec.CommandContext(t.Context(), "git", "-C", repo, "worktree", "add", "--detach", linked).CombinedOutput(); err != nil {
 		t.Fatalf("linked checkout: %v: %s", err, out)
 	}
-	app := focusApp(t)
+	app := worktreeApp(t)
 	app.gitRepoPath = linked
 	app.side = sideRight
 	app.cfg.Git.BranchFormat = []config.BranchFormatRule{{When: config.BranchFormatCondition{Type: "*"}, Template: "task/{{.Key}}"}}
 	app.cfg.Git.WorktreeFormat = "{{.RepoName}}_{{.Key}}"
 	app.issuesList.SetIssues([]jira.Issue{{Key: "PROJ-1", Summary: "Task"}})
 	_, _ = app.handleKeyMsg(runeKey('W'))
-	_, confirm := app.inputModal.Update(keytest.Press("enter"))
+	_, confirm := app.Update(keytest.Press("enter"))
 	if confirm == nil {
-		t.Fatal("expected destination prompt in detail panel")
+		t.Fatal("expected the worktree modal in detail panel")
 	}
-	msg := confirm().(components.InputConfirmedMsg)
-	if want := filepath.Join(filepath.Dir(repo), "web-ui_proj-1"); msg.Text != want {
-		t.Fatalf("destination = %q, want %q", msg.Text, want)
+	msg := confirm().(components.WorktreeConfirmedMsg)
+	if want := filepath.Join(filepath.Dir(repo), "web-ui_proj-1"); msg.Path != want {
+		t.Fatalf("destination = %q, want %q", msg.Path, want)
 	}
 	_, cmd := app.Update(msg)
 	if cmd == nil {
-		t.Fatal("destination confirmation must create the worktree")
+		t.Fatal("confirmation must create the worktree")
 	}
 	_, _ = app.Update(cmd())
-	if branch, err := git.CurrentBranch(msg.Text); err != nil || branch != "web-ui_proj-1" {
+	if branch, err := git.CurrentBranch(msg.Path); err != nil || branch != "web-ui_proj-1" {
 		t.Errorf("worktree must use the w name as its branch: %q, %v", branch, err)
 	}
 }
@@ -158,7 +170,7 @@ func TestCreateWorktreeFlow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	app := focusApp(t)
+	app := worktreeApp(t)
 	app.ctx = t.Context()
 	app.cfg = cfg
 	app.side = sideLeft
@@ -169,24 +181,24 @@ func TestCreateWorktreeFlow(t *testing.T) {
 
 	const worktreeBranch = "web-ui-websdk-218-audit-skills"
 	_, _ = app.handleKeyMsg(runeKey('W'))
-	if !app.inputModal.IsVisible() {
-		t.Fatal("W must open the destination prompt")
+	if !app.worktreeModal.IsVisible() {
+		t.Fatal("W must open the worktree modal")
 	}
 	if git.BranchExists(repo, worktreeBranch) {
-		t.Fatal("branch created before destination confirmation")
+		t.Fatal("branch created before confirmation")
 	}
-	_, confirm := app.inputModal.Update(keytest.Press("enter"))
+	_, confirm := app.Update(keytest.Press("enter"))
 	if confirm == nil {
-		t.Fatal("expected destination prompt")
+		t.Fatal("expected the worktree modal")
 	}
-	pathMsg := confirm().(components.InputConfirmedMsg)
-	wantPath := filepath.Join(filepath.Dir(repo), "trees", "web-ui-websdk-218-audit-skills")
-	if pathMsg.Text != wantPath {
-		t.Fatalf("destination = %q, want %q", pathMsg.Text, wantPath)
+	msg := confirm().(components.WorktreeConfirmedMsg)
+	wantPath := filepath.Join(filepath.Dir(repo), "trees", worktreeBranch)
+	if msg.Path != wantPath || msg.Name != worktreeBranch {
+		t.Fatalf("confirmed = %+v, want %q / %q", msg, worktreeBranch, wantPath)
 	}
-	_, cmd := app.handleInputConfirmed(pathMsg)
+	_, cmd := app.Update(msg)
 	if cmd == nil {
-		t.Fatal("destination confirmation must create the worktree")
+		t.Fatal("confirmation must create the worktree")
 	}
 	_, _ = app.Update(cmd())
 	if app.gitRepoPath != wantPath || app.gitBranch != worktreeBranch {
@@ -210,5 +222,42 @@ func TestCreateWorktreeFlow(t *testing.T) {
 	result := app.executeCustomCommand(commands[0], nil)().(customCommandFinishedMsg)
 	if result.err != nil || strings.TrimSpace(result.output) != worktreeBranch {
 		t.Errorf("custom command still targets old context: %q, %v", result.output, result.err)
+	}
+}
+
+func TestCreateWorktreeEditedNameSetsFolderAndBranch(t *testing.T) {
+	t.Parallel()
+	app := worktreeApp(t)
+	app.side = sideLeft
+	app.leftFocus = focusIssues
+	app.gitRepoPath = gitTestRepo(t)
+	app.gitBranch = worktreeMainBranch
+	parent := t.TempDir()
+	app.cfg.Worktree.DefaultPath = parent
+	app.cfg.Git.WorktreeFormat = "proj-1-task"
+	app.issuesList.SetIssues([]jira.Issue{{Key: "PROJ-1", Summary: "Task"}})
+	repo := app.gitRepoPath
+
+	_, _ = app.handleKeyMsg(runeKey('W'))
+	if items := app.helpBarItems(); len(items) != 2 || items[0].Description != "create" {
+		t.Errorf("help bar = %+v", items)
+	}
+	for _, k := range keytest.Type("-short") {
+		_, _ = app.Update(k)
+	}
+	_, confirm := app.Update(keytest.Press("enter"))
+	if confirm == nil {
+		t.Fatal("enter must confirm")
+	}
+	_, cmd := app.Update(confirm())
+	_, _ = app.Update(cmd())
+
+	const name = "proj-1-task-short"
+	wantPath := filepath.Join(parent, name)
+	if branch, err := git.CurrentBranch(wantPath); err != nil || branch != name {
+		t.Errorf("worktree at %q: branch %q, %v", wantPath, branch, err)
+	}
+	if git.BranchExists(repo, "proj-1-task") {
+		t.Error("the generated name must not survive an edit")
 	}
 }

@@ -20,9 +20,10 @@
 | --- | --- | --- |
 | **Repository name** | The main checkout's directory name. Linked worktrees share this name. Available as the `RepoName` slug in the worktree format. | Project name when referring to a Git repository |
 | **Branch format rule** | A `git.branchFormat` entry that selects a naming template by issue type. Copying and creating a branch use the same rule. | Copy-only format |
-| **Worktree format** | The `git.worktreeFormat` template for the name copied by `w` and used as the branch and default directory name by `W`. Its default includes the repository name. | Branch format rule |
+| **Worktree format** | The `git.worktreeFormat` template for the name copied by `w` and pre-filled as the worktree name by `W`. Its default includes the repository name. | Branch format rule |
+| **Worktree name** | The name entered in the New worktree modal. It is both the worktree's directory name and its branch. | Destination name, folder name |
 | **Worktree location** | The parent directory configured by `worktree.defaultPath`. Relative locations resolve from the main checkout. | Branch name |
-| **Worktree destination** | The full path confirmed when creating a worktree, combining its location and directory name by default. | Worktree location |
+| **Worktree destination** | The full path of a new worktree: its location joined with the worktree name. | Worktree location |
 
 ## Workspace and panes
 

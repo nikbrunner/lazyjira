@@ -63,7 +63,6 @@ const (
 	editField
 	editFieldText
 	editBranch
-	editWorktreePath
 	editCreateField
 	editCreateDesc
 )
@@ -74,7 +73,6 @@ type editCtx struct {
 	commentID      string
 	fieldID        string
 	fieldIndex     int
-	branchName     string
 	converterState any
 }
 
@@ -209,6 +207,7 @@ type App struct {
 	diffView        components.DiffView
 	inputModal      components.InputModal
 	confirmModal    components.ConfirmModal
+	worktreeModal   components.WorktreeModal
 	createForm      components.CreateForm
 	projectPicker   components.ProjectPicker
 	issueLookup     components.IssueLookup
@@ -426,6 +425,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		diffView:           diffView,
 		inputModal:         inputModal,
 		confirmModal:       confirmModal,
+		worktreeModal:      components.NewWorktreeModal(),
 		createForm:         createForm,
 		side:               sideLeft,
 		leftFocus:          focusIssues,
@@ -475,6 +475,7 @@ func NewAppWithAuth(cfg *config.Config, client jira.ClientInterface, authMethod 
 		&app.createForm,
 		&app.jqlModal,
 		&app.inputModal,
+		&app.worktreeModal,
 		&app.diffView,
 		&app.modal,
 	}
@@ -723,6 +724,11 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleInputConfirmed(msg)
 	case components.InputCancelledMsg:
 		return a.handleInputCancelled()
+	case components.WorktreeConfirmedMsg:
+		a.helpBar.SetStatusMsg("Creating worktree: " + msg.Path)
+		return a, gitCreateWorktree(a.gitRepoPath, msg.Name, msg.Path)
+	case components.WorktreeCancelledMsg:
+		return a, nil
 	case components.ConfirmAcceptedMsg:
 		return a.handleConfirmAccepted()
 	case components.ConfirmCancelledMsg:

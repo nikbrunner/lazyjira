@@ -215,6 +215,11 @@ func (a *App) helpBarItems() []components.HelpItem {
 			{Key: "enter", Description: "confirm"},
 			{Key: "esc", Description: "cancel"},
 		}
+	case a.worktreeModal.IsVisible():
+		return []components.HelpItem{
+			{Key: "enter", Description: "create"},
+			{Key: "esc", Description: "cancel"},
+		}
 	case a.inputModal.IsVisible():
 		items := []components.HelpItem{
 			{Key: "enter", Description: "confirm"},

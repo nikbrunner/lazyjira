@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"path/filepath"
+	"os"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -58,7 +58,8 @@ func (a *App) handleActionCreateWorktree() (tea.Model, tea.Cmd) {
 		a.statusPanel.SetError(err.Error())
 		return a, nil
 	}
-	a.inputModal.Show("Create worktree: destination", filepath.Join(parent, name))
-	a.editContext = editCtx{kind: editWorktreePath, branchName: name}
+	home, _ := os.UserHomeDir()
+	repo := a.gitRepoPath
+	a.worktreeModal.Show(name, parent, home, func(branch string) bool { return git.BranchExists(repo, branch) })
 	return a, nil
 }

@@ -62,7 +62,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `b` | Copy branch name (issues, info, or detail panel) |
 | `B` | Create branch from issue using the same name as `b` |
 | `w` | Copy repository-prefixed worktree name (issues, info, or detail panel) |
-| `W` | Create a worktree using the `w` string for its branch and default directory name (issues, info, or detail panel) |
+| `W` | Create a worktree (issues, info, or detail panel). The New worktree modal starts with the `w` string as the name, which sets both the directory under `worktree.defaultPath` and the branch |
 | `s` | JQL search |
 | `x` | Close JQL tab |
 | `esc` | Clear marks, then the local filter, then the picker filter |
