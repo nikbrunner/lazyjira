@@ -476,20 +476,16 @@ func (a *App) handleTabAction(action Action) (tea.Model, tea.Cmd, bool) {
 func (a *App) handleIssueAction(action Action) (tea.Model, tea.Cmd, bool) {
 	switch action { //nolint:exhaustive
 	case ActCopySummary:
-		a.copyIssueLines(a.summaryLine, "issue")
-		return a, nil, true
+		return a, a.copyIssueLines(a.summaryLine, "issue"), true
 
 	case ActCopyMarkdownLink:
-		a.copyIssueLines(a.markdownLink, "Markdown link")
-		return a, nil, true
+		return a, a.copyIssueLines(a.markdownLink, "Markdown link"), true
 
 	case ActCopyURL:
-		a.copyIssueLines(func(issue jira.Issue) string { return a.issueURL(issue.Key) }, "URL")
-		return a, nil, true
+		return a, a.copyIssueLines(func(issue jira.Issue) string { return a.issueURL(issue.Key) }, "URL"), true
 
 	case ActCopyRows:
-		a.copyIssueRows()
-		return a, nil, true
+		return a, a.copyIssueRows(), true
 
 	case ActBrowser:
 		a.openIssuesInBrowser()
@@ -792,38 +788,39 @@ func (a *App) markdownLink(issue jira.Issue) string {
 
 // copyIssueLines copies one formatted line per marked issue and clears the
 // marks, or else copies the current issue.
-func (a *App) copyIssueLines(format func(jira.Issue) string, noun string) {
+func (a *App) copyIssueLines(format func(jira.Issue) string, noun string) tea.Cmd {
 	if marked := a.markedIssues(); marked != nil {
 		lines := make([]string, len(marked))
 		for i, issue := range marked {
 			lines[i] = format(issue)
 		}
-		copyToClipboard(strings.Join(lines, "\n"))
 		a.issuesList.ClearMarks()
 		a.helpBar.SetStatusMsg("Copied " + countOf(len(marked), noun))
-		return
+		return copyToClipboard(strings.Join(lines, "\n"))
 	}
 	if cur := a.currentIssue(); cur != nil {
-		a.copyIssueText(format(*cur))
+		return a.copyIssueText(format(*cur))
 	}
+	return nil
 }
 
 // copyIssueRows copies the marked issue rows, or else the selected row, as
 // padded plain text.
-func (a *App) copyIssueRows() {
+func (a *App) copyIssueRows() tea.Cmd {
 	if a.side != sideLeft || a.leftFocus != focusIssues {
-		return
+		return nil
 	}
 	if marked := a.markedIssues(); marked != nil {
-		copyToClipboard(a.issuesList.MarkedRowsText())
+		text := a.issuesList.MarkedRowsText()
 		a.issuesList.ClearMarks()
 		a.helpBar.SetStatusMsg("Copied " + countOf(len(marked), "issue row"))
-		return
+		return copyToClipboard(text)
 	}
 	if row := a.issuesList.SelectedRowText(); row != "" {
-		copyToClipboard(row)
 		a.helpBar.SetStatusMsg("Copied " + countOf(1, "issue row"))
+		return copyToClipboard(row)
 	}
+	return nil
 }
 
 const maxBrowserTabsWithoutConfirm = 10
@@ -1070,9 +1067,8 @@ func (a *App) handleActionCopyName(action Action) (tea.Model, tea.Cmd) {
 	} else {
 		name = a.branchName(cur)
 	}
-	copyToClipboard(name)
 	a.helpBar.SetStatusMsg("Copied " + kind + " name: " + name)
-	return a, nil
+	return a, copyToClipboard(name)
 }
 
 func (a *App) branchName(sel *jira.Issue) string {

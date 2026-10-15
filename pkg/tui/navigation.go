@@ -176,16 +176,20 @@ func execExternal(input string, waitForExit bool, name string, args ...string) {
 	_ = cmd.Start()
 }
 
-func copyToClipboard(text string) {
+// copyToClipboard runs the local clipboard command and returns a command that
+// also sends the text as OSC 52, which reaches the user's terminal over SSH
+// or in containers where no clipboard tool exists.
+func copyToClipboard(text string) tea.Cmd {
 	name, args := platformCommand("copy", "")
 	runExternalCommand(text, true, name, args...)
+	return tea.SetClipboard(text)
 }
 
 func (a *App) issueURL(key string) string { return a.cfg.Jira.Host + "/browse/" + key }
 
-func (a *App) copyIssueText(text string) {
-	copyToClipboard(text)
+func (a *App) copyIssueText(text string) tea.Cmd {
 	a.helpBar.SetStatusMsg("Copied: " + text)
+	return copyToClipboard(text)
 }
 
 func openBrowser(url string) {

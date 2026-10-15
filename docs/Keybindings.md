@@ -67,6 +67,8 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `x` | Close JQL tab |
 | `esc` | Clear marks, then the local filter, then the picker filter |
 
+Every copy runs the system clipboard command (`pbcopy`, `clip`, or `xclip`) and also sends the text to the terminal as an OSC 52 sequence, so copies reach your local clipboard over SSH and in containers when the terminal supports OSC 52.
+
 ## Help popup
 
 | Key | Action |
