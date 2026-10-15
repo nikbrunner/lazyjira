@@ -7,8 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -66,9 +68,9 @@ func TestCreateForm_PasteDroppedImagesInsertsTokens(t *testing.T) {
 	b := writeFile(t, dir, "b.webp", 10)
 	form := showDescFocused(t, "")
 	form.AttachImage(CreateAttachment{Path: writeFile(t, dir, "clip.png", 1), Size: 1, Temp: true})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" "), Paste: false})
+	form.Intercept(keytest.Press(" "))
 
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(a + " " + b), Paste: true})
+	form.Intercept(tea.PasteMsg{Content: a + " " + b})
 
 	testkit.AssertEqual(t, "tokens numbered by attachment count", form.DescriptionText(), "[Image #1] [Image #2] [Image #3]")
 	names := make([]string, 0, len(form.attachments))
@@ -81,7 +83,7 @@ func TestCreateForm_PasteDroppedImagesInsertsTokens(t *testing.T) {
 func TestCreateForm_PasteTextWithoutImagesStaysText(t *testing.T) {
 	t.Parallel()
 	form := showDescFocused(t, "")
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/no/such.png and text"), Paste: true})
+	form.Intercept(tea.PasteMsg{Content: "/no/such.png and text"})
 	testkit.AssertEqual(t, "text pasted", form.DescriptionText(), "/no/such.png and text")
 	testkit.AssertEqual(t, "no attachments", len(form.attachments), 0)
 }
@@ -89,7 +91,7 @@ func TestCreateForm_PasteTextWithoutImagesStaysText(t *testing.T) {
 func TestCreateForm_CtrlVRequestsClipboardImage(t *testing.T) {
 	t.Parallel()
 	form := showDescFocused(t, "")
-	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlV})
+	cmd, _ := form.Intercept(keytest.Press("ctrl+v"))
 	if cmd == nil {
 		t.Fatal("expected a paste request")
 	}
@@ -103,7 +105,7 @@ func TestCreateForm_SubmitCarriesAttachments(t *testing.T) {
 	form := showDescFocused(t, "")
 	att := CreateAttachment{Path: "/tmp/x.png", Name: "x.png", Size: 3}
 	form.AttachImage(att)
-	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
+	cmd, _ := form.Intercept(keytest.Press("ctrl+s"))
 	msg := cmd().(CreateFormSubmitMsg)
 	testkit.AssertSliceEqual(t, "attachments", msg.Attachments, []CreateAttachment{att})
 	testkit.AssertEqual(t, "token in description", msg.Fields["description"], any("[Image #1]"))
@@ -118,7 +120,7 @@ func TestCreateForm_CancelDeletesOnlyTempFiles(t *testing.T) {
 	form.AttachImage(CreateAttachment{Path: temp, Temp: true})
 	form.AttachImage(CreateAttachment{Path: own, Name: "own.png"})
 
-	form.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
+	form.Intercept(keytest.Press("esc"))
 
 	if _, err := os.Stat(temp); !os.IsNotExist(err) {
 		t.Error("cancel should delete the clipboard temp file")

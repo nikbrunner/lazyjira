@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"

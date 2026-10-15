@@ -150,6 +150,7 @@ func KeymapFromConfig(kcfg config.KeybindingConfig) Keymap {
 	configuredActions := make(map[Action]bool)
 	configuredKeys := make(map[string]bool)
 	set := func(action Action, val string) {
+		val = config.NormalizeKey(val)
 		if val != "" {
 			km[action] = []string{val}
 			configuredActions[action] = true
@@ -265,11 +266,15 @@ func (km Keymap) IsSequencePrefix(key string) bool {
 // Keys returns the first key bound to the action (for display in help)
 func (km Keymap) Keys(action Action) string {
 	if keys, ok := km[action]; ok && len(keys) > 0 {
-		k := keys[0]
-		if k == " " {
-			return "space"
-		}
-		return k
+		return displayKey(keys[0])
 	}
 	return ""
+}
+
+// displayKey returns how the help shows a key.
+func displayKey(key string) string {
+	if key == " " {
+		return "space"
+	}
+	return key
 }

@@ -4,7 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -16,10 +18,10 @@ func TestCreateForm_ScrollFocusedSummary(t *testing.T) {
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
 	form.setFocus(CreatePanelSummary)
 	form.summaryCursor = 0
-	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
+	form.Intercept(tea.MouseWheelMsg{Button: tea.MouseWheelDown})
 	testkit.AssertEqual(t, "scroll down on summary moved cursor", form.summaryCursor > 0, true)
 	form.summaryCursor = 5
-	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
+	form.Intercept(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
 	testkit.AssertEqual(t, "scroll up on summary clamps to 0", form.summaryCursor, 0)
 }
 
@@ -35,9 +37,9 @@ func TestCreateForm_ScrollFocusedFields(t *testing.T) {
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
 	testkit.AssertEqual(t, "on fields panel", form.FocusedPanel(), CreatePanelFields)
-	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
+	form.Intercept(tea.MouseWheelMsg{Button: tea.MouseWheelDown})
 	testkit.AssertEqual(t, "scroll down on fields moved cursor", form.fieldCursor > 0, true)
-	form.Intercept(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
+	form.Intercept(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
 	testkit.AssertEqual(t, "scroll up on fields decreased cursor", form.fieldCursor, 0)
 }
 
@@ -68,12 +70,11 @@ func TestCreateForm_InterceptMouseClickOnSummaryPanel(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	form.Intercept(keytest.Press("tab"))
+	form.Intercept(keytest.Press("tab"))
 	testkit.AssertEqual(t, "focus is on description before click", form.FocusedPanel(), CreatePanelDescription)
-	form.Intercept(tea.MouseMsg{
-		Button: tea.MouseButtonLeft,
-		Action: tea.MouseActionPress,
+	form.Intercept(tea.MouseClickMsg{
+		Button: tea.MouseLeft,
 		X:      60,
 		Y:      1,
 	})
@@ -86,10 +87,10 @@ func TestCreateForm_InterceptMouseClickBelowHeader(t *testing.T) {
 	form.SetSize(120, 40)
 	form.SetHeader("1\n2\n3")
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	form.Intercept(tea.KeyMsg{Type: tea.KeyTab})
+	form.Intercept(keytest.Press("tab"))
+	form.Intercept(keytest.Press("tab"))
 	click := func(y int) {
-		form.Intercept(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 60, Y: y})
+		form.Intercept(tea.MouseClickMsg{Button: tea.MouseLeft, X: 60, Y: y})
 	}
 	click(1)
 	testkit.AssertEqual(t, "click on the header leaves focus", form.FocusedPanel(), CreatePanelDescription)
@@ -106,7 +107,7 @@ func TestCreateForm_EditCurrentField_EmptyFiltered(t *testing.T) {
 		{FieldID: "description", Name: "Description", Type: CFFieldMultiText},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	cmd, consumed := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
+	cmd, consumed := form.Intercept(keytest.Press("e"))
 	testkit.AssertEqual(t, "consumed even with empty fields", consumed, true)
 	testkit.AssertEqual(t, "nil cmd when no fields", cmd == nil, true)
 }
@@ -116,7 +117,7 @@ func TestCreateForm_InterceptFieldsQHides(t *testing.T) {
 	form := NewCreateForm()
 	form.SetSize(120, 40)
 	form.ShowForm(makeTestFields(), testIssueType, testProjectKey)
-	cmd, _ := form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	cmd, _ := form.Intercept(keytest.Press("q"))
 	testkit.AssertEqual(t, "hidden after q on fields", form.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected cancel cmd from fields q")
@@ -134,7 +135,7 @@ func TestCreateForm_FilteredFields_WithFilter(t *testing.T) {
 		{FieldID: "labels", Name: "Labels", Type: CFFieldMultiSelect},
 	}
 	form.ShowForm(fields, testIssueType, testProjectKey)
-	form.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
+	form.Intercept(keytest.Press("/"))
 	form.filterInput.SetValue("pri")
 	filtered := form.filteredFields()
 	testkit.AssertEqual(t, "filter returns matching fields", len(filtered), 1)

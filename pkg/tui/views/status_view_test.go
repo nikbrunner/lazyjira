@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
+	"charm.land/lipgloss/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -91,7 +91,7 @@ func TestStatusPanel_Init_ReturnsNil(t *testing.T) {
 func TestStatusPanel_Update_ReturnsSelf(t *testing.T) {
 	t.Parallel()
 	panel := makeStatusPanel()
-	result, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	result, cmd := panel.Update(keytest.Press("q"))
 	if result != panel {
 		t.Error("Update() should return same panel pointer")
 	}
@@ -144,11 +144,8 @@ func TestStatusPanel_View_UsesHostWhenEmailMissing(t *testing.T) {
 	}
 }
 
-//nolint:paralleltest // The terminal color profile is process-wide.
 func TestStatusPanel_ViewColorsStateAndLabels(t *testing.T) {
-	profile := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.ANSI)
-	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+	t.Parallel()
 
 	for _, tt := range []struct {
 		name         string
@@ -159,6 +156,7 @@ func TestStatusPanel_ViewColorsStateAndLabels(t *testing.T) {
 		{"full", 10, "Account:"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			panel := makeStatusPanel()
 			panel.SetAuthMethod("Environment variables")
 			panel.SetVersion("v1.2.3")

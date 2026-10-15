@@ -4,19 +4,20 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/ascii"
 	"github.com/nikbrunner/lazyjira/pkg/git"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
 // handleKeyMsg dispatches keyboard actions.
 // Returns (nil, nil) if the key was not handled and should be forwarded to the focused panel
-func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *App) handleKeyMsg(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	a.helpBar.SetStatusMsg("")
 
 	if a.showHelp {
@@ -25,24 +26,24 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Custom commands take precedence over built-in keybindings so users
 	// can override any action they want, except the marking keys while
 	// issues are marked.
-	if !a.isMarkingKey(msg.String()) {
-		if m, cmd, ok := a.handleCustomCommand(msg.String()); ok {
+	if !a.isMarkingKey(keyname.Of(msg)) {
+		if m, cmd, ok := a.handleCustomCommand(keyname.Of(msg)); ok {
 			return m, cmd
 		}
 	}
-	if m, cmd, ok := a.handleSpatialFocus(msg.String()); ok {
+	if m, cmd, ok := a.handleSpatialFocus(keyname.Of(msg)); ok {
 		return m, cmd
 	}
-	if msg.String() == "tab" {
+	if keyname.Of(msg) == "tab" {
 		return a, a.switchIssueCollection(1)
 	}
-	if msg.String() == "shift+tab" {
+	if keyname.Of(msg) == "shift+tab" {
 		return a, a.switchIssueCollection(-1)
 	}
 
-	action := a.keymap.Match(msg.String())
+	action := a.keymap.Match(keyname.Of(msg))
 	if a.side == sideLeft && a.leftFocus == focusIssueTabs {
-		switch msg.String() {
+		switch keyname.Of(msg) {
 		case "j":
 			return a, a.switchIssueCollection(1)
 		case "k":
@@ -165,8 +166,8 @@ func (a *App) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return nil, nil
 }
 
-func (a *App) handleDetailScroll(msg tea.KeyMsg) (tea.Model, tea.Cmd, bool) {
-	key := msg.String()
+func (a *App) handleDetailScroll(msg tea.KeyPressMsg) (tea.Model, tea.Cmd, bool) {
+	key := keyname.Of(msg)
 	switch {
 	case key == a.keymap.Keys(ActDetailScrollDown):
 		if !a.maximized || a.maximizedPane != focusIssues {
@@ -190,13 +191,13 @@ func (a *App) handleDetailScroll(msg tea.KeyMsg) (tea.Model, tea.Cmd, bool) {
 	return nil, nil, false
 }
 
-func (a *App) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *App) handleHelpKeys(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if a.helpSearching {
 		return a.handleHelpSearchKey(msg)
 	}
 
 	bindings := a.filteredHelpBindings()
-	key := msg.String()
+	key := keyname.Of(msg)
 
 	if key == "/" {
 		a.helpSearching = true
@@ -243,9 +244,9 @@ func (a *App) handleHelpKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return a, nil
 }
 
-func (a *App) handleHelpSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (a *App) handleHelpSearchKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	filtered := a.filteredHelpBindings()
-	switch msg.String() {
+	switch keyname.Of(msg) {
 	case "enter":
 		a.helpConfirmSearch()
 	case "esc":
@@ -261,14 +262,18 @@ func (a *App) handleHelpSearchKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			a.helpCursor--
 		}
 	default:
-		updated, changed := a.helpSearch.Update(msg)
-		a.helpSearch = updated
-		if changed {
-			a.helpFilter = a.helpSearch.Value()
-			a.helpCursor = 0
-		}
+		a.updateHelpSearch(msg)
 	}
 	return a, nil
+}
+
+func (a *App) updateHelpSearch(msg tea.Msg) {
+	updated, changed := a.helpSearch.Update(msg)
+	a.helpSearch = updated
+	if changed {
+		a.helpFilter = a.helpSearch.Value()
+		a.helpCursor = 0
+	}
 }
 
 func (a *App) helpConfirmSearch() {
@@ -1150,18 +1155,18 @@ func (a *App) handleActionSearch(body bool) (tea.Model, tea.Cmd) {
 // and returns the completed sequence as one key. A key that does not complete
 // the sequence drops the held key and is handled on its own.
 func (a *App) resolveKeySequence(m tea.Msg) (tea.Msg, bool) {
-	msg, ok := m.(tea.KeyMsg)
+	msg, ok := m.(tea.KeyPressMsg)
 	if !ok || a.showHelp && a.helpSearching {
 		return m, false
 	}
-	key := msg.String()
+	key := keyname.Of(msg)
 	if pending := a.pendingKey; pending != "" {
 		a.pendingKey = ""
 		if seq := pending + key; a.keymap.Match(seq) != "" {
-			return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(seq)}, false
+			return tea.KeyPressMsg{Code: tea.KeyExtended, Text: seq}, false
 		}
 	}
-	if msg.Type == tea.KeyRunes && !msg.Alt && !a.isCustomCommandKey(key) && a.keymap.IsSequencePrefix(key) {
+	if keyname.IsText(msg) && !a.isCustomCommandKey(key) && a.keymap.IsSequencePrefix(key) {
 		a.pendingKey = key
 		return msg, true
 	}

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/git"
@@ -65,7 +65,7 @@ func TestBranchCopyAndCreateUseSameName(t *testing.T) {
 				t.Errorf("clipboard = %q, want %q", copied, tt.want)
 			}
 			_, _ = app.handleKeyMsg(runeKey('B'))
-			_, cmd := app.inputModal.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			_, cmd := app.inputModal.Update(keytest.Press("enter"))
 			if cmd == nil {
 				t.Fatal("expected branch creation input")
 			}

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -54,8 +55,8 @@ func (d *DiffView) Update(msg tea.Msg) (DiffView, tea.Cmd) {
 		return *d, nil
 	}
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
+	case tea.KeyPressMsg:
+		switch keyname.Of(msg) {
 		case "enter", " ":
 			d.visible = false
 			content := d.content
@@ -77,10 +78,10 @@ func (d *DiffView) Update(msg tea.Msg) (DiffView, tea.Cmd) {
 				d.offset = 0
 			}
 		}
-	case tea.MouseMsg:
-		if msg.Button == tea.MouseButtonWheelDown {
+	case tea.MouseWheelMsg:
+		if msg.Button == tea.MouseWheelDown {
 			d.offset++
-		} else if msg.Button == tea.MouseButtonWheelUp && d.offset > 0 {
+		} else if msg.Button == tea.MouseWheelUp && d.offset > 0 {
 			d.offset--
 		}
 	}
@@ -139,7 +140,7 @@ func (d *DiffView) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 		return nil, false
 	}
 	switch msg.(type) {
-	case tea.KeyMsg, tea.MouseMsg:
+	case tea.KeyPressMsg, tea.PasteMsg, tea.MouseMsg:
 		updated, cmd := d.Update(msg)
 		*d = updated
 		return cmd, true

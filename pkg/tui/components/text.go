@@ -2,7 +2,7 @@ package components
 
 import "slices"
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 // TruncateEnd truncates s to fit within maxWidth display columns,
 // appending "…" if needed. Respects multi-byte UTF-8 characters.

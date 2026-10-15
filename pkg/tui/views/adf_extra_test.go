@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
@@ -196,7 +194,7 @@ func TestBuiltinRenderer_RenderTable_EmptyTableSkipped(t *testing.T) {
 func TestURLStyle_CyanUnderlined(t *testing.T) {
 	t.Parallel()
 	style := urlStyle()
-	var wantCyan lipgloss.TerminalColor = theme.ColorCyan
+	wantCyan := theme.ColorCyan
 	testkit.AssertEqual(t, "foreground", style.GetForeground(), wantCyan)
 	testkit.AssertEqual(t, "underline", style.GetUnderline(), true)
 }

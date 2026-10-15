@@ -6,11 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func TestHandleTransitionsLoaded(t *testing.T) {
@@ -190,7 +191,7 @@ func TestHandleSprintsLoaded(t *testing.T) {
 			t.Errorf("create form does not show fetch error: %q", view)
 		}
 		before := app.createForm.FocusedPanel()
-		updated, _ = app.Update(tea.KeyMsg{Type: tea.KeyTab})
+		updated, _ = app.Update(keytest.Press("tab"))
 		app = updated.(*App)
 		if app.createForm.FocusedPanel() == before {
 			t.Error("create form should resume keyboard input after fetch failure")

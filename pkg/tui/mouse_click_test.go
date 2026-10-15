@@ -3,7 +3,7 @@ package tui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
@@ -27,9 +27,8 @@ func TestHandleMouse_WheelUpScrollsUp(t *testing.T) {
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}, {Key: mainKey}, {Key: subKey1}})
 	app.issuesList.Cursor = 1
 
-	_, _ = app.handleMouse(tea.MouseMsg{
-		Button: tea.MouseButtonWheelUp,
-		Action: tea.MouseActionPress,
+	_, _ = app.handleMouse(tea.MouseWheelMsg{
+		Button: tea.MouseWheelUp,
 		X:      30,
 		Y:      4,
 	})
@@ -46,9 +45,8 @@ func TestHandleMouse_WheelDownScrollsDown(t *testing.T) {
 	app.leftFocus = focusIssues
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}, {Key: mainKey}, {Key: subKey1}})
 
-	_, _ = app.handleMouse(tea.MouseMsg{
-		Button: tea.MouseButtonWheelDown,
-		Action: tea.MouseActionPress,
+	_, _ = app.handleMouse(tea.MouseWheelMsg{
+		Button: tea.MouseWheelDown,
 		X:      30,
 		Y:      4,
 	})
@@ -63,9 +61,8 @@ func TestHandleMouse_LeftClickFocusesPanel(t *testing.T) {
 	app := mouseApp(t)
 	app.side = sideRight
 
-	_, _ = app.handleMouse(tea.MouseMsg{
-		Button: tea.MouseButtonLeft,
-		Action: tea.MouseActionPress,
+	_, _ = app.handleMouse(tea.MouseClickMsg{
+		Button: tea.MouseLeft,
 		X:      5,
 		Y:      0,
 	})
@@ -83,9 +80,8 @@ func TestHandleMouse_MotionIsNoop(t *testing.T) {
 	app.side = sideLeft
 	app.leftFocus = focusIssues
 
-	_, cmd := app.handleMouse(tea.MouseMsg{
-		Button: tea.MouseButtonNone,
-		Action: tea.MouseActionMotion,
+	_, cmd := app.handleMouse(tea.MouseMotionMsg{
+		Button: tea.MouseNone,
 		X:      30,
 		Y:      4,
 	})

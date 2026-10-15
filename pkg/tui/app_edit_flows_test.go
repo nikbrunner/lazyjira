@@ -823,7 +823,7 @@ func TestView_BottomBarVariants(t *testing.T) {
 			app := routingApp(t)
 			tc.setup(t, app)
 
-			if app.View() == "" {
+			if app.View().Content == "" {
 				t.Error("View should render content")
 			}
 		})

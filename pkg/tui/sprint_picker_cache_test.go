@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -45,7 +47,7 @@ func TestSprintPickerLoadingIsReadOnlyAndCancellable(t *testing.T) {
 		t.Fatal("loading modal must not have a selection callback")
 	}
 
-	updated, cancel := app.modal.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	updated, cancel := app.modal.Update(keytest.Press("enter"))
 	app.modal = updated
 	if cancel == nil {
 		t.Fatal("Enter in a read-only loading modal should cancel, not select")
@@ -148,7 +150,7 @@ func TestSprintCacheHitAndRefreshAllBypassesTTL(t *testing.T) {
 	app.createMetaCache.set(testProject+":1", []jira.CreateMetaField{{FieldID: "summary"}})
 	app.keymap = DefaultKeymap()
 	app.overlays = components.OverlayStack{&app.modal}
-	app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'R'}})
+	app.Update(keytest.Press("R"))
 	if _, ok := app.boardsCache.get("all"); ok {
 		t.Fatal("Refresh All did not clear board cache")
 	}
@@ -180,7 +182,7 @@ func TestRefreshAllDoesNotInterceptSearchOrEditorTyping(t *testing.T) {
 	app.boardsCache.set("all", []jira.Board{{ID: 1}})
 	app.searchBar = components.NewSearchBar()
 	app.searchBar.Activate()
-	app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'R'}})
+	app.Update(keytest.Press("R"))
 	if app.searchBar.Query() != "R" {
 		t.Fatalf("search query = %q, want R", app.searchBar.Query())
 	}
@@ -192,7 +194,7 @@ func TestRefreshAllDoesNotInterceptSearchOrEditorTyping(t *testing.T) {
 	app.inputModal = components.NewInputModal()
 	app.inputModal.Show("Edit", "")
 	app.overlays = components.OverlayStack{&app.inputModal, &app.modal}
-	app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'R'}})
+	app.Update(keytest.Press("R"))
 	if _, ok := app.boardsCache.get("all"); !ok {
 		t.Fatal("Refresh All intercepted editor input")
 	}

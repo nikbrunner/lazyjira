@@ -2,45 +2,47 @@ package theme
 
 import (
 	"fmt"
+	"image/color"
 	"log/slog"
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 // ColorPalette holds the semantic color values for a theme. The defaults are
 // ANSI 0-15 codes so the terminal's own color scheme decides how they look.
 type ColorPalette struct {
-	Green     lipgloss.Color
-	Blue      lipgloss.Color
-	Red       lipgloss.Color
-	Yellow    lipgloss.Color
-	Cyan      lipgloss.Color
-	Magenta   lipgloss.Color
-	White     lipgloss.Color
-	Gray      lipgloss.Color
-	Orange    lipgloss.Color
-	None      lipgloss.Color
-	Highlight lipgloss.Color // selection/cursor background
+	Green     color.Color
+	Blue      color.Color
+	Red       color.Color
+	Yellow    color.Color
+	Cyan      color.Color
+	Magenta   color.Color
+	White     color.Color
+	Gray      color.Color
+	Orange    color.Color
+	None      color.Color
+	Highlight color.Color // selection/cursor background
 }
 
 // Package-level color variables. These are kept in sync with Default.Colors
 // by Init so that existing call sites (theme.ColorBlue, etc.) continue
 // to work without changes.
 var (
-	ColorGreen     = lipgloss.Color("2")  // ANSI green — active borders, accents
-	ColorBlue      = lipgloss.Color("4")  // ANSI blue — help bar, selected bg
-	ColorRed       = lipgloss.Color("1")  // ANSI red — errors, unstaged
-	ColorYellow    = lipgloss.Color("3")  // ANSI yellow — warnings, in-progress
-	ColorCyan      = lipgloss.Color("6")  // ANSI cyan — search mode
-	ColorMagenta   = lipgloss.Color("5")  // ANSI magenta — JQL keywords
-	ColorWhite     = lipgloss.Color("7")  // ANSI white (light gray)
-	ColorGray      = lipgloss.Color("8")  // ANSI bright black (dark gray)
-	ColorOrange    = lipgloss.Color("11") // ANSI bright yellow — secondary accent (names, metadata)
-	ColorNone      = lipgloss.Color("-1") // default terminal color
-	ColorHighlight = lipgloss.Color("4")  // selection/cursor background (same as blue by default)
+	ColorGreen                 = lipgloss.Color("2")  // ANSI green — active borders, accents
+	ColorBlue                  = lipgloss.Color("4")  // ANSI blue — help bar, selected bg
+	ColorRed                   = lipgloss.Color("1")  // ANSI red — errors, unstaged
+	ColorYellow                = lipgloss.Color("3")  // ANSI yellow — warnings, in-progress
+	ColorCyan                  = lipgloss.Color("6")  // ANSI cyan — search mode
+	ColorMagenta               = lipgloss.Color("5")  // ANSI magenta — JQL keywords
+	ColorWhite                 = lipgloss.Color("7")  // ANSI white (light gray)
+	ColorGray                  = lipgloss.Color("8")  // ANSI bright black (dark gray)
+	ColorOrange                = lipgloss.Color("11") // ANSI bright yellow — secondary accent (names, metadata)
+	ColorNone      color.Color = lipgloss.NoColor{}   // default terminal color
+	ColorHighlight             = lipgloss.Color("4")  // selection/cursor background (same as blue by default)
 )
 
 type Theme struct {
@@ -61,7 +63,7 @@ type Theme struct {
 	PriorityLow    lipgloss.Style
 
 	Colors        ColorPalette
-	AuthorPalette []lipgloss.Color
+	AuthorPalette []color.Color
 	Border        lipgloss.Border
 }
 
@@ -83,17 +85,22 @@ func defaultPalette() ColorPalette {
 		White:     lipgloss.Color("7"),
 		Gray:      lipgloss.Color("8"),
 		Orange:    lipgloss.Color("11"),
-		None:      lipgloss.Color("-1"),
+		None:      lipgloss.NoColor{},
 		Highlight: lipgloss.Color("4"), // same as blue for default theme
 	}
 }
 
 // defaultAuthorPalette returns the ANSI colors that tell comment authors apart.
-func defaultAuthorPalette() []lipgloss.Color {
-	return []lipgloss.Color{
+func defaultAuthorPalette() []color.Color {
+	codes := []string{
 		"1", "2", "3", "4", "5", "6",
 		"9", "10", "11", "12", "13", "14",
 	}
+	palette := make([]color.Color, 0, len(codes))
+	for _, code := range codes {
+		palette = append(palette, lipgloss.Color(code))
+	}
+	return palette
 }
 
 func defaultTheme() *Theme {
@@ -101,7 +108,7 @@ func defaultTheme() *Theme {
 }
 
 // buildTheme constructs a Theme from a color palette and author palette.
-func buildTheme(p ColorPalette, authors []lipgloss.Color) *Theme {
+func buildTheme(p ColorPalette, authors []color.Color) *Theme {
 	return &Theme{
 		Title: lipgloss.NewStyle().
 			Bold(true).
@@ -194,11 +201,42 @@ func syncColors() {
 //
 // Borders selects the border shape: "sharp" uses square corners, any other
 // value keeps the rounded default.
+//
+// Background is the terminal background from TerminalBackground. It decides
+// between dark and light and is the basis of the selection highlight. nil
+// counts as black.
 type Options struct {
 	Colors      map[string]string
 	ColorsDark  map[string]string
 	ColorsLight map[string]string
 	Borders     string
+	Background  color.Color
+}
+
+// dark reports whether the terminal background Init received is dark.
+var dark = true
+
+// IsDark reports whether the terminal background is dark.
+func IsDark() bool { return dark }
+
+// TerminalBackground asks the terminal for its background color, falling
+// back to the COLORFGBG environment variable. It returns nil when neither
+// answers, and on platforms without the query. Call it before the TUI owns
+// terminal input.
+func TerminalBackground() color.Color {
+	return terminalBackground()
+}
+
+// colorFGBG returns the background from a COLORFGBG value such as "15;0".
+func colorFGBG(fgbg string) color.Color {
+	if !strings.Contains(fgbg, ";") {
+		return nil
+	}
+	parts := strings.Split(fgbg, ";")
+	if i, err := strconv.Atoi(parts[len(parts)-1]); err == nil && i >= 0 && i <= 255 {
+		return ansi.IndexedColor(i)
+	}
+	return nil
 }
 
 // Init applies any user overrides to the ANSI palette and refreshes the
@@ -206,9 +244,10 @@ type Options struct {
 // called before the TUI starts.
 func Init(opts Options) {
 	palette := defaultPalette()
-	palette.Highlight = selectionBackground(lipgloss.DefaultRenderer().Output().BackgroundColor())
+	palette.Highlight = selectionBackground(opts.Background)
 	palette = applyOverrides(palette, opts.Colors, "themeColors")
-	if lipgloss.HasDarkBackground() {
+	dark = isDark(opts.Background)
+	if dark {
 		palette = applyOverrides(palette, opts.ColorsDark, "themeDark")
 	} else {
 		palette = applyOverrides(palette, opts.ColorsLight, "themeLight")
@@ -231,20 +270,42 @@ func IgnoredThemeWarning(name string) string {
 	return fmt.Sprintf("gui.theme %q is ignored: colors come from the terminal; use gui.themeColors to override them", name)
 }
 
-func selectionBackground(background termenv.Color) lipgloss.Color {
-	color := termenv.ConvertToRGB(background)
-	_, _, lightness := color.Hsl()
+func toRGB(background color.Color) colorful.Color {
+	if background == nil {
+		return colorful.Color{}
+	}
+	c, _ := colorful.MakeColor(background)
+	return c
+}
+
+func isDark(background color.Color) bool {
+	_, _, lightness := toRGB(background).Hsl()
+	return lightness < 0.5
+}
+
+func selectionBackground(background color.Color) color.Color {
+	rgb := toRGB(background)
+	_, _, lightness := rgb.Hsl()
 	target := 1.0
 	if lightness >= 0.5 {
 		target = 0
 	}
-	color.R += (target - color.R) * 0.08
-	color.G += (target - color.G) * 0.08
-	color.B += (target - color.B) * 0.08
-	return lipgloss.Color(color.Hex())
+	rgb.R += (target - rgb.R) * 0.08
+	rgb.G += (target - rgb.G) * 0.08
+	rgb.B += (target - rgb.B) * 0.08
+	return lipgloss.Color(rgb.Hex())
 }
 
-// ValidColor reports whether val is a color string lipgloss/termenv will
+// Color returns the color for a config value that ValidColor accepts. "-1"
+// is the terminal's default color.
+func Color(val string) color.Color {
+	if val == "-1" {
+		return lipgloss.NoColor{}
+	}
+	return lipgloss.Color(val)
+}
+
+// ValidColor reports whether val is a color string lipgloss will
 // render correctly. Accepted forms:
 //   - hex: "#rgb", "#rrggbb", "#rrggbbaa" (case-insensitive)
 //   - ANSI decimal: "0".."255"
@@ -299,11 +360,11 @@ func applyOverrides(p ColorPalette, m map[string]string, scope string) ColorPale
 		if val == "" {
 			continue
 		}
-		c := lipgloss.Color(val)
+		c := Color(val)
 		if !ValidColor(val) {
 			slog.Warn("ignoring invalid theme color; falling back to terminal default",
 				"scope", scope, "key", key, "value", val)
-			c = lipgloss.Color("-1")
+			c = lipgloss.NoColor{}
 		}
 		switch strings.ToLower(key) {
 		case "green":

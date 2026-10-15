@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func TestModal_ShowAndSelect(t *testing.T) {
@@ -22,10 +22,10 @@ func TestModal_ShowAndSelect(t *testing.T) {
 		t.Fatal("modal should be visible after Show")
 	}
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	m, _ = m.Update(keytest.Press("j"))
+	m, _ = m.Update(keytest.Press("j"))
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := m.Update(keytest.Press("enter"))
 
 	if m.IsVisible() {
 		t.Error("modal should hide after selection")
@@ -49,7 +49,7 @@ func TestModal_Cancel(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show("Pick", []ModalItem{{ID: "1", Label: "One"}})
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	_, cmd := m.Update(keytest.Press("esc"))
 
 	if m.IsVisible() {
 		t.Error("modal should hide after esc")
@@ -74,7 +74,7 @@ func TestModal_SkipsSeparators(t *testing.T) {
 	}
 	m.Show("Pick", items)
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := m.Update(keytest.Press("enter"))
 
 	msg := cmd()
 	sel := msg.(ModalSelectedMsg)
@@ -88,7 +88,7 @@ func TestModal_InterceptWhenVisible(t *testing.T) {
 	m := NewModal()
 	m.SetSize(80, 24)
 
-	key := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	key := keytest.Press("j")
 	_, ok := m.Intercept(key)
 	if ok {
 		t.Error("hidden modal should not intercept")
@@ -111,16 +111,16 @@ func TestModal_SearchFilter(t *testing.T) {
 		{ID: "3", Label: "Avocado"},
 	})
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	m, _ = m.Update(keytest.Press("/"))
 	if !m.IsSearching() {
 		t.Fatal("search should be active after /")
 	}
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'v'}})
+	m, _ = m.Update(keytest.Press("a"))
+	m, _ = m.Update(keytest.Press("v"))
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(keytest.Press("enter"))
+	_, cmd := m.Update(keytest.Press("enter"))
 
 	msg := cmd()
 	sel := msg.(ModalSelectedMsg)
@@ -144,11 +144,11 @@ func TestModal_Checklist(t *testing.T) {
 		t.Fatal("should be in checklist mode")
 	}
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	m, _ = m.Update(keytest.Press(" "))
+	m, _ = m.Update(keytest.Press("j"))
+	m, _ = m.Update(keytest.Press(" "))
 
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := m.Update(keytest.Press("enter"))
 
 	msg := cmd()
 	confirmed, ok := msg.(ChecklistConfirmedMsg)
@@ -176,7 +176,7 @@ func TestModal_GroupedChecklistRelabelsAndBlocksDisabled(t *testing.T) {
 		t.Errorf("title = %q, want Filter 0", m.Title())
 	}
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}})
+	m, _ = m.Update(keytest.Press(" "))
 	if m.items[1].Label != "A on" || !m.items[2].Disabled {
 		t.Fatalf("items after toggling a = %+v, want relabelled with b disabled", m.items)
 	}
@@ -187,9 +187,9 @@ func TestModal_GroupedChecklistRelabelsAndBlocksDisabled(t *testing.T) {
 		t.Errorf("cursor = %d, want it to stay on a", m.cursor)
 	}
 
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}})
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(keytest.Press("j"))
+	m, _ = m.Update(keytest.Press(" "))
+	_, cmd := m.Update(keytest.Press("enter"))
 	got, ok := cmd().(ChecklistConfirmedMsg)
 	if !ok {
 		t.Fatal("enter should confirm the checklist")

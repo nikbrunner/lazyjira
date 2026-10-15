@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -20,7 +22,7 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 
 	cases := []struct {
 		name        string
-		key         tea.KeyMsg
+		key         tea.KeyPressMsg
 		setup       func(app *App, fake *jiratest.FakeClient)
 		wantHandled bool
 		assert      func(t *testing.T, app *App, cmd tea.Cmd)
@@ -85,7 +87,7 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 		},
 		{
 			name:        "select marks issue",
-			key:         tea.KeyMsg{Type: tea.KeySpace},
+			key:         keytest.Press(" "),
 			setup:       seedSelectedIssue,
 			wantHandled: true,
 			assert: func(t *testing.T, app *App, cmd tea.Cmd) {
@@ -97,7 +99,7 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 		},
 		{
 			name:        "open opens issue detail",
-			key:         tea.KeyMsg{Type: tea.KeyEnter},
+			key:         keytest.Press("enter"),
 			setup:       seedSelectedIssue,
 			wantHandled: true,
 		},
@@ -124,12 +126,12 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 		},
 		{
 			name:        "show parent without parent is noop",
-			key:         tea.KeyMsg{Type: tea.KeyBackspace},
+			key:         keytest.Press("backspace"),
 			wantHandled: true,
 		},
 		{
 			name: "show parent fetches parent issue",
-			key:  tea.KeyMsg{Type: tea.KeyBackspace},
+			key:  keytest.Press("backspace"),
 			setup: func(app *App, fake *jiratest.FakeClient) {
 				app.issuesList.SetIssues([]jira.Issue{{Key: testKey, Parent: &jira.Issue{Key: mainKey}}})
 				fake.GetIssueFunc = func(context.Context, string) (*jira.Issue, error) { return &jira.Issue{Key: mainKey}, nil }
@@ -144,7 +146,7 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 		},
 		{
 			name: "tab switches issue collection without moving focus",
-			key:  tea.KeyMsg{Type: tea.KeyTab},
+			key:  keytest.Press("tab"),
 			setup: func(app *App, fake *jiratest.FakeClient) {
 				app.issuesList.SetTabs([]config.IssueTabConfig{{Name: "All"}, {Name: "Mine"}})
 			},
@@ -174,7 +176,7 @@ func TestHandleKeyMsg_Dispatch(t *testing.T) {
 		},
 		{
 			name: "unbound key is not handled",
-			key:  tea.KeyMsg{Type: tea.KeyF1},
+			key:  keytest.Press("f1"),
 		},
 	}
 
@@ -212,8 +214,8 @@ func TestHandleDetailScroll_HalfPages(t *testing.T) {
 	t.Parallel()
 	app := focusApp(t)
 
-	_, _, downHandled := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyCtrlF})
-	_, _, upHandled := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyCtrlB})
+	_, _, downHandled := app.handleDetailScroll(keytest.Press("ctrl+f"))
+	_, _, upHandled := app.handleDetailScroll(keytest.Press("ctrl+b"))
 
 	if !downHandled || !upHandled {
 		t.Errorf("half page scroll handled = (%v,%v), want both", downHandled, upHandled)
@@ -225,12 +227,12 @@ func TestHandleHelpKeys_HalfPageNavigation(t *testing.T) {
 	app := focusApp(t)
 	app.showHelp = true
 
-	_, _ = app.handleHelpKeys(tea.KeyMsg{Type: tea.KeyCtrlD})
+	_, _ = app.handleHelpKeys(keytest.Press("ctrl+d"))
 	if app.helpCursor == 0 {
 		t.Error("ctrl+d should move the help cursor down")
 	}
 
-	_, _ = app.handleHelpKeys(tea.KeyMsg{Type: tea.KeyCtrlU})
+	_, _ = app.handleHelpKeys(keytest.Press("ctrl+u"))
 	if app.helpCursor != 0 {
 		t.Errorf("ctrl+u should move back to top, cursor = %d", app.helpCursor)
 	}
@@ -256,7 +258,7 @@ func TestHandleHelpSearchKey_UpMovesSelection(t *testing.T) {
 	app.helpSearching = true
 	app.helpCursor = 2
 
-	_, _ = app.handleHelpSearchKey(tea.KeyMsg{Type: tea.KeyUp})
+	_, _ = app.handleHelpSearchKey(keytest.Press("up"))
 
 	if app.helpCursor != 1 {
 		t.Errorf("helpCursor = %d, want 1", app.helpCursor)

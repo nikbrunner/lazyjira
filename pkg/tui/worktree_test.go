@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/git"
@@ -68,7 +68,7 @@ func TestCreateWorktreeCancelAndFailure(t *testing.T) {
 			}
 			_, _ = app.handleKeyMsg(runeKey('W'))
 			if scenario == "cancel" {
-				_, cancel := app.inputModal.Update(tea.KeyMsg{Type: tea.KeyEsc})
+				_, cancel := app.inputModal.Update(keytest.Press("esc"))
 				_, _ = app.Update(cancel())
 			} else {
 				if scenario == "occupied path" {
@@ -76,7 +76,7 @@ func TestCreateWorktreeCancelAndFailure(t *testing.T) {
 						t.Fatal(err)
 					}
 				}
-				_, confirm := app.inputModal.Update(tea.KeyMsg{Type: tea.KeyEnter})
+				_, confirm := app.inputModal.Update(keytest.Press("enter"))
 				msg := confirm().(components.InputConfirmedMsg)
 				msg.Text = path
 				_, cmd := app.Update(msg)
@@ -122,7 +122,7 @@ func TestCreateWorktreeConfiguredNamesFromLinkedCheckout(t *testing.T) {
 	app.cfg.Git.WorktreeFormat = "{{.RepoName}}_{{.Key}}"
 	app.issuesList.SetIssues([]jira.Issue{{Key: "PROJ-1", Summary: "Task"}})
 	_, _ = app.handleKeyMsg(runeKey('W'))
-	_, confirm := app.inputModal.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, confirm := app.inputModal.Update(keytest.Press("enter"))
 	if confirm == nil {
 		t.Fatal("expected destination prompt in detail panel")
 	}
@@ -175,7 +175,7 @@ func TestCreateWorktreeFlow(t *testing.T) {
 	if git.BranchExists(repo, worktreeBranch) {
 		t.Fatal("branch created before destination confirmation")
 	}
-	_, confirm := app.inputModal.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, confirm := app.inputModal.Update(keytest.Press("enter"))
 	if confirm == nil {
 		t.Fatal("expected destination prompt")
 	}

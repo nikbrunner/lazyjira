@@ -1,18 +1,8 @@
 package components
 
 import (
-	"os"
 	"regexp"
-	"testing"
-
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
-
-func TestMain(m *testing.M) {
-	lipgloss.SetColorProfile(termenv.ANSI256)
-	os.Exit(m.Run())
-}
 
 const (
 	testTitle        = "Test Title"

@@ -4,9 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
-
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -190,11 +187,8 @@ func TestInfoPanel_View_FieldsTab_ShowsStatus(t *testing.T) {
 	}
 }
 
-//nolint:paralleltest // The terminal color profile is process-wide.
 func TestInfoPanel_View_AuthorValuesUseTerminalForeground(t *testing.T) {
-	profile := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.ANSI)
-	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+	t.Parallel()
 
 	panel := NewInfoPanel()
 	panel.SetIssue(&jira.Issue{

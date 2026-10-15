@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -263,8 +265,10 @@ func TestCreateForm_TypeChangeKeepsTextAndMatchingFields(t *testing.T) {
 	app := newCreateTypeApp(t, nil)
 	_, cmd := app.startCreateIssue()
 	drive(app, cmd)
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Crash on login")})
+	app.createForm.Intercept(keytest.Press("tab"))
+	for _, key := range keytest.Type("Crash on login") {
+		app.createForm.Intercept(key)
+	}
 	app.createForm.SetDescriptionText("steps")
 	for i := 0; app.createForm.FieldAt(i) != nil; i++ {
 		switch app.createForm.FieldAt(i).FieldID {
@@ -283,7 +287,7 @@ func TestCreateForm_TypeChangeKeepsTextAndMatchingFields(t *testing.T) {
 	if hasField(app, "customfield_bug") || !hasField(app, "customfield_story") {
 		t.Error("fields should follow Story's createmeta")
 	}
-	cmd, _ = app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
+	cmd, _ = app.createForm.Intercept(keytest.Press("ctrl+s"))
 	submit, ok := cmd().(components.CreateFormSubmitMsg)
 	if !ok {
 		t.Fatalf("ctrl+s = %T, want submit", cmd())

@@ -4,8 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -79,7 +80,7 @@ func TestIssueLookupMergesJiraAndLoadedSuggestions(t *testing.T) {
 	app := newLookupApp(t)
 	app.issueCache["PLAT-11"] = &jira.Issue{Key: "PLAT-11", Summary: "cached"}
 	pressKey(app, "#")
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("1")})
+	_, _ = app.Update(keytest.Press("1"))
 
 	app.handleIssueSuggestionsLoaded(issueSuggestionsLoadedMsg{
 		query:       testProject + "-1",

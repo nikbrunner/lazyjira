@@ -8,13 +8,14 @@ import (
 	"sync"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/git"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
@@ -528,13 +529,33 @@ func (a *App) Init() tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if a.searchBar.IsActive() {
-		if km, ok := msg.(tea.KeyMsg); ok && km.Type != tea.KeyUp && km.Type != tea.KeyDown && km.Type != tea.KeyCtrlJ && km.Type != tea.KeyCtrlK {
-			updated, cmd := a.searchBar.Update(msg)
-			a.searchBar = updated
-			return a, cmd
+// interceptSearchBar sends typed and pasted text to the active search bar.
+// Up and down keys pass through so the filtered list stays navigable.
+func (a *App) interceptSearchBar(msg tea.Msg) (tea.Cmd, bool) {
+	if !a.searchBar.IsActive() {
+		return nil, false
+	}
+	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
+		switch keyname.Of(keyname.WithoutAlt(msg)) {
+		case "up", "down", components.KeyCtrlJ, components.KeyCtrlK:
+			return nil, false
 		}
+	case tea.PasteMsg:
+	default:
+		return nil, false
+	}
+	updated, cmd := a.searchBar.Update(msg)
+	a.searchBar = updated
+	return cmd, true
+}
+
+func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if key, ok := msg.(tea.KeyPressMsg); ok {
+		msg = keyname.Fold(key)
+	}
+	if cmd, ok := a.interceptSearchBar(msg); ok {
+		return a, cmd
 	}
 
 	if cmd, ok := a.overlays.Intercept(msg); ok {
@@ -551,7 +572,12 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a.handleResize(msg)
 	case tea.MouseMsg:
 		return a.handleMouse(msg)
-	case tea.KeyMsg:
+	case tea.PasteMsg:
+		if a.showHelp && a.helpSearching {
+			a.updateHelpSearch(msg)
+		}
+		return a, nil
+	case tea.KeyPressMsg:
 		if m, cmd := a.handleKeyMsg(msg); m != nil {
 			return m, cmd
 		}
@@ -840,7 +866,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (a *App) openProjectPicker() {
 	if a.searchBar.IsActive() {
-		updated, cancelCmd := a.searchBar.Update(tea.KeyMsg{Type: tea.KeyEsc})
+		updated, cancelCmd := a.searchBar.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 		a.searchBar = updated
 		if cancelCmd != nil {
 			a.handleSearchCancelled()
@@ -900,7 +926,14 @@ func (a *App) renderCreateHeader() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, project, a.statusPanel.UnfocusedView(a.width-sideW, statusHeight))
 }
 
-func (a *App) View() string {
+func (a *App) View() tea.View {
+	v := tea.NewView(a.render())
+	v.AltScreen = true
+	v.MouseMode = tea.MouseModeCellMotion
+	return v
+}
+
+func (a *App) render() string {
 	if a.width == 0 {
 		return "Loading..."
 	}

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
@@ -112,7 +112,7 @@ func TestIssuesList_Update_UnfocusedNoCmd(t *testing.T) {
 	list.SetIssues([]jira.Issue{{Key: testKey}, {Key: testKey2}})
 	list.SetFocused(false)
 	list.ResolveNav = navResolverForIssues
-	_, cmd := list.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, cmd := list.Update(keytest.Press("j"))
 	if cmd != nil {
 		t.Error("unfocused Update should return nil cmd")
 	}
@@ -121,7 +121,7 @@ func TestIssuesList_Update_UnfocusedNoCmd(t *testing.T) {
 func TestIssuesList_Update_FocusedNavEmitsSelected(t *testing.T) {
 	t.Parallel()
 	list := makeFocusedIssuesList([]jira.Issue{{Key: testKey}, {Key: testKey2}})
-	_, cmd := list.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, cmd := list.Update(keytest.Press("j"))
 	if cmd == nil {
 		t.Fatal("focused nav should emit a Cmd")
 	}
@@ -136,7 +136,7 @@ func TestIssuesList_Update_FocusedNavEmitsSelected(t *testing.T) {
 func TestIssuesList_Update_NonNavKeyNoCmd(t *testing.T) {
 	t.Parallel()
 	list := makeFocusedIssuesList([]jira.Issue{{Key: testKey}})
-	_, cmd := list.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	_, cmd := list.Update(keytest.Press("x"))
 	if cmd != nil {
 		t.Error("non-nav key should return nil cmd")
 	}

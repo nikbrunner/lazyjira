@@ -1,11 +1,12 @@
 package views
 
 import (
+	"image/color"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
@@ -351,7 +352,7 @@ func TestHeadingStyle_Levels(t *testing.T) {
 
 	tests := []struct {
 		level int
-		want  lipgloss.TerminalColor
+		want  color.Color
 	}{
 		{1, theme.ColorGreen},
 		{2, theme.ColorGreen},

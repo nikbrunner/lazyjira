@@ -4,9 +4,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -67,9 +68,16 @@ func (t *TextInput) InsertAtCursor(s string) {
 	t.cursor += len(inserted)
 }
 
-// Update handles key events and returns the updated TextInput and whether the value changed
+// Update handles key and paste events and returns the updated TextInput and whether the value changed
 func (t *TextInput) Update(msg tea.Msg) (TextInput, bool) {
-	km, ok := msg.(tea.KeyMsg)
+	if pm, ok := msg.(tea.PasteMsg); ok {
+		if pm.Content == "" {
+			return *t, false
+		}
+		t.InsertAtCursor(pm.Content)
+		return *t, true
+	}
+	km, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return *t, false
 	}
@@ -77,28 +85,29 @@ func (t *TextInput) Update(msg tea.Msg) (TextInput, bool) {
 	runes := []rune(t.value)
 	runeLen := len(runes)
 
-	switch km.Type {
-	case tea.KeyLeft:
+	km = keyname.WithoutAlt(km)
+	switch keyname.Of(km) {
+	case "left":
 		if t.cursor > 0 {
 			t.cursor--
 		}
 		return *t, false
 
-	case tea.KeyRight:
+	case "right":
 		if t.cursor < runeLen {
 			t.cursor++
 		}
 		return *t, false
 
-	case tea.KeyHome:
+	case "home":
 		t.cursor = 0
 		return *t, false
 
-	case tea.KeyEnd:
+	case "end":
 		t.cursor = runeLen
 		return *t, false
 
-	case tea.KeyBackspace:
+	case keyBackspace:
 		if t.cursor > 0 {
 			t.value = string(runes[:t.cursor-1]) + string(runes[t.cursor:])
 			t.cursor--
@@ -106,22 +115,22 @@ func (t *TextInput) Update(msg tea.Msg) (TextInput, bool) {
 		}
 		return *t, false
 
-	case tea.KeyDelete:
+	case "delete":
 		if t.cursor < runeLen {
 			t.value = string(runes[:t.cursor]) + string(runes[t.cursor+1:])
 			return *t, true
 		}
 		return *t, false
 
-	case tea.KeyCtrlA:
+	case "ctrl+a":
 		t.cursor = 0
 		return *t, false
 
-	case tea.KeyCtrlE:
+	case "ctrl+e":
 		t.cursor = runeLen
 		return *t, false
 
-	case tea.KeyCtrlW:
+	case "ctrl+w":
 		if t.cursor == 0 {
 			return *t, false
 		}
@@ -136,14 +145,14 @@ func (t *TextInput) Update(msg tea.Msg) (TextInput, bool) {
 		t.cursor = i
 		return *t, true
 
-	case tea.KeyCtrlK:
+	case KeyCtrlK:
 		if t.cursor < runeLen {
 			t.value = string(runes[:t.cursor])
 			return *t, true
 		}
 		return *t, false
 
-	case tea.KeyCtrlU:
+	case keyCtrlU:
 		if t.cursor > 0 {
 			t.value = string(runes[t.cursor:])
 			t.cursor = 0
@@ -151,17 +160,13 @@ func (t *TextInput) Update(msg tea.Msg) (TextInput, bool) {
 		}
 		return *t, false
 
-	case tea.KeySpace:
-		t.InsertAtCursor(" ")
-		return *t, true
-
-	case tea.KeyRunes:
-		s := km.String()
-		t.InsertAtCursor(s)
-		return *t, true
-
 	default:
-		return *t, false
+		text := keyname.Text(km)
+		if text == "" {
+			return *t, false
+		}
+		t.InsertAtCursor(text)
+		return *t, true
 	}
 }
 

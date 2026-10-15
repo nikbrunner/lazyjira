@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -35,7 +35,7 @@ func TestView_LoadingBeforeWidthSet(t *testing.T) {
 	t.Parallel()
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 
-	output := app.View()
+	output := app.View().Content
 
 	if output != "Loading..." {
 		t.Errorf("expected Loading..., got %q", output)
@@ -47,7 +47,7 @@ func TestView_HorizontalLayout(t *testing.T) {
 	app := appForView(t)
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey, Summary: testSummary}})
 
-	output := app.View()
+	output := app.View().Content
 
 	if output == "" {
 		t.Fatal("View() returned empty string")
@@ -80,7 +80,7 @@ func TestView_UsableTerminalRendersEveryCell(t *testing.T) {
 			app.keymap = DefaultKeymap()
 			app.issuesList.SetIssues([]jira.Issue{{Key: "RENDER-1", Summary: "Layout sample"}})
 			app = resizeViewApp(t, app, size.width, size.height)
-			output := ansi.Strip(app.View())
+			output := ansi.Strip(app.View().Content)
 			if strings.Contains(output, "terminal too small") {
 				t.Fatalf("%dx%d render unexpectedly reports too small", size.width, size.height)
 			}
@@ -131,11 +131,11 @@ func TestView_IssueColumnsAtMeasuredMinimum(t *testing.T) {
 			}})
 			required := app.minimumTerminalWidth()
 			app = resizeViewApp(t, app, required-1, 24)
-			if output := ansi.Strip(app.View()); !strings.Contains(output, "terminal too small") || !strings.Contains(output, fmt.Sprintf("%d×%d", required, minHeight)) {
+			if output := ansi.Strip(app.View().Content); !strings.Contains(output, "terminal too small") || !strings.Contains(output, fmt.Sprintf("%d×%d", required, minHeight)) {
 				t.Fatalf("render below minimum = %q, want too-small message for %d×%d", output, required, minHeight)
 			}
 			app = resizeViewApp(t, app, required, 24)
-			output := ansi.Strip(app.View())
+			output := ansi.Strip(app.View().Content)
 			if strings.Contains(output, "terminal too small") {
 				t.Fatalf("render at minimum still reports too small: %q", output)
 			}
@@ -154,22 +154,22 @@ func TestView_TooSmallTerminalAndResizeRecovery(t *testing.T) {
 	app.keymap = DefaultKeymap()
 	app = resizeViewApp(t, app, 60, 40)
 
-	if output := plain(app.View()); !strings.Contains(output, "terminal too small") {
+	if output := plain(app.View().Content); !strings.Contains(output, "terminal too small") {
 		t.Fatalf("narrow terminal view = %q, want size message", output)
 	}
 
 	for _, height := range []int{19, 20} {
 		app = resizeViewApp(t, app, 80, height)
-		if output := plain(app.View()); !strings.Contains(output, "terminal too small") {
+		if output := plain(app.View().Content); !strings.Contains(output, "terminal too small") {
 			t.Fatalf("%d-row terminal view = %q, want size message", height, output)
 		}
 	}
 	app = resizeViewApp(t, app, 80, 21)
-	if output := plain(app.View()); strings.Contains(output, "terminal too small") {
+	if output := plain(app.View().Content); strings.Contains(output, "terminal too small") {
 		t.Fatalf("view did not recover at 21 rows: %q", output)
 	}
 	app = resizeViewApp(t, app, 80, 24)
-	if output := app.View(); strings.Contains(plain(output), "terminal too small") {
+	if output := app.View().Content; strings.Contains(plain(output), "terminal too small") {
 		t.Fatalf("view did not recover after resize: %q", output)
 	}
 }
@@ -179,7 +179,7 @@ func TestView_ShowHelpOverlay(t *testing.T) {
 	app := appForView(t)
 	app.showHelp = true
 
-	output := app.View()
+	output := app.View().Content
 
 	stripped := plain(output)
 	if stripped == "" {
@@ -193,7 +193,7 @@ func TestView_ShowHelpOverlay_WithFilter(t *testing.T) {
 	app.showHelp = true
 	app.helpFilter = string(ActQuit)
 
-	output := app.View()
+	output := app.View().Content
 
 	stripped := plain(output)
 	if stripped == "" {
@@ -237,7 +237,7 @@ func TestView_NoPanic_AllFocusStates(t *testing.T) {
 			testCase.setup(app)
 			app.updateFocusState()
 
-			output := app.View()
+			output := app.View().Content
 			if output == "" {
 				t.Error("View() returned empty string")
 			}

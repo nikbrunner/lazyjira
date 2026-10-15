@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/lipgloss/v2"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
-	"github.com/charmbracelet/lipgloss"
 
 	adfconv "github.com/seflue/adf-converter/adf"
 	adfdisplay "github.com/seflue/adf-converter/display"
@@ -345,7 +345,7 @@ func applyMarks(text string, marks []any) string {
 		case "textColor":
 			if attrs, ok := mark["attrs"].(map[string]any); ok {
 				if color, ok := attrs["color"].(string); ok && theme.ValidColor(color) {
-					text = lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Render(text)
+					text = lipgloss.NewStyle().Foreground(theme.Color(color)).Render(text)
 				}
 			}
 		}

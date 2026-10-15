@@ -9,8 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -66,7 +68,7 @@ func openEdit(t *testing.T, app *App) {
 }
 
 func save(app *App) {
-	cmd, _ := app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyCtrlS})
+	cmd, _ := app.createForm.Intercept(keytest.Press("ctrl+s"))
 	drive(app, cmd)
 }
 
@@ -99,8 +101,10 @@ func TestEditSave_SendsOnlyChangedFields(t *testing.T) {
 	t.Parallel()
 	app, fake := newEditApp(t, editableIssue(), nil)
 	openEdit(t, app)
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" now")})
+	app.createForm.Intercept(keytest.Press("tab"))
+	for _, key := range keytest.Type(" now") {
+		app.createForm.Intercept(key)
+	}
 
 	save(app)
 
@@ -166,8 +170,8 @@ func TestEditSave_UpdateErrorKeepsViewOpen(t *testing.T) {
 	t.Parallel()
 	app, _ := newEditApp(t, editableIssue(), errors.New("field priority is not on the screen"))
 	openEdit(t, app)
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("!")})
+	app.createForm.Intercept(keytest.Press("tab"))
+	app.createForm.Intercept(keytest.Press("!"))
 
 	save(app)
 
@@ -194,9 +198,9 @@ func TestEditSave_UploadsImagesAfterUpdate(t *testing.T) {
 		return nil
 	}
 	openEdit(t, app)
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyTab})
-	app.createForm.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(good + " " + bad), Paste: true})
+	app.createForm.Intercept(keytest.Press("tab"))
+	app.createForm.Intercept(keytest.Press("tab"))
+	app.createForm.Intercept(tea.PasteMsg{Content: good + " " + bad})
 
 	save(app)
 
@@ -255,7 +259,7 @@ func TestCreateIssue_HeaderShowsProjectAboveForm(t *testing.T) {
 	_, cmd := app.startCreateIssue()
 	drive(app, cmd)
 
-	lines := strings.Split(ansi.Strip(app.View()), "\n")
+	lines := strings.Split(ansi.Strip(app.View().Content), "\n")
 	header := strings.Join(lines[:3], "\n")
 	if !strings.Contains(lines[0], "Project") || !strings.Contains(lines[1], testProject+" · Platform") {
 		t.Errorf("the header should name the project:\n%s", header)

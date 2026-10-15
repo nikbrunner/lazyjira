@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/git"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -84,7 +84,7 @@ func (a *App) handleConfirmAccepted() (tea.Model, tea.Cmd) {
 
 // handleEditorFinished processes $EDITOR exit and shows diff view
 func (a *App) handleEditorFinished(msg editorFinishedMsg) (tea.Model, tea.Cmd) {
-	cmds := []tea.Cmd{tea.EnableMouseCellMotion}
+	var cmds []tea.Cmd
 	content, changed, err := readAndCheckEditor(msg)
 
 	// create form description: skip diff view, put the raw text back

@@ -1,9 +1,8 @@
 package views
 
 import (
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/nikbrunner/lazyjira/pkg/config"
+	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 const (
@@ -13,7 +12,7 @@ const (
 )
 
 func ResolveGlamourStyle(style string) string {
-	return resolveGlamourStyle(style, lipgloss.HasDarkBackground)
+	return resolveGlamourStyle(style, theme.IsDark)
 }
 
 func resolveGlamourStyle(style string, hasDarkBackground func() bool) string {

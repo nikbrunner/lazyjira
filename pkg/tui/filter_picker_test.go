@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -31,10 +31,10 @@ func newFilterPickerApp(t *testing.T) *App {
 
 func pressKey(a *App, key string) {
 	if key == "esc" {
-		a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+		a.handleKeyMsg(keytest.Press("esc"))
 		return
 	}
-	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(key)})
+	a.handleKeyMsg(keytest.Press(key))
 }
 
 func TestFilterPicker_AppliesCheckedValues(t *testing.T) {
@@ -139,7 +139,7 @@ func TestFilterPicker_TitleCountsResultingIssues(t *testing.T) {
 		t.Errorf("title = %q, want Filter issues · 3 of 3", got)
 	}
 
-	a.modal, _ = a.modal.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}})
+	a.modal, _ = a.modal.Update(keytest.Press(" "))
 	if got := a.modal.Title(); got != "Filter issues · 2 of 3" {
 		t.Errorf("title after checking In Progress = %q, want Filter issues · 2 of 3", got)
 	}

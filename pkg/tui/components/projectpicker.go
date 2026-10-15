@@ -4,10 +4,11 @@ import (
 	"strings"
 	"unicode"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -55,16 +56,15 @@ func (p *ProjectPicker) Update(msg tea.Msg) (ProjectPicker, tea.Cmd) {
 	if !p.visible {
 		return *p, nil
 	}
-	key, ok := msg.(tea.KeyMsg)
+	if paste, ok := msg.(tea.PasteMsg); ok {
+		p.typeText(paste.Content)
+		return *p, nil
+	}
+	key, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return *p, nil
 	}
-	if key.Type == tea.KeySpace {
-		p.query += " "
-		p.applyFilter()
-		return *p, nil
-	}
-	switch key.String() {
+	switch keyname.Of(key) {
 	case keyEsc:
 		p.visible = false
 		return *p, func() tea.Msg { return ProjectPickerCancelledMsg{} }
@@ -85,16 +85,22 @@ func (p *ProjectPicker) Update(msg tea.Msg) (ProjectPicker, tea.Cmd) {
 			p.applyFilter()
 		}
 	default:
-		if key.Type == tea.KeyRunes && len(key.Runes) > 0 {
-			for _, r := range key.Runes {
-				if unicode.IsPrint(r) {
-					p.query += string(r)
-				}
-			}
-			p.applyFilter()
-		}
+		p.typeText(keyname.Text(keyname.WithoutAlt(key)))
 	}
 	return *p, nil
+}
+
+// typeText appends the printable characters of text to the filter query.
+func (p *ProjectPicker) typeText(text string) {
+	if text == "" {
+		return
+	}
+	for _, r := range text {
+		if unicode.IsPrint(r) {
+			p.query += string(r)
+		}
+	}
+	p.applyFilter()
 }
 
 func (p *ProjectPicker) move(delta int) {
@@ -161,7 +167,9 @@ func (p *ProjectPicker) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	if _, ok := msg.(tea.MouseMsg); ok {
 		return nil, true
 	}
-	if _, ok := msg.(tea.KeyMsg); !ok {
+	switch msg.(type) {
+	case tea.KeyPressMsg, tea.PasteMsg:
+	default:
 		return nil, false
 	}
 	updated, cmd := p.Update(msg)

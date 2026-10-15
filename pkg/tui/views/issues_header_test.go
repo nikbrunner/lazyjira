@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/termenv"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
@@ -46,8 +45,8 @@ func TestIssuesList_SummaryUsesTerminalForeground(t *testing.T) {
 	list := NewIssuesList()
 	for _, column := range list.issueColumns(80) {
 		if column.field == fieldSummary {
-			if column.color != lipgloss.Color("-1") {
-				t.Errorf("summary color = %q, want terminal default foreground", column.color)
+			if column.color != (lipgloss.NoColor{}) {
+				t.Errorf("summary color = %v, want terminal default foreground", column.color)
 			}
 			return
 		}
@@ -258,11 +257,8 @@ func TestIssuesList_HeaderFitsSmallPanels(t *testing.T) {
 	}
 }
 
-//nolint:paralleltest // The terminal color profile is process-wide.
 func TestIssuesList_ColumnColorsUseANSIForHeadersAndValues(t *testing.T) {
-	profile := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.ANSI)
-	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+	t.Parallel()
 	list := NewIssuesList()
 	list.SetFields([]string{"key", "status", "type", "priority", "summary", "assignee", "updated"})
 	list.SetIssues([]jira.Issue{{Key: "A-1", Summary: "Example", Status: &jira.Status{CategoryKey: "indeterminate"}, IssueType: &jira.IssueType{Name: "Task"}, Priority: &jira.Priority{Name: "High"}, Assignee: &jira.User{DisplayName: "Alice"}, Updated: time.Now().Add(-2 * time.Hour)}})

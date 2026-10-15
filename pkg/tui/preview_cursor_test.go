@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -73,7 +73,7 @@ func TestPreviewFollowsCursor_InfoSubtasks_ExistingPath(t *testing.T) {
 	app.infoPanel.SetFocused(true)
 	app.infoPanel.ResolveNav = navResolverJK
 
-	_, cmd := app.infoPanel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	_, cmd := app.infoPanel.Update(keytest.Press("j"))
 	if cmd == nil {
 		t.Fatal("expected PreviewRequestMsg cmd from Subtasks cursor move, got nil")
 	}
@@ -106,7 +106,7 @@ func TestPreviewFollowsCursor_InfoLinks_ExistingPath(t *testing.T) {
 	app.infoPanel.SetFocused(true)
 	app.infoPanel.ResolveNav = navResolverJK
 
-	_, cmd := app.infoPanel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}})
+	_, cmd := app.infoPanel.Update(keytest.Press("j"))
 	if cmd == nil {
 		t.Fatal("expected PreviewRequestMsg cmd from Links cursor move, got nil")
 	}

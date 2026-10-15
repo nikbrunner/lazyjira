@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -666,7 +666,7 @@ func TestHierarchy_Esc_OutsideHierarchyTab(t *testing.T) {
 	a.issuesList.SetTabs([]config.IssueTabConfig{{Name: "My", JQL: ""}})
 	a.side = sideRight
 
-	_, _ = a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	_, _ = a.handleKeyMsg(keytest.Press("esc"))
 
 	if a.side != sideLeft {
 		t.Errorf("a.side = %v, want sideLeft (default Esc behavior)", a.side)
@@ -721,7 +721,7 @@ func TestShowChildrenKey_OpensHierarchyTab(t *testing.T) {
 	a.leftFocus = focusIssues
 	a.issuesList.SetIssues([]jira.Issue{{Key: "A1", Subtasks: []jira.Issue{{Key: "S1"}}}})
 
-	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(">")})
+	a.handleKeyMsg(keytest.Press(">"))
 
 	if !a.issuesList.IsHierarchyTab() {
 		t.Fatal("> should open the children hierarchy tab")
@@ -750,7 +750,7 @@ func TestShowChildren_IgnoresLocalFilterAndRestoresItOnBack(t *testing.T) {
 	a.issuesList.SetFilter("V1")
 	a.issuesList.Cursor = 1
 
-	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(">")})
+	a.handleKeyMsg(keytest.Press(">"))
 
 	if a.issuesList.IsFiltered() {
 		t.Errorf("children tab kept filter %q", a.issuesList.Filter())
@@ -759,7 +759,7 @@ func TestShowChildren_IgnoresLocalFilterAndRestoresItOnBack(t *testing.T) {
 		t.Errorf("children shown = %d, want 3", got)
 	}
 
-	a.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	a.handleKeyMsg(keytest.Press("esc"))
 
 	if a.issuesList.IsHierarchyTab() {
 		t.Fatal("esc should leave the children tab")

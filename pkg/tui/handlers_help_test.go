@@ -3,7 +3,9 @@ package tui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -30,7 +32,7 @@ func TestHandleDetailScroll_Down(t *testing.T) {
 	app.height = 40
 	app.layoutPanels()
 
-	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyCtrlD})
+	_, _, ok := app.handleDetailScroll(keytest.Press("ctrl+d"))
 
 	if !ok {
 		t.Error("detail scroll down should be handled")
@@ -45,7 +47,7 @@ func TestHandleDetailScroll_Up(t *testing.T) {
 	app.height = 40
 	app.layoutPanels()
 
-	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyCtrlU})
+	_, _, ok := app.handleDetailScroll(keytest.Press("ctrl+u"))
 
 	if !ok {
 		t.Error("detail scroll up should be handled")
@@ -57,7 +59,7 @@ func TestHandleDetailScroll_UnknownKey(t *testing.T) {
 	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 	app.keymap = DefaultKeymap()
 
-	_, _, ok := app.handleDetailScroll(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'z'}})
+	_, _, ok := app.handleDetailScroll(keytest.Press("z"))
 
 	if ok {
 		t.Error("unknown key should not be handled by handleDetailScroll")
@@ -69,13 +71,13 @@ func TestHandleHelpKeys(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		key          tea.KeyMsg
+		key          tea.KeyPressMsg
 		initialState func(app *App)
 		assert       func(t *testing.T, app *App)
 	}{
 		{
 			name: "q closes help overlay",
-			key:  tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}},
+			key:  keytest.Press("q"),
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
 				if app.showHelp {
@@ -85,7 +87,7 @@ func TestHandleHelpKeys(t *testing.T) {
 		},
 		{
 			name: "esc closes help overlay",
-			key:  tea.KeyMsg{Type: tea.KeyEsc},
+			key:  keytest.Press("esc"),
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
 				if app.showHelp {
@@ -95,7 +97,7 @@ func TestHandleHelpKeys(t *testing.T) {
 		},
 		{
 			name: "slash enters search mode",
-			key:  tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}},
+			key:  keytest.Press("/"),
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
 				if !app.helpSearching {
@@ -105,7 +107,7 @@ func TestHandleHelpKeys(t *testing.T) {
 		},
 		{
 			name:         "j navigates down",
-			key:          tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+			key:          keytest.Press("j"),
 			initialState: func(app *App) { app.helpCursor = 0 },
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
@@ -116,7 +118,7 @@ func TestHandleHelpKeys(t *testing.T) {
 		},
 		{
 			name:         "k navigates up",
-			key:          tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
+			key:          keytest.Press("k"),
 			initialState: func(app *App) { app.helpCursor = 3 },
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
@@ -127,7 +129,7 @@ func TestHandleHelpKeys(t *testing.T) {
 		},
 		{
 			name:         "gg jumps to top",
-			key:          tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("gg")},
+			key:          tea.KeyPressMsg{Code: tea.KeyExtended, Text: "gg"},
 			initialState: func(app *App) { app.helpCursor = 10 },
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
@@ -136,7 +138,7 @@ func TestHandleHelpKeys(t *testing.T) {
 		},
 		{
 			name:         "G jumps to bottom",
-			key:          tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'G'}},
+			key:          keytest.Press("G"),
 			initialState: func(app *App) { app.helpCursor = 0 },
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
@@ -198,7 +200,7 @@ func TestHandleHelpSearchKey_EscClearsSearch(t *testing.T) {
 	app.helpSearching = true
 	app.helpFilter = "something"
 
-	app.handleHelpSearchKey(tea.KeyMsg{Type: tea.KeyEsc})
+	app.handleHelpSearchKey(keytest.Press("esc"))
 
 	if app.helpSearching {
 		t.Error("esc should exit help search mode")
@@ -214,7 +216,7 @@ func TestHandleHelpSearchKey_EnterConfirms(t *testing.T) {
 	app.helpSearching = true
 	app.helpCursor = 0
 
-	app.handleHelpSearchKey(tea.KeyMsg{Type: tea.KeyEnter})
+	app.handleHelpSearchKey(keytest.Press("enter"))
 
 	if app.helpSearching {
 		t.Error("enter should confirm search and exit search mode")
@@ -228,7 +230,7 @@ func TestHandleHelpSearchKey_DownMovesSelection(t *testing.T) {
 	app.helpFilter = ""
 	app.helpCursor = 0
 
-	app.handleHelpSearchKey(tea.KeyMsg{Type: tea.KeyDown})
+	app.handleHelpSearchKey(keytest.Press("down"))
 
 	if app.helpCursor != 1 {
 		t.Errorf("helpCursor = %d, want 1 after search key down", app.helpCursor)

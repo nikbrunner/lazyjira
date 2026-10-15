@@ -4,7 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -57,9 +59,9 @@ func TestDiffView_UpdateScrollsWithJK(t *testing.T) {
 	d := NewDiffView()
 	d.SetSize(80, 10)
 	d.Show(testTitle, strings.Repeat("line\n", 30), strings.Repeat("line\n", 30)+"extra")
-	d, _ = d.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	d, _ = d.Update(keytest.Press("j"))
 	testkit.AssertEqual(t, "offset increased", d.offset, 1)
-	d, _ = d.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
+	d, _ = d.Update(keytest.Press("k"))
 	testkit.AssertEqual(t, "offset back to zero", d.offset, 0)
 }
 
@@ -68,7 +70,7 @@ func TestDiffView_UpdateConfirmSendsMsg(t *testing.T) {
 	d := NewDiffView()
 	d.SetSize(80, 24)
 	d.Show(testTitle, "old", "new")
-	d, cmd := d.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	d, cmd := d.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "hidden after confirm", d.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected command from confirm")
@@ -86,7 +88,7 @@ func TestDiffView_UpdateCancelSendsMsg(t *testing.T) {
 	d := NewDiffView()
 	d.SetSize(80, 24)
 	d.Show(testTitle, "old", "new")
-	d, cmd := d.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	d, cmd := d.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "hidden after cancel", d.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected command from cancel")
@@ -101,10 +103,10 @@ func TestDiffView_UpdateScrollCtrlDU(t *testing.T) {
 	d := NewDiffView()
 	d.SetSize(80, 20)
 	d.Show(testTitle, strings.Repeat("x\n", 50), strings.Repeat("x\n", 50)+"y")
-	d, _ = d.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("ctrl+d")})
+	d, _ = d.Update(keytest.Press("ctrl+d"))
 	testkit.AssertEqual(t, "ctrl+d increases offset", d.offset > 0, true)
 	saved := d.offset
-	d, _ = d.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("ctrl+u")})
+	d, _ = d.Update(keytest.Press("ctrl+u"))
 	testkit.AssertEqual(t, "ctrl+u decreases offset", d.offset < saved, true)
 }
 
@@ -113,9 +115,9 @@ func TestDiffView_UpdateMouseWheel(t *testing.T) {
 	d := NewDiffView()
 	d.SetSize(80, 20)
 	d.Show(testTitle, strings.Repeat("a\n", 30), strings.Repeat("a\n", 30)+"b")
-	d, _ = d.Update(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
+	d, _ = d.Update(tea.MouseWheelMsg{Button: tea.MouseWheelDown})
 	testkit.AssertEqual(t, "wheel down increases offset", d.offset, 1)
-	d, _ = d.Update(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
+	d, _ = d.Update(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
 	testkit.AssertEqual(t, "wheel up decreases offset", d.offset, 0)
 }
 
@@ -123,7 +125,7 @@ func TestDiffView_UpdateInvisibleIsNoop(t *testing.T) {
 	t.Parallel()
 	d := NewDiffView()
 	d.SetSize(80, 24)
-	d2, cmd := d.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	d2, cmd := d.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "still invisible", d2.IsVisible(), false)
 	testkit.AssertEqual(t, "no command", cmd == nil, true)
 }
@@ -133,14 +135,14 @@ func TestDiffView_InterceptConsumesKeyWhenVisible(t *testing.T) {
 	d := NewDiffView()
 	d.SetSize(80, 24)
 	d.Show(testTitle, "old", "new")
-	_, consumed := d.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, consumed := d.Intercept(keytest.Press("j"))
 	testkit.AssertEqual(t, "key consumed", consumed, true)
 }
 
 func TestDiffView_InterceptPassesThroughWhenHidden(t *testing.T) {
 	t.Parallel()
 	d := NewDiffView()
-	_, consumed := d.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, consumed := d.Intercept(keytest.Press("j"))
 	testkit.AssertEqual(t, "not consumed when hidden", consumed, false)
 }
 

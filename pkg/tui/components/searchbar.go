@@ -1,9 +1,10 @@
 package components
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -45,24 +46,27 @@ func (s *SearchBar) Update(msg tea.Msg) (SearchBar, tea.Cmd) {
 		return *s, nil
 	}
 
-	if km, ok := msg.(tea.KeyMsg); ok {
-		switch km.Type {
-		case tea.KeyEnter:
+	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
+		switch keyname.Of(keyname.WithoutAlt(msg)) {
+		case keyEnter:
 			s.active = false
 			q := s.input.Value()
 			return *s, func() tea.Msg { return SearchConfirmedMsg{Query: q} }
-		case tea.KeyEsc:
+		case keyEsc:
 			s.active = false
 			s.input.SetValue("")
 			return *s, func() tea.Msg { return SearchCancelledMsg{} }
-		default:
-			updated, changed := s.input.Update(msg)
-			s.input = updated
-			if changed {
-				q := s.input.Value()
-				return *s, func() tea.Msg { return SearchChangedMsg{Query: q} }
-			}
 		}
+	case tea.PasteMsg:
+	default:
+		return *s, nil
+	}
+	updated, changed := s.input.Update(msg)
+	s.input = updated
+	if changed {
+		q := s.input.Value()
+		return *s, func() tea.Msg { return SearchChangedMsg{Query: q} }
 	}
 	return *s, nil
 }

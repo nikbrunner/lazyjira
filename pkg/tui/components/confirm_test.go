@@ -4,8 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -13,14 +15,14 @@ import (
 func TestConfirmModal_Answers(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		key  tea.KeyMsg
+		key  tea.KeyPressMsg
 		want tea.Msg
 	}{
-		{tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")}, ConfirmAcceptedMsg{}},
-		{tea.KeyMsg{Type: tea.KeyEnter}, ConfirmAcceptedMsg{}},
-		{tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")}, ConfirmCancelledMsg{}},
-		{tea.KeyMsg{Type: tea.KeyEsc}, ConfirmCancelledMsg{}},
-		{tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}, ConfirmCancelledMsg{}},
+		{keytest.Press("y"), ConfirmAcceptedMsg{}},
+		{keytest.Press("enter"), ConfirmAcceptedMsg{}},
+		{keytest.Press("n"), ConfirmCancelledMsg{}},
+		{keytest.Press("esc"), ConfirmCancelledMsg{}},
+		{keytest.Press("q"), ConfirmCancelledMsg{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.key.String(), func(t *testing.T) {
@@ -45,7 +47,7 @@ func TestConfirmModal_OtherKeysAreSwallowed(t *testing.T) {
 	c := NewConfirmModal()
 	c.Show("Open 23 browser tabs?")
 
-	cmd, ok := c.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	cmd, ok := c.Intercept(keytest.Press("j"))
 
 	testkit.AssertEqual(t, "consumed", ok, true)
 	testkit.AssertEqual(t, "still visible", c.IsVisible(), true)
@@ -58,7 +60,7 @@ func TestConfirmModal_HiddenIgnoresKeys(t *testing.T) {
 	t.Parallel()
 	c := NewConfirmModal()
 
-	_, ok := c.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")})
+	_, ok := c.Intercept(keytest.Press("y"))
 
 	testkit.AssertEqual(t, "consumed", ok, false)
 }

@@ -3,7 +3,7 @@ package tui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -84,7 +84,7 @@ func TestEscInIssuesClearsKeptFilter(t *testing.T) {
 	app.leftFocus = focusIssues
 	app.issuesList.SetFilter("beta")
 
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	_, _ = app.handleKeyMsg(keytest.Press("esc"))
 
 	if app.issuesList.IsFiltered() {
 		t.Fatal("esc should clear the issues filter")
@@ -148,7 +148,7 @@ func TestRouteToPanel_ForwardsToFocusedPanel(t *testing.T) {
 		app.side = sideLeft
 		app.leftFocus = focusIssues
 
-		_ = app.routeToPanel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+		_ = app.routeToPanel(keytest.Press("j"))
 
 		if sel := app.issuesList.SelectedIssue(); sel == nil || sel.Key != "PLAT-2" {
 			t.Errorf("expected cursor to move down to PLAT-2, got %v", sel)
@@ -160,7 +160,7 @@ func TestRouteToPanel_ForwardsToFocusedPanel(t *testing.T) {
 		app := newAppWithFake(t, &jiratest.FakeClient{T: t})
 		app.side = sideRight
 
-		app.routeToPanel(tea.KeyMsg{Type: tea.KeyDown})
+		app.routeToPanel(keytest.Press("down"))
 
 		if app.side != sideRight {
 			t.Errorf("side = %v, want right after routing to detail panel", app.side)
@@ -176,7 +176,7 @@ func TestBodySearchKeyFiltersDescriptions(t *testing.T) {
 	app.side = sideLeft
 	app.leftFocus = focusIssues
 
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyCtrlG})
+	_, _ = app.handleKeyMsg(keytest.Press("ctrl+g"))
 	if !app.searchBar.IsActive() || !app.issuesList.FilterBody() {
 		t.Fatal("ctrl+g should open the search bar in body mode")
 	}
@@ -186,7 +186,7 @@ func TestBodySearchKeyFiltersDescriptions(t *testing.T) {
 	}
 
 	app.searchBar.Deactivate()
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	_, _ = app.handleKeyMsg(keytest.Press("/"))
 	if app.issuesList.FilterBody() {
 		t.Error("/ should switch the filter back to plain mode")
 	}

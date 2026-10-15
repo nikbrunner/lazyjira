@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
@@ -39,7 +39,7 @@ func (a *App) openParentLookup(issueKey string) tea.Cmd {
 
 func (a *App) showIssueLookup(title string, allowEmpty bool) tea.Cmd {
 	if a.searchBar.IsActive() {
-		updated, cancelCmd := a.searchBar.Update(tea.KeyMsg{Type: tea.KeyEsc})
+		updated, cancelCmd := a.searchBar.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 		a.searchBar = updated
 		if cancelCmd != nil {
 			a.handleSearchCancelled()

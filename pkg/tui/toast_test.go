@@ -4,14 +4,15 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func TestCopyToastDoesNotMoveHelpBarOrCaptureKeys(t *testing.T) {
 	t.Parallel()
 	app := appForView(t)
-	before := strings.Split(ansi.Strip(app.View()), "\n")
+	before := strings.Split(ansi.Strip(app.View().Content), "\n")
 
 	_, cmd := app.Update(customCommandFinishedMsg{output: "Copied: ABC-42 summary"})
 	if cmd == nil || app.toastText != "Copied: ABC-42 summary" {
@@ -20,7 +21,7 @@ func TestCopyToastDoesNotMoveHelpBarOrCaptureKeys(t *testing.T) {
 	if got := app.helpBar.View(); strings.Contains(got, "Copied:") {
 		t.Fatalf("copy output moved into help bar: %q", got)
 	}
-	lines := strings.Split(ansi.Strip(app.View()), "\n")
+	lines := strings.Split(ansi.Strip(app.View().Content), "\n")
 	if lines[len(lines)-1] != before[len(before)-1] {
 		t.Errorf("help bar moved: before %q, after %q", before[len(before)-1], lines[len(lines)-1])
 	}
@@ -28,7 +29,7 @@ func TestCopyToastDoesNotMoveHelpBarOrCaptureKeys(t *testing.T) {
 		t.Error("toast not visible")
 	}
 
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	_, _ = app.Update(keytest.Press("?"))
 	if !app.showHelp {
 		t.Error("toast captured the help key")
 	}

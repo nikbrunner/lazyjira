@@ -118,8 +118,6 @@ func TestLoad_InvalidCustomCommandTemplate(t *testing.T) {
 	}
 }
 
-func pointerTo[T any](v T) *T { return &v }
-
 func TestResolveMaxResults(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -129,12 +127,12 @@ func TestResolveMaxResults(t *testing.T) {
 		want   int
 	}{
 		{"all unset → default", nil, IssueTabConfig{}, DefaultMaxResults},
-		{"global only", pointerTo(25), IssueTabConfig{}, 25},
-		{"tab overrides global", pointerTo(25), IssueTabConfig{MaxResults: pointerTo(75)}, 75},
-		{"negative global ignored", pointerTo(-5), IssueTabConfig{}, DefaultMaxResults},
-		{"zero tab falls back to global", pointerTo(40), IssueTabConfig{MaxResults: pointerTo(0)}, 40},
-		{"large global not clamped", pointerTo(500), IssueTabConfig{}, 500},
-		{"large tab override not clamped", pointerTo(50), IssueTabConfig{MaxResults: pointerTo(1000)}, 1000},
+		{"global only", new(25), IssueTabConfig{}, 25},
+		{"tab overrides global", new(25), IssueTabConfig{MaxResults: new(75)}, 75},
+		{"negative global ignored", new(-5), IssueTabConfig{}, DefaultMaxResults},
+		{"zero tab falls back to global", new(40), IssueTabConfig{MaxResults: new(0)}, 40},
+		{"large global not clamped", new(500), IssueTabConfig{}, 500},
+		{"large tab override not clamped", new(50), IssueTabConfig{MaxResults: new(1000)}, 1000},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -155,9 +153,9 @@ func TestResolveGlobalMaxResults(t *testing.T) {
 		want   int
 	}{
 		{"nil → default", nil, DefaultMaxResults},
-		{"zero → default", pointerTo(0), DefaultMaxResults},
-		{"negative → default", pointerTo(-1), DefaultMaxResults},
-		{"set", pointerTo(125), 125},
+		{"zero → default", new(0), DefaultMaxResults},
+		{"negative → default", new(-1), DefaultMaxResults},
+		{"set", new(125), 125},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -357,8 +355,8 @@ func TestGUIConfig_TriStateDefaults(t *testing.T) {
 		want  bool
 	}{
 		{"nil defaults to true", nil, true},
-		{"explicit true", pointerTo(true), true},
-		{"explicit false", pointerTo(false), false},
+		{"explicit true", new(true), true},
+		{"explicit false", new(false), false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -382,8 +380,8 @@ func TestCustomCommandConfig_ShouldSuspend(t *testing.T) {
 		want    bool
 	}{
 		{"nil defaults to true", nil, true},
-		{"explicit true", pointerTo(true), true},
-		{"explicit false", pointerTo(false), false},
+		{"explicit true", new(true), true},
+		{"explicit false", new(false), false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -621,8 +619,8 @@ func TestGUIConfig_ShouldShowCommandLog(t *testing.T) {
 		want  bool
 	}{
 		{"nil defaults to true", nil, true},
-		{"explicit true", pointerTo(true), true},
-		{"explicit false", pointerTo(false), false},
+		{"explicit true", new(true), true},
+		{"explicit false", new(false), false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

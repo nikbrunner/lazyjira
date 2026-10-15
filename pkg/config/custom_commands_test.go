@@ -124,6 +124,28 @@ func TestResolveCustomCommands_DuplicateKeySameContextError(t *testing.T) {
 	}
 }
 
+func TestResolveCustomCommands_SpaceSpellingsAreOneKey(t *testing.T) {
+	t.Parallel()
+	cfg := &Config{
+		CustomCommands: []CustomCommandConfig{
+			{Key: "space", Name: "first", Command: "echo 1", Contexts: []string{"issues"}},
+		},
+	}
+	resolved, err := cfg.ResolveCustomCommands()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resolved[0].Key != " " {
+		t.Errorf("Key = %q, want %q", resolved[0].Key, " ")
+	}
+
+	cfg.CustomCommands = append(cfg.CustomCommands,
+		CustomCommandConfig{Key: " ", Name: "second", Command: "echo 2", Contexts: []string{"issues"}})
+	if _, err := cfg.ResolveCustomCommands(); err == nil {
+		t.Error(`expected duplicate key error for "space" and " "`)
+	}
+}
+
 func TestResolveCustomCommands_DuplicateKeyDisjointContextsAllowed(t *testing.T) {
 	t.Parallel()
 	cfg := &Config{
@@ -311,8 +333,8 @@ func TestResolvedCustomCommand_ShouldSuspend(t *testing.T) {
 		want    bool
 	}{
 		{"nil defaults to true", nil, true},
-		{"explicit true", pointerTo(true), true},
-		{"explicit false", pointerTo(false), false},
+		{"explicit true", new(true), true},
+		{"explicit false", new(false), false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

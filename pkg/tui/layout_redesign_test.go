@@ -5,9 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
@@ -232,7 +234,7 @@ func TestIssueTabsPane_KeyboardChangesCollectionAndEnterFocusesIssues(t *testing
 	if app.issuesList.GetTabIndex() != 1 || app.leftFocus != focusIssueTabs {
 		t.Fatalf("j changed tab/focus to (%d,%d)", app.issuesList.GetTabIndex(), app.leftFocus)
 	}
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = app.handleKeyMsg(keytest.Press("enter"))
 	if app.issuesList.GetTabIndex() != 1 || app.leftFocus != focusIssues {
 		t.Fatalf("enter changed tab/focus to (%d,%d)", app.issuesList.GetTabIndex(), app.leftFocus)
 	}
@@ -301,7 +303,7 @@ func TestIssueCollectionsSwitchFromAnyPaneWithoutMovingFocus(t *testing.T) {
 				app.maximizedPane = focusDetailPane
 			}
 
-			_, _ = app.Update(tea.KeyMsg{Type: tea.KeyTab})
+			_, _ = app.Update(keytest.Press("tab"))
 
 			if app.issuesList.GetTabIndex() != 1 || app.side != tt.side || app.leftFocus != tt.pane || app.maximized != (tt.name == "details") {
 				t.Fatalf("tab/focus/max = (%d,%d,%d,%v)", app.issuesList.GetTabIndex(), app.side, app.leftFocus, app.maximized)
@@ -337,17 +339,17 @@ func TestZoomedIssuesOpenZoomedDetailAndEscBacksOut(t *testing.T) {
 	app.side, app.leftFocus = sideLeft, focusIssues
 	app.toggleMaximize(focusIssues)
 
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = app.handleKeyMsg(keytest.Press("enter"))
 	if !app.maximized || app.maximizedPane != focusDetailPane || app.side != sideRight {
 		t.Fatalf("enter: max=%v pane=%d side=%v", app.maximized, app.maximizedPane, app.side)
 	}
 
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	_, _ = app.handleKeyMsg(keytest.Press("esc"))
 	if !app.maximized || app.maximizedPane != focusIssues || app.side != sideLeft || app.leftFocus != focusIssues {
 		t.Fatalf("first esc: max=%v pane=%d side=%v focus=%d", app.maximized, app.maximizedPane, app.side, app.leftFocus)
 	}
 
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	_, _ = app.handleKeyMsg(keytest.Press("esc"))
 	if app.maximized || app.side != sideLeft || app.leftFocus != focusIssues {
 		t.Fatalf("second esc: max=%v side=%v focus=%d", app.maximized, app.side, app.leftFocus)
 	}
@@ -466,7 +468,7 @@ func TestMaximizeClickAndKeyPreserveSelection(t *testing.T) {
 		t.Fatalf("Issues title has no maximize button: %q", title)
 	}
 	buttonX := layout.issues.x + lipgloss.Width(buttonPrefix)
-	_, _ = app.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: buttonX, Y: layout.issues.y})
+	_, _ = app.handleMouse(tea.MouseClickMsg{Button: tea.MouseLeft, X: buttonX, Y: layout.issues.y})
 	if !app.maximized || app.maximizedPane != focusIssues {
 		panel, relY := app.hitTest(buttonX, layout.issues.y)
 		t.Fatalf("clicking the unfocused Issues maximize target did not maximize Issues: panel=%d relY=%d x=%d layout=%+v", panel, relY, buttonX, layout)
@@ -505,7 +507,7 @@ func TestDetailMaximizeTitleClick(t *testing.T) {
 		t.Fatalf("Details title has no maximize button: %q", title)
 	}
 	x := layout.detail.x + lipgloss.Width(buttonPrefix)
-	_, _ = app.handleMouse(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: x, Y: layout.detail.y})
+	_, _ = app.handleMouse(tea.MouseClickMsg{Button: tea.MouseLeft, X: x, Y: layout.detail.y})
 	if !app.maximized || app.maximizedPane != focusDetailPane {
 		t.Fatal("clicking the Details maximize target did not maximize Details")
 	}
@@ -523,7 +525,7 @@ func TestMaximizedIssuesDoesNotScrollHiddenDetails(t *testing.T) {
 	app.side = sideLeft
 	app.leftFocus = focusIssues
 
-	_, _ = app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyCtrlD})
+	_, _ = app.handleKeyMsg(keytest.Press("ctrl+d"))
 
 	if after := app.detailView.View(); after != before {
 		t.Fatal("Ctrl+D scrolled hidden Details while Issues was maximized")

@@ -1,6 +1,10 @@
 package components
 
-import "time"
+import (
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+)
 
 const dblClickThreshold = 500 * time.Millisecond
 
@@ -27,4 +31,10 @@ func (d *DblClickDetector) Click(idx int) bool {
 		d.lastTime = now
 	}
 	return dbl
+}
+
+// IsLeftClick reports whether msg is a press of the left mouse button.
+func IsLeftClick(msg tea.MouseMsg) bool {
+	click, ok := msg.(tea.MouseClickMsg)
+	return ok && click.Button == tea.MouseLeft
 }

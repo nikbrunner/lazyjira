@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -147,7 +149,7 @@ func TestDetailView_Update_NavBottomScrollsTextTab(t *testing.T) {
 	t.Parallel()
 	detail := makeFocusedDetail()
 	detail.SetIssue(&jira.Issue{Key: testKey, Description: strings.Repeat("line\n", 60)})
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
+	detail.Update(keytest.Press("G"))
 	detail.View()
 	if detail.scrollY == 0 {
 		t.Error("nav bottom on text tab should scroll down")
@@ -160,18 +162,18 @@ func TestDetailView_HandleCursorDownUp_ListWraps(t *testing.T) {
 	t.Run("down moves then wraps to top", func(t *testing.T) {
 		t.Parallel()
 		detail := makeCommentsDetail(t, "c1", "c2")
-		detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+		detail.Update(keytest.Press("j"))
 		testkit.AssertEqual(t, "moved down", detail.listCursor, 1)
-		detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+		detail.Update(keytest.Press("j"))
 		testkit.AssertEqual(t, "wrapped to top", detail.listCursor, 0)
 	})
 
 	t.Run("up wraps to bottom then moves up", func(t *testing.T) {
 		t.Parallel()
 		detail := makeCommentsDetail(t, "c1", "c2")
-		detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
+		detail.Update(keytest.Press("k"))
 		testkit.AssertEqual(t, "wrapped to bottom", detail.listCursor, 1)
-		detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
+		detail.Update(keytest.Press("k"))
 		testkit.AssertEqual(t, "moved up", detail.listCursor, 0)
 	})
 }
@@ -182,7 +184,7 @@ func TestDetailView_HandleHalfPage_ListTab(t *testing.T) {
 	t.Run("half page down clamps to last item", func(t *testing.T) {
 		t.Parallel()
 		detail := makeCommentsDetail(t, "c1", "c2", "c3")
-		detail.Update(tea.KeyMsg{Type: tea.KeyCtrlD})
+		detail.Update(keytest.Press("ctrl+d"))
 		testkit.AssertEqual(t, "cursor", detail.listCursor, 2)
 	})
 
@@ -190,7 +192,7 @@ func TestDetailView_HandleHalfPage_ListTab(t *testing.T) {
 		t.Parallel()
 		detail := makeCommentsDetail(t, "c1", "c2", "c3")
 		detail.listCursor = 2
-		detail.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
+		detail.Update(keytest.Press("ctrl+u"))
 		testkit.AssertEqual(t, "cursor", detail.listCursor, 0)
 	})
 }
@@ -199,7 +201,7 @@ func TestDetailView_HandleActivation_NonListTabNoop(t *testing.T) {
 	t.Parallel()
 	detail := makeFocusedDetail()
 	detail.SetIssue(makeDetailIssue())
-	_, cmd := detail.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := detail.Update(keytest.Press("enter"))
 	if cmd != nil {
 		t.Error("enter on text tab should return nil command")
 	}
@@ -209,7 +211,7 @@ func TestDetailView_HandleActivation_ShortBlockNoop(t *testing.T) {
 	t.Parallel()
 	detail := makeCommentsDetail(t, "short")
 	detail.View()
-	_, cmd := detail.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := detail.Update(keytest.Press("enter"))
 	if cmd != nil {
 		t.Error("enter on short block should return nil command")
 	}
@@ -246,12 +248,12 @@ func TestDetailView_AutoScroll_FollowsCursorInSmallView(t *testing.T) {
 	t.Parallel()
 	detail := makeCommentsDetail(t, "c1", "c2", "c3", "c4", "c5", "c6")
 	detail.SetSize(80, 5)
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
+	detail.Update(keytest.Press("G"))
 	detail.View()
 	if detail.scrollY == 0 {
 		t.Error("view should scroll to keep last block visible")
 	}
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	detail.Update(keytest.Press("g"))
 	detail.View()
 	testkit.AssertEqual(t, "scrolled back to top", detail.scrollY, 0)
 }

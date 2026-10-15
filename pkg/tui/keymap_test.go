@@ -7,7 +7,38 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
+
+// Every default single-key binding matches the key press a terminal sends.
+func TestDefaultKeymap_MatchesTerminalKeyPresses(t *testing.T) {
+	t.Parallel()
+	km := DefaultKeymap()
+	for action, keys := range km {
+		for _, key := range keys {
+			if key == "gg" {
+				continue
+			}
+			if got := km.Match(keyname.Of(keytest.Press(key))); got == "" {
+				t.Errorf("%s: key %q does not match its key press", action, key)
+			}
+		}
+	}
+	testkit.AssertEqual(t, "space marks", km.Match(keyname.Of(keytest.Press(" "))), ActSelect)
+	testkit.AssertEqual(t, "alt+y copies rows", km.Match(keyname.Of(keytest.Press("alt+y"))), ActCopyRows)
+}
+
+func TestKeymapFromConfig_AcceptsBothSpaceSpellings(t *testing.T) {
+	t.Parallel()
+	space := keyname.Of(keytest.Press(" "))
+	for _, configured := range []string{" ", "space"} {
+		km := KeymapFromConfig(config.KeybindingConfig{Issues: config.IssueKeys{VisualSelect: configured}})
+		testkit.AssertEqual(t, "space bound to "+configured, km.Match(space), ActVisualSelect)
+		testkit.AssertSliceEqual(t, "select loses space", km[ActSelect], []string{})
+		testkit.AssertEqual(t, "help shows space", km.Keys(ActVisualSelect), "space")
+	}
+}
 
 func TestKeymapFromConfig_OverridesAndMatches(t *testing.T) {
 	t.Parallel()

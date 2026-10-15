@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -30,7 +30,7 @@ func TestSearchBar_DeactivateClearsQuery(t *testing.T) {
 	t.Parallel()
 	bar := NewSearchBar()
 	bar.Activate()
-	bar.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")})
+	bar.Update(keytest.Press("a"))
 	bar.Deactivate()
 	testkit.AssertEqual(t, "inactive after deactivate", bar.IsActive(), false)
 	testkit.AssertEqual(t, "query cleared", bar.Query(), "")
@@ -40,9 +40,9 @@ func TestSearchBar_EnterConfirmsSearch(t *testing.T) {
 	t.Parallel()
 	bar := NewSearchBar()
 	bar.Activate()
-	bar, _ = bar.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("h")})
-	bar, _ = bar.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("i")})
-	bar, cmd := bar.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	bar, _ = bar.Update(keytest.Press("h"))
+	bar, _ = bar.Update(keytest.Press("i"))
+	bar, cmd := bar.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "inactive after enter", bar.IsActive(), false)
 	if cmd == nil {
 		t.Fatal("expected command from Enter")
@@ -59,7 +59,7 @@ func TestSearchBar_EscCancelsSearch(t *testing.T) {
 	t.Parallel()
 	bar := NewSearchBar()
 	bar.Activate()
-	bar, cmd := bar.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	bar, cmd := bar.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "inactive after esc", bar.IsActive(), false)
 	if cmd == nil {
 		t.Fatal("expected command from Esc")
@@ -74,7 +74,7 @@ func TestSearchBar_TypeChangesQuery(t *testing.T) {
 	t.Parallel()
 	bar := NewSearchBar()
 	bar.Activate()
-	bar, cmd := bar.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	bar, cmd := bar.Update(keytest.Press("x"))
 	if cmd == nil {
 		t.Fatal("expected SearchChangedMsg command after typing")
 	}
@@ -90,7 +90,7 @@ func TestSearchBar_TypeChangesQuery(t *testing.T) {
 func TestSearchBar_UpdateInactiveIsNoop(t *testing.T) {
 	t.Parallel()
 	bar := NewSearchBar()
-	bar2, cmd := bar.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("z")})
+	bar2, cmd := bar.Update(keytest.Press("z"))
 	testkit.AssertEqual(t, "still inactive", bar2.IsActive(), false)
 	testkit.AssertEqual(t, "no cmd", cmd == nil, true)
 }

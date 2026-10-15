@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func TestLogPanel_NewLogPanel_EmptyState(t *testing.T) {
@@ -27,7 +27,7 @@ func TestLogPanel_Init_ReturnsNil(t *testing.T) {
 func TestLogPanel_Update_ReturnsSelf(t *testing.T) {
 	t.Parallel()
 	panel := NewLogPanel()
-	result, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	result, cmd := panel.Update(keytest.Press("j"))
 	if result != panel {
 		t.Error("Update() should return same panel pointer")
 	}

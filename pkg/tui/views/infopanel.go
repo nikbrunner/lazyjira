@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -373,8 +374,8 @@ func (p *InfoPanel) Update(msg tea.Msg) (*InfoPanel, tea.Cmd) {
 	if !p.Focused {
 		return p, nil
 	}
-	if msg, ok := msg.(tea.KeyMsg); ok {
-		moved := p.KeyNav(msg.String())
+	if msg, ok := msg.(tea.KeyPressMsg); ok {
+		moved := p.KeyNav(keyname.Of(msg))
 		if moved {
 			switch p.activeTab {
 			case InfoTabSubtasks:

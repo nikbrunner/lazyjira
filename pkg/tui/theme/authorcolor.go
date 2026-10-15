@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 // authorPalette is sourced from the active theme's AuthorPalette.

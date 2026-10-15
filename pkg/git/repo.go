@@ -44,8 +44,7 @@ func CurrentBranch(dir string) (string, error) {
 	cmd := exec.CommandContext(context.Background(), "git", "-C", dir, "symbolic-ref", "--short", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
+		if _, ok := errors.AsType[*exec.ExitError](err); ok {
 			return "", nil
 		}
 		return "", err

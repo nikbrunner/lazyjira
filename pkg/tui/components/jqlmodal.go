@@ -6,9 +6,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -157,21 +158,27 @@ func (m *JQLModal) errorLines() []string {
 // Update handles key and mouse events and returns the updated modal and an optional command
 func (m *JQLModal) Update(msg tea.Msg) (JQLModal, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.handleKey(msg)
+	case tea.PasteMsg:
+		if !m.focusInput {
+			return *m, nil
+		}
+		m.errorMsg = ""
+		return m.updateInput(msg)
 	case tea.MouseMsg:
 		return m.handleMouse(msg)
 	}
 	return *m, nil
 }
 
-func (m *JQLModal) handleKey(msg tea.KeyMsg) (JQLModal, tea.Cmd) {
+func (m *JQLModal) handleKey(msg tea.KeyPressMsg) (JQLModal, tea.Cmd) {
 	if m.errorMsg != "" && m.focusInput {
 		m.errorMsg = ""
 	}
 
-	switch msg.Type {
-	case tea.KeyEsc:
+	switch keyname.Of(keyname.WithoutAlt(msg)) {
+	case keyEsc:
 		if !m.focusInput {
 			m.focusInput = true
 			return *m, nil
@@ -179,7 +186,7 @@ func (m *JQLModal) handleKey(msg tea.KeyMsg) (JQLModal, tea.Cmd) {
 		m.Hide()
 		return *m, func() tea.Msg { return JQLCancelMsg{} }
 
-	case tea.KeyTab:
+	case keyTab:
 		if m.focusInput && m.mode == jqlModeAutocomplete && len(m.items) == 1 {
 			m.insertSuggestion(m.items[0])
 			return *m, func() tea.Msg {
@@ -192,26 +199,29 @@ func (m *JQLModal) handleKey(msg tea.KeyMsg) (JQLModal, tea.Cmd) {
 		m.focusInput = !m.focusInput
 		return *m, nil
 
-	case tea.KeyEnter:
+	case keyEnter:
 		return m.handleEnter()
-	default:
 	}
 
 	if m.focusInput {
-		updated, changed := m.input.Update(msg)
-		m.input = updated
-		if changed {
-			return *m, func() tea.Msg {
-				return JQLInputChangedMsg{
-					Text:      m.input.Value(),
-					CursorPos: m.input.CursorPos(),
-				}
-			}
-		}
-		return *m, nil
+		return m.updateInput(msg)
 	}
 
 	m.handleListNav(msg)
+	return *m, nil
+}
+
+func (m *JQLModal) updateInput(msg tea.Msg) (JQLModal, tea.Cmd) {
+	updated, changed := m.input.Update(msg)
+	m.input = updated
+	if changed {
+		return *m, func() tea.Msg {
+			return JQLInputChangedMsg{
+				Text:      m.input.Value(),
+				CursorPos: m.input.CursorPos(),
+			}
+		}
+	}
 	return *m, nil
 }
 
@@ -246,9 +256,11 @@ func (m *JQLModal) handleEnter() (JQLModal, tea.Cmd) {
 	return *m, nil
 }
 
-func (m *JQLModal) handleListNav(msg tea.KeyMsg) {
-	moveDown := msg.String() == "j" || msg.Type == tea.KeyDown || msg.Type == tea.KeyCtrlJ
-	moveUp := msg.String() == "k" || msg.Type == tea.KeyUp || msg.Type == tea.KeyCtrlK
+func (m *JQLModal) handleListNav(msg tea.KeyPressMsg) {
+	key := keyname.Of(msg)
+	plain := keyname.Of(keyname.WithoutAlt(msg))
+	moveDown := key == "j" || plain == keyDown || plain == KeyCtrlJ
+	moveUp := key == "k" || plain == "up" || plain == KeyCtrlK
 	pendingG := m.pendingG
 	m.pendingG = false
 	switch {
@@ -262,12 +274,12 @@ func (m *JQLModal) handleListNav(msg tea.KeyMsg) {
 			m.cursor--
 			m.adjustListOffset()
 		}
-	case msg.String() == "g" && pendingG:
+	case key == "g" && pendingG:
 		m.cursor = 0
 		m.offset = 0
-	case msg.String() == "g":
+	case key == "g":
 		m.pendingG = true
-	case msg.String() == "G":
+	case key == "G":
 		if len(m.items) > 0 {
 			m.cursor = len(m.items) - 1
 			m.adjustListOffset()
@@ -276,23 +288,24 @@ func (m *JQLModal) handleListNav(msg tea.KeyMsg) {
 }
 
 func (m *JQLModal) handleMouse(msg tea.MouseMsg) (JQLModal, tea.Cmd) {
+	mouse := msg.Mouse()
 	switch {
-	case msg.Button == tea.MouseButtonWheelUp:
+	case mouse.Button == tea.MouseWheelUp:
 		if m.offset > 0 {
 			m.offset--
 		}
-	case msg.Button == tea.MouseButtonWheelDown:
+	case mouse.Button == tea.MouseWheelDown:
 		maxOffset := max(len(m.items)-m.listHeight(), 0)
 		if m.offset < maxOffset {
 			m.offset++
 		}
-	case msg.Button == tea.MouseButtonLeft && msg.Action == tea.MouseActionPress:
+	case IsLeftClick(msg):
 		listTop := 5
 		if m.errorMsg != "" {
 			listTop++
 		}
 		listH := m.listHeight()
-		relY := msg.Y - listTop
+		relY := mouse.Y - listTop
 		if relY >= 0 && relY < listH {
 			idx := m.offset + relY
 			if idx < len(m.items) {
@@ -374,7 +387,7 @@ func (m *JQLModal) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 		return nil, false
 	}
 	switch msg.(type) {
-	case tea.KeyMsg, tea.MouseMsg:
+	case tea.KeyPressMsg, tea.PasteMsg, tea.MouseMsg:
 		updated, cmd := m.Update(msg)
 		*m = updated
 		return cmd, true

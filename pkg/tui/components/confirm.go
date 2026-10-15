@@ -1,8 +1,10 @@
 package components
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 )
 
 // ConfirmAcceptedMsg is sent when the user answers yes.
@@ -36,11 +38,11 @@ func (c *ConfirmModal) SetSize(w, h int) {
 }
 
 func (c *ConfirmModal) Update(msg tea.Msg) (ConfirmModal, tea.Cmd) {
-	key, ok := msg.(tea.KeyMsg)
+	key, ok := msg.(tea.KeyPressMsg)
 	if !c.visible || !ok {
 		return *c, nil
 	}
-	switch key.String() {
+	switch keyname.Of(key) {
 	case "y", keyEnter:
 		c.visible = false
 		return *c, func() tea.Msg { return ConfirmAcceptedMsg{} }
@@ -66,11 +68,11 @@ func (c *ConfirmModal) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 		return nil, false
 	}
 	switch msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		updated, cmd := c.Update(msg)
 		*c = updated
 		return cmd, true
-	case tea.MouseMsg:
+	case tea.PasteMsg, tea.MouseMsg:
 		return nil, true
 	}
 	return nil, false

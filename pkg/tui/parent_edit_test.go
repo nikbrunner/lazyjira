@@ -5,7 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -98,7 +100,7 @@ func newParentLookupApp(t *testing.T, fake *jiratest.FakeClient) *App {
 	return app
 }
 
-func sendLookupKey(app *App, key tea.KeyMsg) {
+func sendLookupKey(app *App, key tea.KeyPressMsg) {
 	_, cmd := app.Update(key)
 	if cmd == nil {
 		return
@@ -139,8 +141,8 @@ func TestEditParent_SuggestionSetsParent(t *testing.T) {
 		suggestions: []jira.IssueSuggestion{{Key: "PLAT-205", Summary: "Release notes"}},
 	})
 
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyDown})
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyEnter})
+	sendLookupKey(app, keytest.Press("down"))
+	sendLookupKey(app, keytest.Press("enter"))
 
 	if len(fake.UpdateIssueCalls) != 1 {
 		t.Fatalf("UpdateIssue calls = %d, want 1", len(fake.UpdateIssueCalls))
@@ -159,8 +161,8 @@ func TestEditParent_TypedKeyIsAccepted(t *testing.T) {
 	app := newParentLookupApp(t, fake)
 	_, _ = app.editInfoField(app.issueCache[mainKey])
 
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("9")})
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyEnter})
+	sendLookupKey(app, keytest.Press("9"))
+	sendLookupKey(app, keytest.Press("enter"))
 
 	if len(fake.UpdateIssueCalls) != 1 {
 		t.Fatalf("UpdateIssue calls = %d, want 1", len(fake.UpdateIssueCalls))
@@ -178,8 +180,8 @@ func TestEditParent_EmptyPromptClearsParent(t *testing.T) {
 	app := newParentLookupApp(t, fake)
 	_, _ = app.editInfoField(app.issueCache[mainKey])
 
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyCtrlU})
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyEnter})
+	sendLookupKey(app, keytest.Press("ctrl+u"))
+	sendLookupKey(app, keytest.Press("enter"))
 
 	if len(fake.RemoveIssueParentCalls) != 1 {
 		t.Fatalf("RemoveIssueParent calls = %d, want 1", len(fake.RemoveIssueParentCalls))
@@ -192,7 +194,7 @@ func TestEditParent_EscCancelsWithoutAPICall(t *testing.T) {
 	app := newParentLookupApp(t, fake)
 	_, _ = app.editInfoField(app.issueCache[mainKey])
 
-	sendLookupKey(app, tea.KeyMsg{Type: tea.KeyEsc})
+	sendLookupKey(app, keytest.Press("esc"))
 
 	if app.issueLookup.IsVisible() || app.parentLookupFor != "" {
 		t.Errorf("lookup visible = %v, parentLookupFor = %q, want closed and cleared", app.issueLookup.IsVisible(), app.parentLookupFor)

@@ -4,9 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func TestProjectPickerFiltersKeyAndNameImmediately(t *testing.T) {
@@ -17,7 +19,7 @@ func TestProjectPickerFiltersKeyAndNameImmediately(t *testing.T) {
 		{Key: "WEB", Name: "Web portal"},
 	})
 
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o', 'p'}})
+	picker = typeInto(picker, "op")
 	if got := len(picker.filtered); got != 1 || picker.filtered[0].Key != "OPS" {
 		t.Fatalf("filter by key got %#v", picker.filtered)
 	}
@@ -25,7 +27,7 @@ func TestProjectPickerFiltersKeyAndNameImmediately(t *testing.T) {
 		{Key: "OPS", Name: "Operations"},
 		{Key: "WEB", Name: "Web portal"},
 	})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w', 'e', 'b'}})
+	picker = typeInto(picker, "web")
 	if got := len(picker.filtered); got != 1 || picker.filtered[0].Key != "WEB" {
 		t.Fatalf("filter by name got %#v", picker.filtered)
 	}
@@ -37,16 +39,16 @@ func TestProjectPickerNavigateAndConfirm(t *testing.T) {
 	projects := []ProjectChoice{{Key: "OPS", Name: "Operations"}, {Key: "WEB", Name: "Web"}}
 	picker.Show(projects)
 
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyDown})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	picker, _ = picker.Update(keytest.Press("down"))
+	picker, _ = picker.Update(keytest.Press("o"))
 	if picker.cursor != 0 {
 		t.Fatalf("filter should reset cursor, got %d", picker.cursor)
 	}
 	// Arrow navigation remains available and Enter confirms the selected item.
 	picker.query = ""
 	picker.applyFilter()
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyDown})
-	_, cmd := picker.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	picker, _ = picker.Update(keytest.Press("down"))
+	_, cmd := picker.Update(keytest.Press("enter"))
 	if picker.IsVisible() || cmd == nil {
 		t.Fatal("confirmation should close picker and emit a selection")
 	}
@@ -60,9 +62,9 @@ func TestProjectPickerFilterSupportsKeySpace(t *testing.T) {
 	t.Parallel()
 	picker := NewProjectPicker()
 	picker.Show([]ProjectChoice{{Key: "ABC", Name: "Alpha Beta"}, {Key: "XYZ", Name: "AlphaGamma"}})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Alpha")})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeySpace})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Beta")})
+	picker = typeInto(picker, "Alpha")
+	picker, _ = picker.Update(keytest.Press(" "))
+	picker = typeInto(picker, "Beta")
 	if got := len(picker.filtered); got != 1 || picker.filtered[0].Key != "ABC" {
 		t.Fatalf("space-containing filter results = %#v, want ABC", picker.filtered)
 	}
@@ -73,7 +75,7 @@ func TestProjectPickerFilterLineFitsNarrowDisplayWidth(t *testing.T) {
 	picker := NewProjectPicker()
 	picker.SetSize(40, 20)
 	picker.Show([]ProjectChoice{{Key: "ABC", Name: "Alpha"}})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(strings.Repeat("界", 40))})
+	picker = typeInto(picker, strings.Repeat("界", 40))
 	lines := strings.Split(ansi.Strip(picker.View()), "\n")
 	for i, line := range lines {
 		if width := lipgloss.Width(line); width != 30 {
@@ -90,7 +92,7 @@ func TestProjectPickerFilterCanIncludeNavigationLetters(t *testing.T) {
 	picker := NewProjectPicker()
 	picker.Show([]ProjectChoice{{Key: "JIRA", Name: "Jira"}, {Key: "OPS", Name: "Operations"}})
 	for _, r := range []rune{'j', 'k'} {
-		picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		picker, _ = picker.Update(keytest.Press(string(r)))
 	}
 	if picker.query != "jk" {
 		t.Fatalf("query = %q, want j/k accepted as filter text", picker.query)
@@ -100,7 +102,7 @@ func TestProjectPickerFilterCanIncludeNavigationLetters(t *testing.T) {
 func TestProjectPickerCancelAndOverlayInterception(t *testing.T) {
 	t.Parallel()
 	picker := NewProjectPicker()
-	key := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}}
+	key := keytest.Press("x")
 	if _, ok := picker.Intercept(key); ok {
 		t.Fatal("hidden picker should not intercept")
 	}
@@ -109,7 +111,7 @@ func TestProjectPickerCancelAndOverlayInterception(t *testing.T) {
 	if !ok || cmd != nil || picker.query != "x" {
 		t.Fatalf("open picker did not consume/filter printable input: ok=%v query=%q cmd=%v", ok, picker.query, cmd)
 	}
-	cmd, ok = picker.Intercept(tea.KeyMsg{Type: tea.KeyEsc})
+	cmd, ok = picker.Intercept(keytest.Press("esc"))
 	if !ok || picker.IsVisible() || cmd == nil {
 		t.Fatal("escape should be consumed and close picker")
 	}
@@ -122,9 +124,9 @@ func TestProjectPickerInterceptsMouseWhileVisible(t *testing.T) {
 	t.Parallel()
 	picker := NewProjectPicker()
 	picker.Show([]ProjectChoice{{Key: "A", Name: "Alpha"}, {Key: "B", Name: "Beta"}})
-	for _, msg := range []tea.MouseMsg{
-		{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 10, Y: 5},
-		{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress, X: 10, Y: 5},
+	for _, msg := range []tea.Msg{
+		tea.MouseClickMsg{Button: tea.MouseLeft, X: 10, Y: 5},
+		tea.MouseWheelMsg{Button: tea.MouseWheelDown, X: 10, Y: 5},
 	} {
 		cmd, handled := picker.Intercept(msg)
 		if !handled || cmd != nil || picker.cursor != 0 || picker.query != "" {
@@ -138,9 +140,16 @@ func TestProjectPickerViewShowsFilterAndEmptyState(t *testing.T) {
 	picker := NewProjectPicker()
 	picker.SetSize(80, 24)
 	picker.Show([]ProjectChoice{{Key: "OPS", Name: "Operations"}})
-	picker, _ = picker.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'z'}})
+	picker, _ = picker.Update(keytest.Press("z"))
 	view := ansi.Strip(picker.View())
 	if !strings.Contains(view, "Filter: z") || !strings.Contains(view, "No projects match") {
 		t.Fatalf("picker view missing query/empty state: %q", view)
 	}
+}
+
+func typeInto(picker ProjectPicker, text string) ProjectPicker {
+	for _, key := range keytest.Type(text) {
+		picker, _ = picker.Update(key)
+	}
+	return picker
 }

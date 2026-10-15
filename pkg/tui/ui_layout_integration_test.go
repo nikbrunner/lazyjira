@@ -4,8 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -31,7 +33,7 @@ func TestProjectSelectorPickerConfirmAndCancel(t *testing.T) {
 	// Direct focus key reaches the selector; Enter opens the picker and focus
 	// remains there whether the overlay is confirmed or cancelled.
 	_, _ = app.Update(runeKey('0'))
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = app.Update(keytest.Press("enter"))
 	if !app.projectPicker.IsVisible() {
 		t.Fatal("Enter on selector did not open picker")
 	}
@@ -40,9 +42,9 @@ func TestProjectSelectorPickerConfirmAndCancel(t *testing.T) {
 	if !strings.Contains(pickerView, "Filter: j") || !strings.Contains(pickerView, jiraProjectKey+"  Jira Platform") {
 		t.Fatalf("picker query/results = %q, want j/JIRA", pickerView)
 	}
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyBackspace})
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyDown})
-	_, cmd := app.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, _ = app.Update(keytest.Press("backspace"))
+	_, _ = app.Update(keytest.Press("down"))
+	_, cmd := app.Update(keytest.Press("enter"))
 	if cmd == nil {
 		t.Fatal("Enter in picker should emit selection")
 	}
@@ -55,8 +57,8 @@ func TestProjectSelectorPickerConfirmAndCancel(t *testing.T) {
 		t.Fatalf("confirmed state: key=%q focus=%d visible=%v", app.projectKey, app.leftFocus, app.projectPicker.IsVisible())
 	}
 
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	_, cmd = app.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	_, _ = app.Update(keytest.Press("enter"))
+	_, cmd = app.Update(keytest.Press("esc"))
 	if cmd == nil {
 		t.Fatal("Esc in picker should emit cancellation")
 	}
@@ -87,7 +89,7 @@ func TestProjectSelectorClickCancelsActiveSearch(t *testing.T) {
 				t.Fatal("expected active search to filter out issue before selector click")
 			}
 
-			_, _ = app.Update(tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 5, Y: 0})
+			_, _ = app.Update(tea.MouseClickMsg{Button: tea.MouseLeft, X: 5, Y: 0})
 			if !app.projectPicker.IsVisible() || app.searchBar.IsActive() || app.searchBar.Query() != "" || app.issuesList.SelectedIssue() == nil {
 				t.Fatalf("opening picker did not cancel search: picker=%v search=%v query=%q selected=%v", app.projectPicker.IsVisible(), app.searchBar.IsActive(), app.searchBar.Query(), app.issuesList.SelectedIssue())
 			}
@@ -96,7 +98,7 @@ func TestProjectSelectorClickCancelsActiveSearch(t *testing.T) {
 				t.Fatal("typing after selector click was not consumed by picker")
 			}
 			if finish == "confirm" {
-				_, cmd = app.Update(tea.KeyMsg{Type: tea.KeyEnter})
+				_, cmd = app.Update(keytest.Press("enter"))
 				if cmd == nil {
 					t.Fatal("picker Enter did not emit selected project")
 				}
@@ -105,7 +107,7 @@ func TestProjectSelectorClickCancelsActiveSearch(t *testing.T) {
 					t.Fatalf("projectKey=%q, want %q", app.projectKey, jiraProjectKey)
 				}
 			} else {
-				_, cmd = app.Update(tea.KeyMsg{Type: tea.KeyEsc})
+				_, cmd = app.Update(keytest.Press("esc"))
 				if cmd == nil {
 					t.Fatal("picker Esc did not emit cancellation")
 				}
@@ -130,7 +132,7 @@ func TestProjectSelectorAndStatusRenderInAlignedHeader(t *testing.T) {
 	app.statusPanel.SetVersion("v1")
 	app.statusPanel.SetSize(app.geometry().status.width, 3)
 	app.projectList.SetActiveKey(app.projectKey)
-	view := ansi.Strip(app.View())
+	view := ansi.Strip(app.View().Content)
 	for _, want := range []string{"JIRA", "Jira Platf…", "Connected", "Acct:", "Host:", "Auth:", "v1"} {
 		if !strings.Contains(view, want) {
 			t.Errorf("header rendering missing %q in %q", want, view)
@@ -150,9 +152,9 @@ func TestProjectPickerConsumesWorkspaceMouseEvents(t *testing.T) {
 	app.detailView.SetIssue(&jira.Issue{Key: "ISSUE-1"})
 	app.side, app.leftFocus = sideRight, focusInfo
 
-	for _, msg := range []tea.MouseMsg{
-		{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 60, Y: 5},
-		{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress, X: 5, Y: 0},
+	for _, msg := range []tea.Msg{
+		tea.MouseClickMsg{Button: tea.MouseLeft, X: 60, Y: 5},
+		tea.MouseWheelMsg{Button: tea.MouseWheelDown, X: 5, Y: 0},
 	} {
 		_, _ = app.Update(msg)
 	}

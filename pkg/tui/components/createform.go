@@ -7,20 +7,23 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/cursor"
-	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 const (
-	keyEsc   = "esc"
-	keyEnter = "enter"
-	keyDown  = "down"
-	keyCtrlD = "ctrl+d"
-	keyCtrlU = "ctrl+u"
+	keyEsc       = "esc"
+	keyEnter     = "enter"
+	keyTab       = "tab"
+	keyBackspace = "backspace"
+	keyDown      = "down"
+	keyCtrlD     = "ctrl+d"
+	keyCtrlU     = "ctrl+u"
 )
 
 // CreatePanel identifies which sub-panel of the create form is focused
@@ -147,15 +150,29 @@ func newDescArea() textarea.Model {
 	ta.ShowLineNumbers = false
 	ta.CharLimit = 0
 	ta.MaxHeight = 0
-	// ctrl+v would emit textarea's private paste message, which never reaches
-	// the form; terminal paste arrives as a KeyMsg instead.
+	// ctrl+v would make the textarea read the clipboard itself; the form
+	// handles ctrl+v, and terminal paste arrives as a tea.PasteMsg.
 	ta.KeyMap.Paste.SetEnabled(false)
-	ta.Cursor.SetMode(cursor.CursorStatic)
-	ta.Cursor.Style = lipgloss.NewStyle().Foreground(theme.ColorCyan)
-	style, _ := textarea.DefaultStyles()
-	style.CursorLine = lipgloss.NewStyle()
-	ta.FocusedStyle = style
-	ta.BlurredStyle = style
+	// The description edits plain text: no selection, paging, or clipboard
+	// keys, and word motion and deletion only on alt.
+	for _, binding := range []*key.Binding{
+		&ta.KeyMap.PageUp, &ta.KeyMap.PageDown,
+		&ta.KeyMap.SelectCharacterForward, &ta.KeyMap.SelectCharacterBackward,
+		&ta.KeyMap.SelectWordForward, &ta.KeyMap.SelectWordBackward,
+		&ta.KeyMap.SelectLineUp, &ta.KeyMap.SelectLineDown,
+		&ta.KeyMap.SelectAll, &ta.KeyMap.CopySelection,
+	} {
+		binding.SetEnabled(false)
+	}
+	ta.KeyMap.WordForward.SetKeys("alt+right", "alt+f")
+	ta.KeyMap.WordBackward.SetKeys("alt+left", "alt+b")
+	ta.KeyMap.DeleteWordBackward.SetKeys("alt+backspace", "ctrl+w")
+	ta.KeyMap.DeleteWordForward.SetKeys("alt+delete", "alt+d")
+	styles := textarea.DefaultStyles(theme.IsDark())
+	styles.Focused.CursorLine = lipgloss.NewStyle()
+	styles.Blurred = styles.Focused
+	styles.Cursor = textarea.CursorStyle{Color: theme.ColorCyan, Shape: tea.CursorBlock}
+	ta.SetStyles(styles)
 	ta.Blur()
 	return ta
 }
@@ -370,12 +387,19 @@ func (f *CreateForm) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 		return f.interceptMouse(mm)
 	}
 
-	km, ok := msg.(tea.KeyMsg)
+	if pm, isPaste := msg.(tea.PasteMsg); isPaste {
+		if f.loading {
+			return nil, true
+		}
+		return f.interceptPaste(pm)
+	}
+
+	km, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return nil, false
 	}
 	if f.loading {
-		if km.String() == keyEsc {
+		if keyname.Of(km) == keyEsc {
 			return f.cancel()
 		}
 		return nil, true
@@ -384,14 +408,14 @@ func (f *CreateForm) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 		return f.interceptFilter(km)
 	}
 
-	switch km.Type { //nolint:exhaustive
-	case tea.KeyTab:
+	switch keyname.Of(keyname.WithoutAlt(km)) {
+	case keyTab:
 		f.setFocus(CreatePanel((int(f.focusedPanel) + 1) % createPanelCount))
 		return nil, true
-	case tea.KeyShiftTab:
+	case "shift+tab":
 		f.setFocus(CreatePanel((int(f.focusedPanel) + createPanelCount - 1) % createPanelCount))
 		return nil, true
-	case tea.KeyCtrlS:
+	case "ctrl+s":
 		return f.submitForm()
 	}
 
@@ -406,16 +430,19 @@ func (f *CreateForm) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	return nil, true
 }
 
-func (f *CreateForm) interceptMouse(mm tea.MouseMsg) (tea.Cmd, bool) {
-	switch mm.Button { //nolint:exhaustive
-	case tea.MouseButtonWheelUp:
-		f.scrollFocused(-3)
+func (f *CreateForm) interceptMouse(msg tea.MouseMsg) (tea.Cmd, bool) {
+	mm := msg.Mouse()
+	switch msg.(type) {
+	case tea.MouseWheelMsg:
+		switch mm.Button { //nolint:exhaustive
+		case tea.MouseWheelUp:
+			f.scrollFocused(-3)
+		case tea.MouseWheelDown:
+			f.scrollFocused(3)
+		}
 		return nil, true
-	case tea.MouseButtonWheelDown:
-		f.scrollFocused(3)
-		return nil, true
-	case tea.MouseButtonLeft:
-		if mm.Action != tea.MouseActionPress {
+	case tea.MouseClickMsg:
+		if mm.Button != tea.MouseLeft {
 			return nil, true
 		}
 	default:
@@ -480,9 +507,9 @@ func (f *CreateForm) scrollDesc(delta int) {
 	if f.desc == nil {
 		return
 	}
-	step := tea.KeyMsg{Type: tea.KeyDown}
+	step := tea.KeyPressMsg{Code: tea.KeyDown}
 	if delta < 0 {
-		step = tea.KeyMsg{Type: tea.KeyUp}
+		step = tea.KeyPressMsg{Code: tea.KeyUp}
 		delta = -delta
 	}
 	for range delta {
@@ -490,8 +517,8 @@ func (f *CreateForm) scrollDesc(delta int) {
 	}
 }
 
-func (f *CreateForm) interceptFilter(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.String() {
+func (f *CreateForm) interceptFilter(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	switch keyname.Of(msg) {
 	case keyEsc:
 		f.filtering = false
 		f.filterInput.SetValue("")
@@ -511,52 +538,82 @@ func (f *CreateForm) interceptFilter(msg tea.KeyMsg) (tea.Cmd, bool) {
 			f.ensureFieldVisible()
 		}
 	default:
-		updated, changed := f.filterInput.Update(msg)
-		f.filterInput = updated
-		if changed {
-			f.fieldCursor = 0
-			f.fieldOffset = 0
-		}
+		f.updateFilterInput(msg)
 	}
 	return nil, true
 }
 
-func (f *CreateForm) interceptSummary(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.Type { //nolint:exhaustive
-	case tea.KeyEnter:
+func (f *CreateForm) updateFilterInput(msg tea.Msg) {
+	updated, changed := f.filterInput.Update(msg)
+	f.filterInput = updated
+	if changed {
+		f.fieldCursor = 0
+		f.fieldOffset = 0
+	}
+}
+
+// interceptPaste inserts pasted text into the focused input. Pasted text
+// never triggers a key binding.
+func (f *CreateForm) interceptPaste(msg tea.PasteMsg) (tea.Cmd, bool) {
+	switch {
+	case f.filtering:
+		f.updateFilterInput(msg)
+	case f.focusedPanel == CreatePanelSummary:
+		f.insertSummaryRunes([]rune(msg.Content))
+	case f.focusedPanel == CreatePanelDescription && f.desc != nil:
+		if images := pastedImages(msg.Content); images != nil {
+			for i, img := range images {
+				if i > 0 {
+					f.desc.InsertString(" ")
+				}
+				f.AttachImage(img)
+			}
+			return nil, true
+		}
+		var cmd tea.Cmd
+		*f.desc, cmd = f.desc.Update(msg)
+		return cmd, true
+	}
+	return nil, true
+}
+
+func (f *CreateForm) interceptSummary(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	msg = keyname.WithoutAlt(msg)
+	switch keyname.Of(msg) {
+	case keyEnter:
 		f.setFocus(CreatePanelDescription)
-	case tea.KeyEsc:
+	case keyEsc:
 		return f.cancel()
-	case tea.KeyBackspace:
+	case keyBackspace:
 		if f.summaryCursor > 0 {
 			f.summaryText = append(f.summaryText[:f.summaryCursor-1], f.summaryText[f.summaryCursor:]...)
 			f.summaryCursor--
 		}
-	case tea.KeyDelete:
+	case "delete":
 		if f.summaryCursor < len(f.summaryText) {
 			f.summaryText = append(f.summaryText[:f.summaryCursor], f.summaryText[f.summaryCursor+1:]...)
 		}
-	case tea.KeyLeft:
+	case "left":
 		if f.summaryCursor > 0 {
 			f.summaryCursor--
 		}
-	case tea.KeyRight:
+	case "right":
 		if f.summaryCursor < len(f.summaryText) {
 			f.summaryCursor++
 		}
-	case tea.KeyHome, tea.KeyCtrlA:
+	case "home", "ctrl+a":
 		f.summaryCursor = 0
-	case tea.KeyEnd, tea.KeyCtrlE:
+	case "end", "ctrl+e":
 		f.summaryCursor = len(f.summaryText)
-	case tea.KeyCtrlU:
+	case keyCtrlU:
 		f.summaryText = f.summaryText[f.summaryCursor:]
 		f.summaryCursor = 0
-	case tea.KeyCtrlK:
+	case "ctrl+k":
 		f.summaryText = f.summaryText[:f.summaryCursor]
-	case tea.KeySpace:
-		f.insertSummaryRunes([]rune{' '})
-	case tea.KeyRunes:
-		f.insertSummaryRunes(msg.Runes)
+	default:
+		if text := keyname.Text(msg); text != "" {
+			f.insertSummaryRunes([]rune(text))
+		}
 	}
 	return nil, true
 }
@@ -576,13 +633,13 @@ func (f *CreateForm) cancel() (tea.Cmd, bool) {
 	return func() tea.Msg { return CreateFormCancelMsg{} }, true
 }
 
-func (f *CreateForm) interceptDescription(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.Type { //nolint:exhaustive
-	case tea.KeyEsc:
+func (f *CreateForm) interceptDescription(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	switch keyname.Of(keyname.WithoutAlt(msg)) {
+	case keyEsc:
 		return f.cancel()
-	case tea.KeyCtrlV:
+	case "ctrl+v":
 		return func() tea.Msg { return CreateFormPasteImageMsg{} }, true
-	case tea.KeyCtrlG:
+	case "ctrl+g":
 		if f.descIdx >= 0 {
 			idx := f.descIdx
 			return func() tea.Msg { return CreateFormEditExternalMsg{FieldIndex: idx} }, true
@@ -592,27 +649,16 @@ func (f *CreateForm) interceptDescription(msg tea.KeyMsg) (tea.Cmd, bool) {
 	if f.desc == nil {
 		return nil, true
 	}
-	if msg.Paste {
-		if images := pastedImages(string(msg.Runes)); images != nil {
-			for i, img := range images {
-				if i > 0 {
-					f.desc.InsertString(" ")
-				}
-				f.AttachImage(img)
-			}
-			return nil, true
-		}
-	}
 	var cmd tea.Cmd
 	*f.desc, cmd = f.desc.Update(msg)
 	return cmd, true
 }
 
-func (f *CreateForm) interceptFields(msg tea.KeyMsg) (tea.Cmd, bool) {
+func (f *CreateForm) interceptFields(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	filtered := f.filteredFields()
 	pendingG := f.pendingG
 	f.pendingG = false
-	switch msg.String() {
+	switch keyname.Of(msg) {
 	case "j", keyDown, KeyCtrlJ:
 		if f.fieldCursor < len(filtered)-1 {
 			f.fieldCursor++

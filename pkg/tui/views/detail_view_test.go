@@ -1,12 +1,12 @@
 package views
 
 import (
+	"image/color"
 	"strings"
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -428,7 +428,7 @@ func TestDetailView_Update_UnfocusedReturnsNilCmd(t *testing.T) {
 	detail.SetIssue(makeDetailIssue())
 	detail.SetFocused(false)
 	detail.ResolveNav = navResolverForDetail
-	_, cmd := detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, cmd := detail.Update(keytest.Press("j"))
 	if cmd != nil {
 		t.Error("unfocused Update should return nil cmd")
 	}
@@ -441,7 +441,7 @@ func TestDetailView_Update_TabKeyCallsNextTab(t *testing.T) {
 		Key:      testKey,
 		Comments: []jira.Comment{{Body: "c"}},
 	})
-	detail.Update(tea.KeyMsg{Type: tea.KeyTab})
+	detail.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "tab switched", detail.ActiveTab(), TabComments)
 }
 
@@ -460,7 +460,7 @@ func TestDetailView_Update_EnterOnExpandableEmitsExpandBlockMsg(t *testing.T) {
 	})
 	detail.SetActiveTab(TabComments)
 	detail.View()
-	_, cmd := detail.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := detail.Update(keytest.Press("enter"))
 	if cmd == nil {
 		t.Fatal("enter on long block should return Cmd")
 	}
@@ -475,7 +475,7 @@ func TestDetailView_Update_NavDown_ScrollsDescription(t *testing.T) {
 	detail := makeFocusedDetail()
 	longDesc := strings.Repeat("line of text\n", 30)
 	detail.SetIssue(&jira.Issue{Key: testKey, Description: longDesc})
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	detail.Update(keytest.Press("j"))
 	if detail.scrollY == 0 {
 		t.Error("nav down should increase scrollY on description tab")
 	}
@@ -487,7 +487,7 @@ func TestDetailView_Update_NavUp_ScrollsDescriptionUp(t *testing.T) {
 	longDesc := strings.Repeat("line of text\n", 30)
 	detail.SetIssue(&jira.Issue{Key: testKey, Description: longDesc})
 	detail.scrollY = 5
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
+	detail.Update(keytest.Press("k"))
 	testkit.AssertEqual(t, "scrolled up", detail.scrollY, 4)
 }
 
@@ -500,7 +500,7 @@ func TestDetailView_Update_NavTop_ResetsScrollAndCursor(t *testing.T) {
 	})
 	detail.SetActiveTab(TabComments)
 	detail.listCursor = 1
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	detail.Update(keytest.Press("g"))
 	testkit.AssertEqual(t, "cursor at top", detail.listCursor, 0)
 }
 
@@ -513,7 +513,7 @@ func TestDetailView_Update_NavBottom_MovesListCursorToEnd(t *testing.T) {
 	})
 	detail.SetActiveTab(TabComments)
 	detail.View()
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
+	detail.Update(keytest.Press("G"))
 	testkit.AssertEqual(t, "cursor at bottom", detail.listCursor, 2)
 }
 
@@ -522,7 +522,7 @@ func TestDetailView_Update_HalfPageDown_ScrollsHalfPage(t *testing.T) {
 	detail := makeFocusedDetail()
 	longDesc := strings.Repeat("line of text\n", 50)
 	detail.SetIssue(&jira.Issue{Key: testKey, Description: longDesc})
-	detail.Update(tea.KeyMsg{Type: tea.KeyCtrlD})
+	detail.Update(keytest.Press("ctrl+d"))
 	if detail.scrollY == 0 {
 		t.Error("ctrl+d should scroll down half page")
 	}
@@ -533,7 +533,7 @@ func TestDetailView_Update_HalfPageUp_ClampedAtZero(t *testing.T) {
 	detail := makeFocusedDetail()
 	detail.SetIssue(makeDetailIssue())
 	detail.scrollY = 0
-	detail.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
+	detail.Update(keytest.Press("ctrl+u"))
 	testkit.AssertEqual(t, "scroll clamped at 0", detail.scrollY, 0)
 }
 
@@ -542,7 +542,7 @@ func TestDetailView_Update_NonNavKey_NoChange(t *testing.T) {
 	detail := makeFocusedDetail()
 	detail.SetIssue(makeDetailIssue())
 	before := detail.scrollY
-	detail.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	detail.Update(keytest.Press("x"))
 	testkit.AssertEqual(t, "no scroll change", detail.scrollY, before)
 }
 
@@ -918,7 +918,7 @@ func TestStatusNameStyle_Colors(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		statusName    string
-		expectedColor lipgloss.TerminalColor
+		expectedColor color.Color
 	}{
 		{"done", theme.ColorGreen},
 		{"in progress", theme.ColorYellow},

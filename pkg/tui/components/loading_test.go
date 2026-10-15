@@ -4,8 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func TestLoadingIndicatorAnimatesDotsBeforeLabel(t *testing.T) {
@@ -117,7 +118,7 @@ func TestModalCancellationStopsLoadingIndicator(t *testing.T) {
 	modal.ShowLoading("Loading sprints", "Fetching sprint options")
 	indicator := modal.loading
 
-	updated, cmd := modal.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	updated, cmd := modal.Update(keytest.Press("esc"))
 	modal = updated
 	if modal.IsVisible() || indicator.active {
 		t.Fatal("cancelling the modal did not stop its loading indicator")

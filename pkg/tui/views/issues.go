@@ -6,13 +6,14 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/navstack"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
@@ -602,9 +603,9 @@ func (m *IssuesList) Update(msg tea.Msg) (*IssuesList, tea.Cmd) {
 	if !m.Focused {
 		return m, nil
 	}
-	if msg, ok := msg.(tea.KeyMsg); ok {
+	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		m.NoWrap = m.visualAnchor != ""
-		if m.KeyNav(msg.String()) {
+		if m.KeyNav(keyname.Of(msg)) {
 			return m, func() tea.Msg {
 				return IssueSelectedMsg{Issue: m.SelectedIssue()}
 			}

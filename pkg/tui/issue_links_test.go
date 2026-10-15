@@ -6,7 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -120,14 +122,16 @@ func TestAddLink_PicksDirectionThenTargetAndRefetches(t *testing.T) {
 			testkit.AssertEqual(t, "relates to listed once", strings.Count(view, "relates to"), 1)
 
 			for range tt.downs {
-				send(app, tea.KeyMsg{Type: tea.KeyDown})
+				send(app, keytest.Press("down"))
 			}
-			send(app, send(app, tea.KeyMsg{Type: tea.KeyEnter}))
+			send(app, send(app, keytest.Press("enter")))
 			if !app.issueLookup.IsVisible() {
 				t.Fatal("issue lookup not shown after picking a direction")
 			}
-			send(app, keyRunes("12"))
-			created := send(app, send(app, tea.KeyMsg{Type: tea.KeyEnter}))
+			for _, key := range keytest.Type("12") {
+				send(app, key)
+			}
+			created := send(app, send(app, keytest.Press("enter")))
 
 			if len(fake.CreateIssueLinkCalls) != 1 {
 				t.Fatalf("CreateIssueLink calls = %d, want 1", len(fake.CreateIssueLinkCalls))
@@ -153,7 +157,7 @@ func TestAddLink_CachesLinkTypes(t *testing.T) {
 	app := linksApp(t, fake)
 
 	app.Update(send(app, keyRunes("n")))
-	send(app, tea.KeyMsg{Type: tea.KeyEsc})
+	send(app, keytest.Press("esc"))
 	send(app, keyRunes("n"))
 
 	testkit.AssertEqual(t, "link type requests", len(fake.GetIssueLinkTypesCalls), 1)
@@ -230,7 +234,7 @@ func TestRemoveLink_AsksFirst(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name        string
-		answer      tea.KeyMsg
+		answer      tea.KeyPressMsg
 		wantDeletes int
 	}{
 		{"accept", keyRunes("y"), 1},

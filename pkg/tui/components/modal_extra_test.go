@@ -4,7 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/lipgloss/v2"
+
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -86,7 +90,7 @@ func TestModal_HandleMouseWheelDown_MovesSelection(t *testing.T) {
 	}
 	m.Show(testTitle, items)
 	initialCursor := m.cursor
-	m, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
+	m, _ = m.Update(tea.MouseWheelMsg{Button: tea.MouseWheelDown})
 	testkit.AssertEqual(t, "cursor moved down", m.cursor > initialCursor, true)
 }
 
@@ -99,9 +103,9 @@ func TestModal_HandleMouseWheelUp_MovesSelectionBack(t *testing.T) {
 		{ID: testItem2ID, Label: testItem2Label},
 	}
 	m.Show(testTitle, items)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	m, _ = m.Update(keytest.Press("j"))
 	before := m.cursor
-	m, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
+	m, _ = m.Update(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
 	testkit.AssertEqual(t, "cursor moved up", m.cursor < before, true)
 }
 
@@ -117,9 +121,8 @@ func TestModal_HandleMouseLeftClick_SelectsItem(t *testing.T) {
 	mainBoxH := min(len(items)+4, 22) + 2
 	topOffset := (24 - mainBoxH) / 2
 	clickY := topOffset + 3
-	m, cmd := m.Update(tea.MouseMsg{
-		Button: tea.MouseButtonLeft,
-		Action: tea.MouseActionPress,
+	m, cmd := m.Update(tea.MouseClickMsg{
+		Button: tea.MouseLeft,
 		X:      5,
 		Y:      clickY,
 	})
@@ -144,9 +147,9 @@ func TestModal_ViewReadOnly_ScrollsWithJK(t *testing.T) {
 	}
 	m.ShowReadOnly(testTitle, items)
 	initialOffset := m.offset
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	m, _ = m.Update(keytest.Press("j"))
 	testkit.AssertEqual(t, "offset increased", m.offset > initialOffset, true)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
+	m, _ = m.Update(keytest.Press("k"))
 	testkit.AssertEqual(t, "offset decreased back", m.offset, initialOffset)
 }
 
@@ -225,6 +228,23 @@ func TestModal_HintView_ShowsHintWhenPresent(t *testing.T) {
 	}
 }
 
+func TestModal_HintView_MatchesPickerWidth(t *testing.T) {
+	t.Parallel()
+	m := NewModal()
+	m.SetSize(80, 24)
+	m.Show(testTitle, []ModalItem{{ID: testItem1ID, Label: testItem1Label}})
+	hint := strings.Repeat("h", m.selectionContentW()-1)
+	m.Show(testTitle, []ModalItem{{ID: testItem1ID, Label: testItem1Label, Hint: hint}})
+
+	box := m.HintView()
+
+	testkit.AssertEqual(t, "hint box width", lipgloss.Width(box), lipgloss.Width(m.View()))
+	testkit.AssertEqual(t, "hint box height", lipgloss.Height(box), 4)
+	if !strings.Contains(stripANSI(box), hint) {
+		t.Errorf("hint wrapped or truncated: %q", stripANSI(box))
+	}
+}
+
 func TestModal_ChecklistContentW_DerivedFromItems(t *testing.T) {
 	t.Parallel()
 	m := NewModal()
@@ -245,14 +265,14 @@ func TestModal_InterceptConsumesKeyWhenVisible(t *testing.T) {
 	m := NewModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, []ModalItem{{ID: testItem1ID, Label: testItem1Label}})
-	_, consumed := m.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, consumed := m.Intercept(keytest.Press("j"))
 	testkit.AssertEqual(t, "key consumed", consumed, true)
 }
 
 func TestModal_InterceptPassesThroughWhenHidden(t *testing.T) {
 	t.Parallel()
 	m := NewModal()
-	_, consumed := m.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, consumed := m.Intercept(keytest.Press("j"))
 	testkit.AssertEqual(t, "not consumed when hidden", consumed, false)
 }
 
@@ -265,10 +285,10 @@ func TestModal_SearchFilterAndConfirm(t *testing.T) {
 		{ID: testItem2ID, Label: testItem2Label},
 	}
 	m.Show(testTitle, items)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
+	m, _ = m.Update(keytest.Press("/"))
 	testkit.AssertEqual(t, "searching activated", m.IsSearching(), true)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("S")})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(keytest.Press("S"))
+	m, _ = m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "searching stopped after enter", m.IsSearching(), false)
 }
 
@@ -281,8 +301,8 @@ func TestModal_SearchFilterEscRestores(t *testing.T) {
 		{ID: testItem2ID, Label: testItem2Label},
 	}
 	m.Show(testTitle, items)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/")})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(keytest.Press("/"))
+	m, _ = m.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "searching stopped after esc", m.IsSearching(), false)
 }
 
@@ -295,9 +315,9 @@ func TestModal_ChecklistToggleWithSpace(t *testing.T) {
 		{ID: testItem2ID, Label: testItem2Label},
 	}
 	m.ShowChecklist(testTitle, items, nil)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	m, _ = m.Update(keytest.Press(" "))
 	testkit.AssertEqual(t, "item toggled", m.selected[testItem1ID], true)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	m, _ = m.Update(keytest.Press(" "))
 	testkit.AssertEqual(t, "item untoggled", m.selected[testItem1ID], false)
 }
 
@@ -310,7 +330,7 @@ func TestModal_ChecklistConfirmSendsSelectedItems(t *testing.T) {
 		{ID: testItem2ID, Label: testItem2Label},
 	}
 	m.ShowChecklist(testTitle, items, map[string]bool{testItem1ID: true})
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := m.Update(keytest.Press("enter"))
 	if cmd == nil {
 		t.Fatal("expected command from checklist confirm")
 	}
@@ -329,7 +349,7 @@ func TestModal_ReadOnlyEnterHidesAndCancels(t *testing.T) {
 	m := NewModal()
 	m.SetSize(80, 24)
 	m.ShowReadOnly(testTitle, []ModalItem{{ID: testItem1ID, Label: testItem1Label}})
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "hidden", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected cancel command")

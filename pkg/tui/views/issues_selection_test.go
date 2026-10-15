@@ -6,18 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/termenv"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 )
 
-//nolint:paralleltest // The terminal color profile is process-wide.
 func TestIssuesList_SelectedBackgroundCoversRow(t *testing.T) {
-	profile := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.TrueColor)
-	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+	t.Parallel()
 
 	list := NewIssuesList()
 	th := *list.theme

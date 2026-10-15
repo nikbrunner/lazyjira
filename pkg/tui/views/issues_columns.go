@@ -1,9 +1,10 @@
 package views
 
 import (
+	"image/color"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -16,7 +17,7 @@ type issueColumn struct {
 	field string
 	label string
 	width int
-	color lipgloss.Color
+	color color.Color
 }
 
 func (m *IssuesList) MinimumWidth() int {
@@ -43,11 +44,11 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 		column := issueColumn{field: field}
 		switch field {
 		case "key":
-			column.label, column.width, column.color = "Key", m.keyColWidth, "6"
+			column.label, column.width, column.color = "Key", m.keyColWidth, lipgloss.Color("6")
 		case fieldStatus:
-			column.label, column.width, column.color = "Status", m.statusIconCols, "2"
+			column.label, column.width, column.color = "Status", m.statusIconCols, lipgloss.Color("2")
 		case "type":
-			column.label, column.width, column.color = "Type", m.typeIconCols, "5"
+			column.label, column.width, column.color = "Type", m.typeIconCols, lipgloss.Color("5")
 			if len(m.typeIcons) == 0 {
 				column.width = 10
 			}
@@ -57,7 +58,7 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 				}
 			}
 		case "priority":
-			column.label, column.width, column.color = "Priority", m.priorityIconCols, "3"
+			column.label, column.width, column.color = "Priority", m.priorityIconCols, lipgloss.Color("3")
 			if len(m.priorityIcons) == 0 {
 				column.width = 8
 			}
@@ -67,13 +68,13 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 				}
 			}
 		case fieldSummary:
-			column.label, column.color = "Summary", lipgloss.Color("-1")
+			column.label, column.color = "Summary", lipgloss.NoColor{}
 		case "assignee":
-			column.label, column.width, column.color = "Assignee", 12, "14"
+			column.label, column.width, column.color = "Assignee", 12, lipgloss.Color("14")
 		case "updated":
-			column.label, column.width, column.color = "Updated", 8, "12"
+			column.label, column.width, column.color = "Updated", 8, lipgloss.Color("12")
 		case "sprint":
-			column.label, column.width, column.color = "Sprint", 16, "13"
+			column.label, column.width, column.color = "Sprint", 16, lipgloss.Color("13")
 		default:
 			continue
 		}

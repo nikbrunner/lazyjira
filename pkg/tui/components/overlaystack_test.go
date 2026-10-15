@@ -3,7 +3,9 @@ package components
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 type fakeOverlay struct {
@@ -34,7 +36,7 @@ func TestOverlayStack_InterceptRoutesToFirstVisible(t *testing.T) {
 	c := &fakeOverlay{visible: true}
 	stack := OverlayStack{a, b, c}
 
-	key := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	key := keytest.Press("j")
 	_, ok := stack.Intercept(key)
 
 	if !ok {
@@ -57,7 +59,7 @@ func TestOverlayStack_InterceptPassesThroughWhenNoneVisible(t *testing.T) {
 	b := &fakeOverlay{visible: false}
 	stack := OverlayStack{a, b}
 
-	key := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	key := keytest.Press("j")
 	_, ok := stack.Intercept(key)
 
 	if ok {

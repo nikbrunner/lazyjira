@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -322,11 +323,15 @@ func (m *Modal) Update(msg tea.Msg) (Modal, tea.Cmd) {
 		return *m, nil
 	}
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if m.searching {
 			return m.handleSearchKey(msg)
 		}
 		return m.handleKey(msg)
+	case tea.PasteMsg:
+		if m.searching {
+			m.updateFilterInput(msg)
+		}
 	case tea.MouseMsg:
 		return m.handleMouse(msg)
 	case LoadingIndicatorTickMsg:
@@ -337,8 +342,8 @@ func (m *Modal) Update(msg tea.Msg) (Modal, tea.Cmd) {
 	return *m, nil
 }
 
-func (m *Modal) handleSearchKey(msg tea.KeyMsg) (Modal, tea.Cmd) {
-	switch msg.String() {
+func (m *Modal) handleSearchKey(msg tea.KeyPressMsg) (Modal, tea.Cmd) {
+	switch keyname.Of(msg) {
 	case "enter":
 		m.confirmSearch()
 	case "esc":
@@ -350,17 +355,21 @@ func (m *Modal) handleSearchKey(msg tea.KeyMsg) (Modal, tea.Cmd) {
 	case "up", KeyCtrlK:
 		m.moveCursor(-1)
 	default:
-		updated, changed := m.filterInput.Update(msg)
-		m.filterInput = updated
-		if changed {
-			m.applyFilter()
-		}
+		m.updateFilterInput(msg)
 	}
 	return *m, nil
 }
 
-func (m *Modal) handleKey(msg tea.KeyMsg) (Modal, tea.Cmd) {
-	switch msg.String() {
+func (m *Modal) updateFilterInput(msg tea.Msg) {
+	updated, changed := m.filterInput.Update(msg)
+	m.filterInput = updated
+	if changed {
+		m.applyFilter()
+	}
+}
+
+func (m *Modal) handleKey(msg tea.KeyPressMsg) (Modal, tea.Cmd) {
+	switch keyname.Of(msg) {
 	case "/":
 		if !m.readOnly {
 			m.searching = true
@@ -435,14 +444,15 @@ func (m *Modal) handleEnter() (Modal, tea.Cmd) {
 }
 
 func (m *Modal) handleMouse(msg tea.MouseMsg) (Modal, tea.Cmd) {
+	mouse := msg.Mouse()
 	switch {
-	case msg.Button == tea.MouseButtonWheelDown:
+	case mouse.Button == tea.MouseWheelDown:
 		if m.readOnly {
 			m.offset++
 		} else {
 			m.moveCursor(1)
 		}
-	case msg.Button == tea.MouseButtonWheelUp:
+	case mouse.Button == tea.MouseWheelUp:
 		if m.readOnly {
 			if m.offset > 0 {
 				m.offset--
@@ -450,9 +460,9 @@ func (m *Modal) handleMouse(msg tea.MouseMsg) (Modal, tea.Cmd) {
 		} else {
 			m.moveCursor(-1)
 		}
-	case msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft:
+	case IsLeftClick(msg):
 		if !m.readOnly {
-			clickY := msg.Y
+			clickY := mouse.Y
 			idx := clickY - 3
 			if m.height > 0 {
 				mainBoxH := min(len(m.items)+4, m.height-2) + 2
@@ -724,7 +734,7 @@ func (m *Modal) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 		return nil, false
 	}
 	switch msg.(type) {
-	case tea.KeyMsg, tea.MouseMsg:
+	case tea.KeyPressMsg, tea.PasteMsg, tea.MouseMsg:
 		updated, cmd := m.Update(msg)
 		*m = updated
 		return cmd, true
@@ -767,7 +777,7 @@ func (m *Modal) HintView() string {
 	return lipgloss.NewStyle().
 		Border(theme.Default.Border).
 		BorderForeground(theme.ColorWhite).
-		Width(contentW).
-		Height(hintH).
+		Width(contentW + 2).
+		Height(hintH + 2).
 		Render(hintContent)
 }

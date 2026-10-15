@@ -159,6 +159,7 @@ func (c *Config) ResolveCustomCommandsForShell(shell string) ([]ResolvedCustomCo
 		if entry.Key == "" || entry.Name == "" || entry.Command == "" {
 			return nil, fmt.Errorf("customCommands[%d] (%q): key, name and command must all be non-empty", i, entry.Name)
 		}
+		key := NormalizeKey(entry.Key)
 
 		var ctxs []Context
 		if len(entry.Contexts) == 0 {
@@ -176,7 +177,7 @@ func (c *Config) ResolveCustomCommandsForShell(shell string) ([]ResolvedCustomCo
 		var scopes ScopeMask
 		for _, ctx := range ctxs {
 			scopes |= contextScopes[ctx]
-			k := keyCtx{entry.Key, ctx}
+			k := keyCtx{key, ctx}
 			if seen[k] {
 				return nil, fmt.Errorf("customCommands: duplicate key %q in context %q", entry.Key, ctx)
 			}
@@ -196,7 +197,7 @@ func (c *Config) ResolveCustomCommandsForShell(shell string) ([]ResolvedCustomCo
 		}
 
 		out = append(out, ResolvedCustomCommand{
-			Key:      entry.Key,
+			Key:      key,
 			Name:     entry.Name,
 			Command:  entry.Command,
 			Suspend:  entry.Suspend,

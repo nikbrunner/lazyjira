@@ -5,7 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -13,8 +15,8 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
-func runeKey(r rune) tea.KeyMsg {
-	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+func runeKey(r rune) tea.KeyPressMsg {
+	return keytest.Press(string(r))
 }
 
 func routingApp(t *testing.T) *App {
@@ -77,7 +79,7 @@ func TestUpdate_RoutesCoreMessages(t *testing.T) {
 		},
 		{
 			name: "mouse message dispatches to mouse handler",
-			msg:  tea.MouseMsg{Button: tea.MouseButtonLeft, Action: tea.MouseActionPress, X: 5, Y: 0},
+			msg:  tea.MouseClickMsg{Button: tea.MouseLeft, X: 5, Y: 0},
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
 				if app.leftFocus != focusProjects || !app.projectPicker.IsVisible() {
@@ -97,7 +99,7 @@ func TestUpdate_RoutesCoreMessages(t *testing.T) {
 		},
 		{
 			name: "unhandled key message falls through to panel routing",
-			msg:  tea.KeyMsg{Type: tea.KeyF1},
+			msg:  keytest.Press("f1"),
 		},
 		{
 			name: "search changed filters issues",
@@ -472,18 +474,25 @@ func TestUpdate_RoutesCreateAndEditMessages(t *testing.T) {
 			},
 		},
 		{
-			name:    "editor finished with error keeps mouse cmd",
-			msg:     editorFinishedMsg{err: errNoEditor},
-			wantCmd: true,
+			name: "editor finished with error keeps mouse",
+			msg:  editorFinishedMsg{err: errNoEditor},
+			assert: func(t *testing.T, app *App) {
+				t.Helper()
+				if app.View().MouseMode != tea.MouseModeCellMotion {
+					t.Error("mouse should stay on after the editor exits")
+				}
+			},
 		},
 		{
-			name:    "custom command finished with error",
-			msg:     customCommandFinishedMsg{err: errors.New("exit 1")},
-			wantCmd: true,
+			name: "custom command finished with error",
+			msg:  customCommandFinishedMsg{err: errors.New("exit 1")},
 			assert: func(t *testing.T, app *App) {
 				t.Helper()
 				if app.statusPanel.ErrorMessage() == "" {
 					t.Error("command error should surface in status panel")
+				}
+				if app.View().MouseMode != tea.MouseModeCellMotion {
+					t.Error("mouse should stay on after the command exits")
 				}
 			},
 		},
@@ -747,7 +756,7 @@ func TestUpdate_ActiveSearchBarPassesArrowKeysThrough(t *testing.T) {
 	app.searchBar.Activate()
 	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}, {Key: mainKey}})
 
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyDown})
+	_, _ = app.Update(keytest.Press("down"))
 
 	if got := app.searchBar.Query(); got != "" {
 		t.Errorf("arrow key must not be typed into the search bar, query = %q", got)
@@ -760,7 +769,7 @@ func TestUpdate_VisibleOverlayInterceptsKeys(t *testing.T) {
 	app.modal.Show("Pick", []components.ModalItem{{ID: "1", Label: "A"}})
 	app.overlays = components.OverlayStack{&app.modal}
 
-	_, _ = app.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	_, _ = app.Update(keytest.Press("esc"))
 
 	if app.modal.IsVisible() {
 		t.Error("esc should close the intercepting modal")

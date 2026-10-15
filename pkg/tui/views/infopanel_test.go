@@ -3,7 +3,9 @@ package views
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
@@ -23,8 +25,8 @@ func makeInfoPanelFocused() *InfoPanel {
 	return p
 }
 
-func pressJ() tea.KeyMsg {
-	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")}
+func pressJ() tea.KeyPressMsg {
+	return keytest.Press("j")
 }
 
 func TestInfoPanel_SubTab_CursorMove_DispatchesPreviewRequestMsg(t *testing.T) {

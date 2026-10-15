@@ -1,9 +1,10 @@
 package components
 
 import (
+	"image/color"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
@@ -33,7 +34,7 @@ func TestHighlightJQL_Segments(t *testing.T) {
 	}
 }
 
-func assertForeground(t *testing.T, label string, style lipgloss.Style, want lipgloss.TerminalColor) {
+func assertForeground(t *testing.T, label string, style lipgloss.Style, want color.Color) {
 	t.Helper()
 	if got := style.GetForeground(); got != want {
 		t.Errorf("%s foreground = %v, want %v", label, got, want)
@@ -48,7 +49,7 @@ func TestClassifyJQLWord(t *testing.T) {
 		word     string
 		fullText string
 		pos      int
-		want     lipgloss.TerminalColor
+		want     color.Color
 	}{
 		{"known field", "project", "project = x", 0, theme.ColorBlue},
 		{"customfield prefix", "customfield_10001", "customfield_10001 = x", 0, theme.ColorBlue},

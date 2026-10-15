@@ -1,8 +1,9 @@
 package tui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
 )
 
@@ -20,15 +21,16 @@ const (
 )
 
 func (a *App) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
-	x, y := msg.X, msg.Y
+	mouse := msg.Mouse()
+	x, y := mouse.X, mouse.Y
 	panel, relY := a.hitTest(x, y)
 
 	switch {
-	case msg.Button == tea.MouseButtonWheelUp:
+	case mouse.Button == tea.MouseWheelUp:
 		return a.mouseScroll(panel, -3)
-	case msg.Button == tea.MouseButtonWheelDown:
+	case mouse.Button == tea.MouseWheelDown:
 		return a.mouseScroll(panel, 3)
-	case msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft:
+	case components.IsLeftClick(msg):
 		return a.mouseClick(panel, relY, x)
 	}
 	return a, nil

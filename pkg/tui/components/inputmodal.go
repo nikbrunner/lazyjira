@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -62,8 +63,9 @@ func (m *InputModal) Update(msg tea.Msg) (InputModal, tea.Cmd) {
 	if !m.visible {
 		return *m, nil
 	}
-	if msg, ok := msg.(tea.KeyMsg); ok {
-		if msg.Type == tea.KeyTab && len(m.hints) > 0 {
+	switch msg := msg.(type) {
+	case tea.KeyPressMsg:
+		if keyname.Of(keyname.WithoutAlt(msg)) == keyTab && len(m.hints) > 0 {
 			m.focusInput = !m.focusInput
 			return *m, nil
 		}
@@ -71,31 +73,35 @@ func (m *InputModal) Update(msg tea.Msg) (InputModal, tea.Cmd) {
 			return m.handleHintKeys(msg)
 		}
 		return m.handleTextInput(msg)
+	case tea.PasteMsg:
+		if m.focusInput {
+			m.insert([]rune(msg.Content))
+		}
 	}
 	return *m, nil
 }
 
-func (m *InputModal) handleHintKeys(msg tea.KeyMsg) (InputModal, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyEnter:
+func (m *InputModal) handleHintKeys(msg tea.KeyPressMsg) (InputModal, tea.Cmd) {
+	switch keyname.Of(keyname.WithoutAlt(msg)) {
+	case keyEnter:
 		if m.hintCursor >= 0 && m.hintCursor < len(m.hints) {
 			m.visible = false
 			text := m.hints[m.hintCursor]
 			return *m, func() tea.Msg { return InputConfirmedMsg{Text: text} }
 		}
-	case tea.KeyEsc:
+	case keyEsc:
 		m.visible = false
 		return *m, func() tea.Msg { return InputCancelledMsg{} }
-	case tea.KeyDown, tea.KeyCtrlJ:
+	case keyDown, KeyCtrlJ:
 		if m.hintCursor < len(m.hints)-1 {
 			m.hintCursor++
 		}
-	case tea.KeyUp, tea.KeyCtrlK:
+	case "up", KeyCtrlK:
 		if m.hintCursor > 0 {
 			m.hintCursor--
 		}
 	default:
-		switch msg.String() {
+		switch keyname.Of(msg) {
 		case "q":
 			m.visible = false
 			return *m, func() tea.Msg { return InputCancelledMsg{} }
@@ -112,59 +118,55 @@ func (m *InputModal) handleHintKeys(msg tea.KeyMsg) (InputModal, tea.Cmd) {
 	return *m, nil
 }
 
-func (m *InputModal) handleTextInput(msg tea.KeyMsg) (InputModal, tea.Cmd) {
-	switch msg.Type {
-	case tea.KeyEnter:
+func (m *InputModal) handleTextInput(msg tea.KeyPressMsg) (InputModal, tea.Cmd) {
+	msg = keyname.WithoutAlt(msg)
+	switch keyname.Of(msg) {
+	case keyEnter:
 		m.visible = false
 		text := string(m.text)
 		return *m, func() tea.Msg { return InputConfirmedMsg{Text: text} }
-	case tea.KeyEsc:
+	case keyEsc:
 		m.visible = false
 		return *m, func() tea.Msg { return InputCancelledMsg{} }
-	case tea.KeyBackspace:
+	case keyBackspace:
 		if m.cursor > 0 {
 			m.text = append(m.text[:m.cursor-1], m.text[m.cursor:]...)
 			m.cursor--
 		}
-	case tea.KeyDelete:
+	case "delete":
 		if m.cursor < len(m.text) {
 			m.text = append(m.text[:m.cursor], m.text[m.cursor+1:]...)
 		}
-	case tea.KeyLeft:
+	case "left":
 		if m.cursor > 0 {
 			m.cursor--
 		}
-	case tea.KeyRight:
+	case "right":
 		if m.cursor < len(m.text) {
 			m.cursor++
 		}
-	case tea.KeyHome, tea.KeyCtrlA:
+	case "home", "ctrl+a":
 		m.cursor = 0
-	case tea.KeyEnd, tea.KeyCtrlE:
+	case "end", "ctrl+e":
 		m.cursor = len(m.text)
-	case tea.KeyCtrlU:
+	case keyCtrlU:
 		m.text = m.text[m.cursor:]
 		m.cursor = 0
-	case tea.KeyCtrlK:
+	case KeyCtrlK:
 		m.text = m.text[:m.cursor]
-	case tea.KeySpace:
-		newText := make([]rune, 0, len(m.text)+1)
-		newText = append(newText, m.text[:m.cursor]...)
-		newText = append(newText, ' ')
-		newText = append(newText, m.text[m.cursor:]...)
-		m.text = newText
-		m.cursor++
-	case tea.KeyRunes:
-		runes := msg.Runes
-		newText := make([]rune, 0, len(m.text)+len(runes))
-		newText = append(newText, m.text[:m.cursor]...)
-		newText = append(newText, runes...)
-		newText = append(newText, m.text[m.cursor:]...)
-		m.text = newText
-		m.cursor += len(runes)
 	default:
+		m.insert([]rune(keyname.Text(msg)))
 	}
 	return *m, nil
+}
+
+func (m *InputModal) insert(runes []rune) {
+	newText := make([]rune, 0, len(m.text)+len(runes))
+	newText = append(newText, m.text[:m.cursor]...)
+	newText = append(newText, runes...)
+	newText = append(newText, m.text[m.cursor:]...)
+	m.text = newText
+	m.cursor += len(runes)
 }
 
 func (m *InputModal) View() string {
@@ -254,7 +256,8 @@ func (m *InputModal) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	if !m.visible {
 		return nil, false
 	}
-	if _, ok := msg.(tea.KeyMsg); ok {
+	switch msg.(type) {
+	case tea.KeyPressMsg, tea.PasteMsg:
 		updated, cmd := m.Update(msg)
 		*m = updated
 		return cmd, true

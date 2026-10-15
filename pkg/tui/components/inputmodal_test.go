@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -59,7 +59,7 @@ func TestInputModal_EnterConfirmsText(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "hello")
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "hidden after confirm", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected command from Enter")
@@ -77,7 +77,7 @@ func TestInputModal_EscCancels(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "")
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, cmd := m.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "hidden after esc", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected cancel command")
@@ -92,10 +92,10 @@ func TestInputModal_TextEditingKeys(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "hello")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	m, _ = m.Update(keytest.Press("backspace"))
 	testkit.AssertEqual(t, "backspace removes char", string(m.text), "hell")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	m, _ = m.Update(keytest.Press("left"))
+	m, _ = m.Update(keytest.Press("delete"))
 	testkit.AssertEqual(t, "delete removes char at cursor", string(m.text), "hel")
 }
 
@@ -104,13 +104,13 @@ func TestInputModal_HomeEndCtrlAE(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "hello")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyHome})
+	m, _ = m.Update(keytest.Press("home"))
 	testkit.AssertEqual(t, "cursor at start after Home", m.cursor, 0)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnd})
+	m, _ = m.Update(keytest.Press("end"))
 	testkit.AssertEqual(t, "cursor at end after End", m.cursor, 5)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlA})
+	m, _ = m.Update(keytest.Press("ctrl+a"))
 	testkit.AssertEqual(t, "cursor at start after CtrlA", m.cursor, 0)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlE})
+	m, _ = m.Update(keytest.Press("ctrl+e"))
 	testkit.AssertEqual(t, "cursor at end after CtrlE", m.cursor, 5)
 }
 
@@ -119,13 +119,13 @@ func TestInputModal_CtrlUK(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "hello world")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyHome})
+	m, _ = m.Update(keytest.Press("home"))
 	m.cursor = 5
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlK})
+	m, _ = m.Update(keytest.Press("ctrl+k"))
 	testkit.AssertEqual(t, "ctrl+k kills to end", string(m.text), "hello")
 	m.Show(testTitle, "hello world")
 	m.cursor = 6
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
+	m, _ = m.Update(keytest.Press("ctrl+u"))
 	testkit.AssertEqual(t, "ctrl+u kills to start", string(m.text), "world")
 }
 
@@ -134,9 +134,9 @@ func TestInputModal_SpaceAndRunes(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "hi")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	m, _ = m.Update(keytest.Press(" "))
 	testkit.AssertEqual(t, "space inserts space", string(m.text), "hi ")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("!")})
+	m, _ = m.Update(keytest.Press("!"))
 	testkit.AssertEqual(t, "runes inserted", string(m.text), "hi !")
 }
 
@@ -164,14 +164,14 @@ func TestInputModal_InterceptConsumesKeyWhenVisible(t *testing.T) {
 	m := NewInputModal()
 	m.SetSize(80, 24)
 	m.Show(testTitle, "")
-	_, consumed := m.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	_, consumed := m.Intercept(keytest.Press("x"))
 	testkit.AssertEqual(t, "key consumed", consumed, true)
 }
 
 func TestInputModal_InterceptPassesThroughWhenHidden(t *testing.T) {
 	t.Parallel()
 	m := NewInputModal()
-	_, consumed := m.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	_, consumed := m.Intercept(keytest.Press("x"))
 	testkit.AssertEqual(t, "not consumed when hidden", consumed, false)
 }
 
@@ -223,9 +223,9 @@ func TestInputModal_TabTogglesFocusWhenHintsPresent(t *testing.T) {
 	m.Show(testTitle, "")
 	m.SetHints([]string{testBranchName1})
 	testkit.AssertEqual(t, "initially focus input", m.focusInput, true)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "focus moved to hints", m.focusInput, false)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "focus moved back to input", m.focusInput, true)
 }
 
@@ -235,10 +235,10 @@ func TestInputModal_HintKeyNavigationJK(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show(testTitle, "")
 	m.SetHints([]string{testBranchName1, testBranchName2})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, _ = m.Update(keytest.Press("down"))
 	testkit.AssertEqual(t, "hint cursor moved down", m.hintCursor, 1)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m, _ = m.Update(keytest.Press("up"))
 	testkit.AssertEqual(t, "hint cursor moved up", m.hintCursor, 0)
 }
 
@@ -248,8 +248,8 @@ func TestInputModal_HintEnterSelectsHint(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show(testTitle, "")
 	m.SetHints([]string{testBranchName1, testBranchName2})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "hidden after hint enter", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected command from hint Enter")
@@ -267,8 +267,8 @@ func TestInputModal_HintEscCancels(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show(testTitle, "")
 	m.SetHints([]string{testBranchName1})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, cmd := m.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "hidden after hint esc", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected cancel command")
@@ -284,8 +284,8 @@ func TestInputModal_HintQCancels(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show(testTitle, "")
 	m.SetHints([]string{testBranchName1})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, cmd := m.Update(keytest.Press("q"))
 	testkit.AssertEqual(t, "hidden after q", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected cancel command from q")
@@ -298,7 +298,7 @@ func TestInputModal_HintQCancels(t *testing.T) {
 func TestInputModal_UpdateInvisibleIsNoop(t *testing.T) {
 	t.Parallel()
 	m := NewInputModal()
-	m2, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m2, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "still invisible", m2.IsVisible(), false)
 	testkit.AssertEqual(t, "no cmd", cmd == nil, true)
 }

@@ -80,7 +80,7 @@ With [mise](https://mise.jdx.dev):
 mise use -g github:nikbrunner/lazyjira
 ```
 
-With Go 1.25.8 or later:
+With Go 1.26 or later:
 
 ```sh
 go install github.com/nikbrunner/lazyjira/cmd/lazyjira@latest

@@ -4,7 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 )
@@ -190,7 +192,7 @@ func TestJQLModal_EscFromInputCancels(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", nil)
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, cmd := m.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "hidden after esc", m.IsVisible(), false)
 	if cmd == nil {
 		t.Fatal("expected cancel command")
@@ -205,7 +207,7 @@ func TestJQLModal_EnterSubmitsQuery(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show(testQueryText, nil)
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, cmd := m.Update(keytest.Press("enter"))
 	if cmd == nil {
 		t.Fatal("expected submit command")
 	}
@@ -222,7 +224,7 @@ func TestJQLModal_EnterWithEmptyQueryIsNoop(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", nil)
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "visible (no submit)", m.IsVisible(), true)
 	testkit.AssertEqual(t, "no command", cmd == nil, true)
 }
@@ -233,9 +235,9 @@ func TestJQLModal_TabTogglesFocus(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show("", []string{testHistoryItem1})
 	testkit.AssertEqual(t, "initially focus input", m.focusInput, true)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "focus moved to list", m.focusInput, false)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "focus returned to input", m.focusInput, true)
 }
 
@@ -245,7 +247,7 @@ func TestJQLModal_TabInsertsSuggestionWhenOnlyOne(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show("status", nil)
 	m.SetSuggestions([]string{"status = Open"})
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, cmd := m.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "still focus input", m.focusInput, true)
 	if cmd == nil {
 		t.Fatal("expected changed command")
@@ -260,11 +262,11 @@ func TestJQLModal_ListNavWithJK(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", []string{testHistoryItem1, testHistoryItem2})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(keytest.Press("tab"))
 	testkit.AssertEqual(t, "cursor initially 0", m.cursor, 0)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	m, _ = m.Update(keytest.Press("j"))
 	testkit.AssertEqual(t, "cursor moved down", m.cursor, 1)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")})
+	m, _ = m.Update(keytest.Press("k"))
 	testkit.AssertEqual(t, "cursor moved up", m.cursor, 0)
 }
 
@@ -273,12 +275,12 @@ func TestJQLModal_ListNavTopBottom(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", []string{testHistoryItem1, testHistoryItem2})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("G")})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, _ = m.Update(keytest.Press("G"))
 	testkit.AssertEqual(t, "cursor at bottom", m.cursor, 1)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	m, _ = m.Update(keytest.Press("g"))
 	testkit.AssertEqual(t, "cursor waits after g", m.cursor, 1)
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("g")})
+	m, _ = m.Update(keytest.Press("g"))
 	testkit.AssertEqual(t, "cursor at top", m.cursor, 0)
 }
 
@@ -287,8 +289,8 @@ func TestJQLModal_EnterOnHistoryItemSetsInput(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", []string{testHistoryItem1})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, _ = m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "input set to history item", m.InputValue(), testHistoryItem1)
 	testkit.AssertEqual(t, "focus returned to input", m.focusInput, true)
 }
@@ -299,8 +301,8 @@ func TestJQLModal_EnterOnSuggestionInsertsIt(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show("status", nil)
 	m.SetSuggestions([]string{"status = Open", "status = Closed"})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "focus returned to input", m.focusInput, true)
 	if cmd == nil {
 		t.Fatal("expected command from autocomplete insert")
@@ -315,8 +317,8 @@ func TestJQLModal_EscFromListReturnsFocusToInput(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", []string{testHistoryItem1})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m, _ = m.Update(keytest.Press("tab"))
+	m, _ = m.Update(keytest.Press("esc"))
 	testkit.AssertEqual(t, "focus back to input", m.focusInput, true)
 	testkit.AssertEqual(t, "still visible", m.IsVisible(), true)
 }
@@ -326,7 +328,7 @@ func TestJQLModal_TypingGeneratesInputChangedMsg(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", nil)
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")})
+	m, cmd := m.Update(keytest.Press("p"))
 	if cmd == nil {
 		t.Fatal("expected command after typing")
 	}
@@ -345,9 +347,9 @@ func TestJQLModal_MouseWheelScrollsList(t *testing.T) {
 		history[i] = testHistoryItem1
 	}
 	m.Show("", history)
-	m, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress})
+	m, _ = m.Update(tea.MouseWheelMsg{Button: tea.MouseWheelDown})
 	testkit.AssertEqual(t, "offset increased", m.offset, 1)
-	m, _ = m.Update(tea.MouseMsg{Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress})
+	m, _ = m.Update(tea.MouseWheelMsg{Button: tea.MouseWheelUp})
 	testkit.AssertEqual(t, "offset back to 0", m.offset, 0)
 }
 
@@ -356,9 +358,8 @@ func TestJQLModal_MouseClickSelectsItem(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", []string{testHistoryItem1, testHistoryItem2})
-	m, _ = m.Update(tea.MouseMsg{
-		Button: tea.MouseButtonLeft,
-		Action: tea.MouseActionPress,
+	m, _ = m.Update(tea.MouseClickMsg{
+		Button: tea.MouseLeft,
 		X:      5,
 		Y:      6,
 	})
@@ -370,14 +371,14 @@ func TestJQLModal_InterceptConsumesKeyWhenVisible(t *testing.T) {
 	m := NewJQLModal()
 	m.SetSize(80, 24)
 	m.Show("", nil)
-	_, consumed := m.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, consumed := m.Intercept(keytest.Press("j"))
 	testkit.AssertEqual(t, "key consumed", consumed, true)
 }
 
 func TestJQLModal_InterceptPassesThroughWhenHidden(t *testing.T) {
 	t.Parallel()
 	m := NewJQLModal()
-	_, consumed := m.Intercept(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	_, consumed := m.Intercept(keytest.Press("j"))
 	testkit.AssertEqual(t, "not consumed when hidden", consumed, false)
 }
 
@@ -416,7 +417,7 @@ func TestJQLModal_SelectedSuggestion_WhenFocusList(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show("", nil)
 	m.SetSuggestions([]string{"priority = High", "priority = Low"})
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m, _ = m.Update(keytest.Press("tab"))
 	sel := m.SelectedSuggestion()
 	testkit.AssertEqual(t, "first suggestion selected", sel, "priority = High")
 }
@@ -427,7 +428,7 @@ func TestJQLModal_LoadingBlocksSubmit(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show(testQueryText, nil)
 	m.SetLoading(true)
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m, cmd := m.Update(keytest.Press("enter"))
 	testkit.AssertEqual(t, "no command while loading", cmd == nil, true)
 	testkit.AssertEqual(t, "still visible while loading", m.IsVisible(), true)
 }
@@ -438,6 +439,6 @@ func TestJQLModal_ErrorClearedOnTyping(t *testing.T) {
 	m.SetSize(80, 24)
 	m.Show("query", nil)
 	m.SetError("oops")
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	m, _ = m.Update(keytest.Press("x"))
 	testkit.AssertEqual(t, "error cleared on typing", m.errorMsg, "")
 }

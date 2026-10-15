@@ -1,10 +1,11 @@
 package components
 
 import (
+	"image/color"
 	"math"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
@@ -52,8 +53,8 @@ func RenderPanel(title, content string, width, innerHeight int, focused bool) st
 }
 
 // RenderPanelWithColor draws a panel with an explicit border color
-func RenderPanelWithColor(title, footer, content string, width, innerHeight int, scroll *ScrollInfo, color lipgloss.TerminalColor) string {
-	return renderPanelImpl(title, footer, content, width, innerHeight, color, scroll)
+func RenderPanelWithColor(title, footer, content string, width, innerHeight int, scroll *ScrollInfo, borderColor color.Color) string {
+	return renderPanelImpl(title, footer, content, width, innerHeight, borderColor, scroll)
 }
 
 // RenderPanelFull draws a panel with title, footer, and optional scrollbar
@@ -65,7 +66,7 @@ func RenderPanelFull(title, footer, content string, width, innerHeight int, focu
 	return renderPanelImpl(title, footer, content, width, innerHeight, borderColor, scroll)
 }
 
-func renderPanelImpl(title, footer, content string, width, innerHeight int, borderColor lipgloss.TerminalColor, scroll *ScrollInfo) string {
+func renderPanelImpl(title, footer, content string, width, innerHeight int, borderColor color.Color, scroll *ScrollInfo) string {
 	th := theme.Default
 
 	var styledTitle string

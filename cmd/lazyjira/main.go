@@ -12,7 +12,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -103,6 +103,7 @@ func run() error {
 		ColorsDark:  cfg.GUI.ThemeDark,
 		ColorsLight: cfg.GUI.ThemeLight,
 		Borders:     cfg.GUI.Borders,
+		Background:  theme.TerminalBackground(),
 	})
 
 	var client jira.ClientInterface
@@ -149,7 +150,7 @@ func run() error {
 	app := tui.NewAppWithAuth(cfg, client, authMethod)
 	defer app.Shutdown()
 
-	p := tea.NewProgram(app, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(app)
 	_, err = p.Run()
 	return err
 }

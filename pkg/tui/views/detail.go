@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -389,11 +390,11 @@ func (d *DetailView) Update(msg tea.Msg) (*DetailView, tea.Cmd) {
 	if !d.focused {
 		return d, nil
 	}
-	km, ok := msg.(tea.KeyMsg)
+	km, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return d, nil
 	}
-	key := km.String()
+	key := keyname.Of(km)
 
 	if key == "tab" {
 		d.NextTab()

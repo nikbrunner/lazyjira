@@ -3,7 +3,7 @@ package tui
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
@@ -109,7 +109,7 @@ func TestEmptySubList_NoPreviewDispatch(t *testing.T) {
 		t.Fatal("expected InfoTabSubtasks after two NextTab actions")
 	}
 
-	navKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")}
+	navKey := keytest.Press("j")
 	app.infoPanel.ResolveNav = DefaultKeymap().MatchNav
 	_, cmd := app.infoPanel.Update(navKey)
 	if cmd == nil {

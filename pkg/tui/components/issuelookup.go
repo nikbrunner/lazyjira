@@ -5,10 +5,11 @@ import (
 	"strings"
 	"unicode"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname"
 	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
@@ -85,11 +86,17 @@ func (l *IssueLookup) SetIssueSuggestions(query string, issues []LookupSuggestio
 }
 
 func (l *IssueLookup) Update(msg tea.Msg) (IssueLookup, tea.Cmd) {
-	key, ok := msg.(tea.KeyMsg)
-	if !l.visible || !ok {
+	if !l.visible {
 		return *l, nil
 	}
-	switch key.String() {
+	if paste, ok := msg.(tea.PasteMsg); ok {
+		return *l, l.typeText(paste.Content)
+	}
+	key, ok := msg.(tea.KeyPressMsg)
+	if !ok {
+		return *l, nil
+	}
+	switch keyname.Of(key) {
 	case keyEsc:
 		l.visible = false
 		return *l, func() tea.Msg { return IssueLookupCancelledMsg{} }
@@ -111,19 +118,24 @@ func (l *IssueLookup) Update(msg tea.Msg) (IssueLookup, tea.Cmd) {
 	case "ctrl+u":
 		return *l, l.setQuery("")
 	default:
-		if key.Type == tea.KeyRunes {
-			var typed strings.Builder
-			for _, r := range key.Runes {
-				if unicode.IsPrint(r) && !unicode.IsSpace(r) {
-					typed.WriteRune(r)
-				}
-			}
-			if typed.Len() > 0 {
-				return *l, l.setQuery(l.query + typed.String())
-			}
-		}
+		return *l, l.typeText(keyname.Text(keyname.WithoutAlt(key)))
 	}
 	return *l, nil
+}
+
+// typeText appends the printable characters of text to the query, leaving
+// out whitespace.
+func (l *IssueLookup) typeText(text string) tea.Cmd {
+	var typed strings.Builder
+	for _, r := range text {
+		if unicode.IsPrint(r) && !unicode.IsSpace(r) {
+			typed.WriteRune(r)
+		}
+	}
+	if typed.Len() == 0 {
+		return nil
+	}
+	return l.setQuery(l.query + typed.String())
 }
 
 func (l *IssueLookup) confirm() tea.Cmd {
@@ -264,7 +276,9 @@ func (l *IssueLookup) Intercept(msg tea.Msg) (tea.Cmd, bool) {
 	if _, ok := msg.(tea.MouseMsg); ok {
 		return nil, true
 	}
-	if _, ok := msg.(tea.KeyMsg); !ok {
+	switch msg.(type) {
+	case tea.KeyPressMsg, tea.PasteMsg:
+	default:
 		return nil, false
 	}
 	updated, cmd := l.Update(msg)

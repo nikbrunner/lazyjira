@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -261,7 +261,7 @@ func (a *App) executeCustomCommand(rc config.ResolvedCustomCommand, data map[str
 }
 
 func (a *App) handleCustomCommandFinished(msg customCommandFinishedMsg) (tea.Model, tea.Cmd) {
-	cmds := []tea.Cmd{tea.EnableMouseCellMotion}
+	var cmds []tea.Cmd
 	if msg.err != nil {
 		errText := msg.err.Error()
 		if tail := lastNonEmptyLine(msg.output); tail != "" {
@@ -341,7 +341,7 @@ func (a *App) customCommandBindings(ctx config.Context) []Binding {
 	for _, rc := range a.customCmds {
 		if rc.HasContext(ctx) {
 			bindings = append(bindings, Binding{
-				Key:         rc.Key,
+				Key:         displayKey(rc.Key),
 				Description: rc.Name,
 			})
 		}

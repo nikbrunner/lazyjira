@@ -8,7 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
@@ -17,7 +19,7 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 )
 
-func keyRunes(s string) tea.KeyMsg { return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)} }
+func keyRunes(s string) tea.KeyPressMsg { return keytest.Press(s) }
 
 func marksApp(t *testing.T) *App {
 	t.Helper()
@@ -47,7 +49,7 @@ func TestYank_MarkedRowsThenSummary(t *testing.T) {
 	app.issuesList.Cursor = 1
 	app.handleKeyMsg(keyRunes("v"))
 	app.issuesList.Cursor = 2
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 	app.handleKeyMsg(keyRunes("y"))
 
 	if want := "A-1 One\nA-2 Two\nA-3 Three"; copied != want {
@@ -72,7 +74,7 @@ func TestYank_MarksHiddenByFilterCopySummary(t *testing.T) {
 	runExternalCommand = func(input string, _ bool, _ string, _ ...string) { copied = input }
 
 	app := marksApp(t)
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 	app.issuesList.SetFilter("Three")
 
 	app.handleKeyMsg(keyRunes("y"))
@@ -81,7 +83,7 @@ func TestYank_MarksHiddenByFilterCopySummary(t *testing.T) {
 		t.Fatalf("copied %q, want %q", copied, want)
 	}
 
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	app.handleKeyMsg(keytest.Press("esc"))
 
 	if app.issuesList.IsFiltered() {
 		t.Fatal("esc did not clear the filter")
@@ -106,7 +108,7 @@ func TestYank_MarkingModeBypassesCustomCommand(t *testing.T) {
 		t.Fatal("y without marks should run the custom command")
 	}
 
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 	app.handleKeyMsg(keyRunes("y"))
 
 	if want := "A-1 One"; copied != want {
@@ -142,7 +144,7 @@ func (c *externalCalls) lastCopied(t *testing.T) string {
 	return c.copied[len(c.copied)-1]
 }
 
-var altY = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y"), Alt: true}
+var altY = keytest.Press("alt+y")
 
 func copyApp(t *testing.T) *App {
 	t.Helper()
@@ -158,9 +160,9 @@ func copyApp(t *testing.T) *App {
 }
 
 func markFirstTwo(app *App) {
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 	app.issuesList.Cursor = 1
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 	app.issuesList.Cursor = 2
 }
 
@@ -168,12 +170,12 @@ func markFirstTwo(app *App) {
 func TestCopy_MarkedIssuesOneLinePerIssue(t *testing.T) {
 	tests := []struct {
 		name   string
-		key    tea.KeyMsg
+		key    tea.KeyPressMsg
 		want   string
 		status string
 	}{
 		{"y copies key and summary only", keyRunes("y"), "A-205 web Release notes\nA-206 Changelog", "Copied 2 issues"},
-		{"ctrl+y copies Markdown links", tea.KeyMsg{Type: tea.KeyCtrlY},
+		{"ctrl+y copies Markdown links", keytest.Press("ctrl+y"),
 			"[A-205 web Release notes](https://jira.example/browse/A-205)\n[A-206 Changelog](https://jira.example/browse/A-206)",
 			"Copied 2 Markdown links"},
 		{"Y copies URLs", keyRunes("Y"), "https://jira.example/browse/A-205\nhttps://jira.example/browse/A-206", "Copied 2 URLs"},
@@ -200,11 +202,11 @@ func TestCopy_MarkedIssuesOneLinePerIssue(t *testing.T) {
 //nolint:paralleltest // Replaces the process-wide clipboard command runner.
 func TestCopy_OneMarkReportsSingular(t *testing.T) {
 	tests := []struct {
-		key    tea.KeyMsg
+		key    tea.KeyPressMsg
 		status string
 	}{
 		{keyRunes("y"), "Copied 1 issue"},
-		{tea.KeyMsg{Type: tea.KeyCtrlY}, "Copied 1 Markdown link"},
+		{keytest.Press("ctrl+y"), "Copied 1 Markdown link"},
 		{keyRunes("Y"), "Copied 1 URL"},
 		{altY, "Copied 1 issue row"},
 	}
@@ -212,7 +214,7 @@ func TestCopy_OneMarkReportsSingular(t *testing.T) {
 		t.Run(tt.key.String(), func(t *testing.T) {
 			stubExternal(t)
 			app := copyApp(t)
-			app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+			app.handleKeyMsg(keytest.Press(" "))
 
 			app.handleKeyMsg(tt.key)
 
@@ -228,11 +230,11 @@ func TestCopy_OneMarkReportsSingular(t *testing.T) {
 func TestCopy_WithoutMarksUsesCursorIssue(t *testing.T) {
 	tests := []struct {
 		name string
-		key  tea.KeyMsg
+		key  tea.KeyPressMsg
 		want string
 	}{
 		{"y", keyRunes("y"), "A-206 Changelog"},
-		{"ctrl+y", tea.KeyMsg{Type: tea.KeyCtrlY}, "[A-206 Changelog](https://jira.example/browse/A-206)"},
+		{"ctrl+y", keytest.Press("ctrl+y"), "[A-206 Changelog](https://jira.example/browse/A-206)"},
 		{"Y", keyRunes("Y"), "https://jira.example/browse/A-206"},
 	}
 	for _, tt := range tests {
@@ -349,12 +351,12 @@ func TestBrowser_WithoutMarksOpensCursorIssue(t *testing.T) {
 func TestBrowser_ManyMarkedIssuesAskFirst(t *testing.T) {
 	tests := []struct {
 		name       string
-		answer     tea.KeyMsg
+		answer     tea.KeyPressMsg
 		wantOpened int
 		wantMarks  bool
 	}{
 		{"accept", keyRunes("y"), 11, false},
-		{"cancel", tea.KeyMsg{Type: tea.KeyEsc}, 0, true},
+		{"cancel", keytest.Press("esc"), 0, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -370,7 +372,7 @@ func TestBrowser_ManyMarkedIssuesAskFirst(t *testing.T) {
 			if !app.confirmModal.IsVisible() {
 				t.Fatal("no confirmation for 11 issues")
 			}
-			if view := app.View(); !strings.Contains(view, "Open 11 browser tabs?") {
+			if view := app.View().Content; !strings.Contains(view, "Open 11 browser tabs?") {
 				t.Fatal("confirmation question missing from the view")
 			}
 
@@ -396,7 +398,7 @@ func TestMarkingKeys_IncludeCopyAndBrowserActions(t *testing.T) {
 	for _, key := range []string{"ctrl+y", "Y", "o", "alt+y"} {
 		testkit.AssertEqual(t, key+" without marks", app.isMarkingKey(key), false)
 	}
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 	for _, key := range []string{"y", "ctrl+y", "Y", "o", "alt+y"} {
 		testkit.AssertEqual(t, key+" with marks", app.isMarkingKey(key), true)
 	}
@@ -406,9 +408,9 @@ func TestEsc_ClearsMarksBeforeFilter(t *testing.T) {
 	t.Parallel()
 	app := marksApp(t)
 	app.issuesList.SetFilter("A")
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeySpace})
+	app.handleKeyMsg(keytest.Press(" "))
 
-	app.handleKeyMsg(tea.KeyMsg{Type: tea.KeyEsc})
+	app.handleKeyMsg(keytest.Press("esc"))
 
 	if app.issuesList.HasMarks() {
 		t.Fatal("marks remain after esc")
@@ -494,7 +496,7 @@ func TestConfirm_DrawnAboveLaterOverlays(t *testing.T) {
 	}
 	app.modal.Show("Link type", items)
 
-	if !strings.Contains(app.View(), "Remove link: blocks SHOP-12?") {
+	if !strings.Contains(app.View().Content, "Remove link: blocks SHOP-12?") {
 		t.Fatal("confirmation hidden under a later overlay")
 	}
 }

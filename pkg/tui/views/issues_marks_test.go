@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/muesli/termenv"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/config"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -111,8 +111,8 @@ func TestIssuesList_MarkedRowsTextKeepsFullSummaries(t *testing.T) {
 func TestIssuesList_RangeStopsAtListEdges(t *testing.T) {
 	t.Parallel()
 	list := makeFocusedIssuesList([]jira.Issue{{Key: "A-1"}, {Key: "A-2"}})
-	down := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")}
-	up := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("k")}
+	down := keytest.Press("j")
+	up := keytest.Press("k")
 
 	list.Cursor = 1
 	list.ToggleVisual()
@@ -146,11 +146,8 @@ func TestIssuesList_MarkedRowsTextIsSanitized(t *testing.T) {
 	}
 }
 
-//nolint:paralleltest // The terminal color profile is process-wide.
 func TestIssuesList_MarkedRowsShowGlyphAndKeepWidth(t *testing.T) {
-	profile := lipgloss.ColorProfile()
-	lipgloss.SetColorProfile(termenv.TrueColor)
-	t.Cleanup(func() { lipgloss.SetColorProfile(profile) })
+	t.Parallel()
 
 	list := marksFixture()
 	th := *list.theme

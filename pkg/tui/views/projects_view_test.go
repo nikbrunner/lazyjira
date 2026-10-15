@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 
 	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
@@ -63,7 +63,7 @@ func TestProjectList_Update_UnfocusedDoesNothing(t *testing.T) {
 	list.SetProjects([]jira.Project{{Key: "AAA"}, {Key: "BBB"}})
 	list.SetFocused(false)
 	list.ResolveNav = navDownResolverProjects
-	result, cmd := list.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	result, cmd := list.Update(keytest.Press("j"))
 	testkit.AssertEqual(t, "cursor stays at 0", result.Cursor, 0)
 	if cmd != nil {
 		t.Error("unfocused Update should return nil cmd")
@@ -73,7 +73,7 @@ func TestProjectList_Update_UnfocusedDoesNothing(t *testing.T) {
 func TestProjectList_Update_FocusedNavEmitsHovered(t *testing.T) {
 	t.Parallel()
 	list := makeFocusedProjectList([]jira.Project{{Key: "AAA"}, {Key: "BBB"}})
-	result, cmd := list.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	result, cmd := list.Update(keytest.Press("j"))
 	testkit.AssertEqual(t, "cursor moved to 1", result.Cursor, 1)
 	if cmd == nil {
 		t.Fatal("focused nav should emit a Cmd")
@@ -89,7 +89,7 @@ func TestProjectList_Update_FocusedNavEmitsHovered(t *testing.T) {
 func TestProjectList_Update_NonNavKey_NoCmd(t *testing.T) {
 	t.Parallel()
 	list := makeFocusedProjectList([]jira.Project{{Key: "AAA"}})
-	_, cmd := list.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
+	_, cmd := list.Update(keytest.Press("x"))
 	if cmd != nil {
 		t.Error("non-nav key should return nil cmd")
 	}

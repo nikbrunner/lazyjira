@@ -567,7 +567,7 @@ rendererStyle: auto
 | Value | Behavior |
 |-------|----------|
 | *(unset, default)* | Same as `auto`. |
-| `auto` | Picks `dark` or `light` based on `lipgloss.HasDarkBackground`. Terminal background detection can fail under `tmux` or `ssh`; set the value explicitly when autodetect picks wrong. |
+| `auto` | Picks `dark` or `light` from the terminal background color, read at startup. Terminal background detection can fail under `tmux` or `ssh`; set the value explicitly when autodetect picks wrong. |
 | `dark` | Forces the dark Glamour theme. |
 | `light` | Forces the light Glamour theme. |
 | `notty` | Plain output without ANSI styling. |

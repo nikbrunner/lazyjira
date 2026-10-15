@@ -4,12 +4,18 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/nikbrunner/lazyjira/pkg/tui/keyname/keytest"
 )
 
 func lookupRunes(l IssueLookup, s string) (IssueLookup, tea.Cmd) {
-	return l.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)})
+	var cmd tea.Cmd
+	for _, key := range keytest.Type(s) {
+		l, cmd = l.Update(key)
+	}
+	return l, cmd
 }
 
 func lookupMsg(t *testing.T, cmd tea.Cmd) tea.Msg {
@@ -45,7 +51,7 @@ func TestIssueLookupCompletesProjectKey(t *testing.T) {
 		t.Fatalf("suggestions = %#v, want key match WEBSDK before name match SHOP", l.suggestions)
 	}
 
-	l, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	l, cmd := l.Update(keytest.Press("enter"))
 	if l.Query() != "WEBSDK-" || !l.IsVisible() {
 		t.Fatalf("query = %q, visible = %v, want WEBSDK- and still open", l.Query(), l.IsVisible())
 	}
@@ -61,7 +67,7 @@ func TestIssueLookupEnterOpensTypedKey(t *testing.T) {
 	l, _ = lookupRunes(l, "12")
 	l.SetIssueSuggestions("plat-12", []LookupSuggestion{{Key: "PLAT-120"}, {Key: "PLAT-12"}})
 
-	l, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	l, cmd := l.Update(keytest.Press("enter"))
 	if msg, ok := lookupMsg(t, cmd).(IssueLookupSelectedMsg); !ok || msg.Key != "PLAT-12" {
 		t.Fatalf("msg = %#v, want the typed key PLAT-12", msg)
 	}
@@ -76,8 +82,8 @@ func TestIssueLookupEnterOpensNavigatedSuggestion(t *testing.T) {
 	l.Show("PLAT-1", lookupProjects)
 	l.SetIssueSuggestions("PLAT-1", []LookupSuggestion{{Key: "PLAT-1"}, {Key: "PLAT-12"}})
 
-	l, _ = l.Update(tea.KeyMsg{Type: tea.KeyDown})
-	_, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	l, _ = l.Update(keytest.Press("down"))
+	_, cmd := l.Update(keytest.Press("enter"))
 	if msg, ok := lookupMsg(t, cmd).(IssueLookupSelectedMsg); !ok || msg.Key != "PLAT-12" {
 		t.Fatalf("msg = %#v, want the highlighted PLAT-12", msg)
 	}
@@ -100,7 +106,7 @@ func TestIssueLookupEscCancels(t *testing.T) {
 	l := NewIssueLookup()
 	l.Show("PLAT-", lookupProjects)
 
-	l, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	l, cmd := l.Update(keytest.Press("esc"))
 	if _, ok := lookupMsg(t, cmd).(IssueLookupCancelledMsg); !ok || l.IsVisible() {
 		t.Fatal("esc should close the lookup and send IssueLookupCancelledMsg")
 	}
@@ -129,9 +135,9 @@ func TestIssueLookupEmptyQueryConfirmsEmptyKeyWhenAllowed(t *testing.T) {
 	t.Parallel()
 	l := NewIssueLookup()
 	_ = l.ShowTitled("Edit Parent", true, "PLAT-", lookupProjects)
-	l, _ = l.Update(tea.KeyMsg{Type: tea.KeyCtrlU})
+	l, _ = l.Update(keytest.Press("ctrl+u"))
 
-	_, cmd := l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := l.Update(keytest.Press("enter"))
 
 	if got, ok := lookupMsg(t, cmd).(IssueLookupSelectedMsg); !ok || got.Key != "" {
 		t.Fatalf("msg = %#v, want IssueLookupSelectedMsg with an empty key", got)
@@ -143,7 +149,7 @@ func TestIssueLookupEmptyQueryCompletesProjectByDefault(t *testing.T) {
 	l := NewIssueLookup()
 	_ = l.Show("", lookupProjects)
 
-	l, _ = l.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	l, _ = l.Update(keytest.Press("enter"))
 
 	if l.Query() != "PLAT-" {
 		t.Fatalf("query = %q, want PLAT-", l.Query())
