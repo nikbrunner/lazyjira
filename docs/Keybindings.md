@@ -91,7 +91,7 @@ Editing starts from the issue's current values, and saving sends only the fields
 |-----|--------|
 | `tab` / `shift+tab` | Next / previous panel |
 | `ctrl+s` | Create or save the issue from any panel |
-| `enter` | Move from Summary to Description; start a new line in Description; edit the selected field in Fields |
+| `enter` / `shift+enter` | Move from Summary to Description; start a new line in Description; edit the selected field in Fields |
 | `ctrl+g` | Open the Description in `$EDITOR`; the saved text returns to the view |
 | `ctrl+v` | Paste an image from the clipboard into the Description |
 | `e` / `space` | Edit the selected field (Fields) |

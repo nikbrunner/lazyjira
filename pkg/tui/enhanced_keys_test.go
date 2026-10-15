@@ -51,3 +51,42 @@ func TestUpdate_EnhancedKeysTypeIntoSearchBar(t *testing.T) {
 		t.Errorf("search query = %q, want %q", got, " GG")
 	}
 }
+
+// Shift+enter starts a new line in the Description and moves on from the
+// Summary, like enter, without saving the issue.
+func TestUpdate_ShiftEnterInEditViewActsLikeEnter(t *testing.T) {
+	t.Parallel()
+	for _, input := range []string{
+		"\x1b[13;2u",    // kitty
+		"\x1b[27;2;13~", // modifyOtherKeys
+	} {
+		app, _ := newEditApp(t, editableIssue(), nil)
+		openEdit(t, app)
+		app.overlays = components.OverlayStack{&app.createForm}
+		for app.createForm.FocusedPanel() != components.CreatePanelSummary {
+			_, _ = app.Update(keytest.Press("tab"))
+		}
+
+		_, cmd := app.Update(keytest.Decode(input))
+		if cmd != nil {
+			t.Errorf("%q in Summary returned a command", input)
+		}
+		if got := app.createForm.FocusedPanel(); got != components.CreatePanelDescription {
+			t.Errorf("%q in Summary focused %v, want Description", input, got)
+		}
+
+		before := app.createForm.DescriptionText()
+		_, cmd = app.Update(keytest.Decode(input))
+		if cmd != nil {
+			if _, ok := cmd().(components.CreateFormSubmitMsg); ok {
+				t.Errorf("%q in Description submitted the form", input)
+			}
+		}
+		if got := app.createForm.DescriptionText(); got != before+"\n" {
+			t.Errorf("%q in Description: description = %q, want %q", input, got, before+"\n")
+		}
+		if !app.createForm.IsVisible() {
+			t.Errorf("%q closed the Issue Edit View", input)
+		}
+	}
+}

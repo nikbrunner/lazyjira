@@ -191,6 +191,7 @@ func (a *App) helpBarItems() []components.HelpItem {
 			items = append(items,
 				components.HelpItem{Key: "ctrl+g", Description: "edit in $EDITOR"},
 				components.HelpItem{Key: "ctrl+v", Description: "paste image"},
+				components.HelpItem{Key: "shift+enter", Description: "new line"},
 			)
 		}
 		return items
