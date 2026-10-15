@@ -303,6 +303,7 @@ func (m *Modal) Hide() {
 	m.generation++
 }
 func (m *Modal) IsVisible() bool    { return m.visible }
+func (m *Modal) IsLoading() bool    { return m.visible && m.loading != nil }
 func (m *Modal) Title() string      { return m.title }
 func (m *Modal) Generation() uint64 { return m.generation }
 func (m *Modal) IsSearching() bool  { return m.searching }

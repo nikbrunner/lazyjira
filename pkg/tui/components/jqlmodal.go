@@ -92,6 +92,9 @@ func (m *JQLModal) SetSize(w, h int) {
 }
 
 func (m *JQLModal) SetLoading(v bool) { m.loading = v }
+
+// IsLoading reports whether the visible modal waits for a search.
+func (m *JQLModal) IsLoading() bool { return m.visible && m.loading }
 func (m *JQLModal) SetError(msg string) {
 	m.errorMsg = msg
 	m.loading = false

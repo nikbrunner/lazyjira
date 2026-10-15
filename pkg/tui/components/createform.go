@@ -366,7 +366,7 @@ func (f *CreateForm) FieldAt(index int) *CreateFormField {
 func (f *CreateForm) IsVisible() bool { return f.visible }
 
 // IsLoading reports whether the form waits for createmeta or a create request.
-func (f *CreateForm) IsLoading() bool { return f.loading }
+func (f *CreateForm) IsLoading() bool { return f.visible && f.loading }
 
 func (f *CreateForm) SetSize(w, h int) {
 	f.width = w

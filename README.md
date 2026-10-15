@@ -123,6 +123,7 @@ downloaded in a browser; run `xattr -d com.apple.quarantine lazyjira` once to al
 - Pick the Issues columns and group issues by your workflow's status order.
 - Pick the fields in the Issue info pane, Jira custom fields included.
 - Colors follow your terminal's color scheme. `themeColors` overrides single colors.
+- The terminal title shows the active project, and terminals that support it show a progress indicator while a dialog loads.
 - `y` copies key and summary, `ctrl+y` a Markdown link, `Y` the URL, `alt+y` the padded issue row. With marks, each copies one line per marked issue, `o` opens each in the browser, and `t` transitions them together.
 - Five fixed panes: `0` to `4` jump to one, `H` `J` `K` `L` move between them, `+` maximizes.
 - Most keys can be remapped. `?` lists them all, and `/` filters that list.

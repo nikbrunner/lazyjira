@@ -936,7 +936,23 @@ func (a *App) View() tea.View {
 	v := tea.NewView(a.render())
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
+	v.WindowTitle = a.windowTitle()
+	if a.isLoading() {
+		v.ProgressBar = tea.NewProgressBar(tea.ProgressBarIndeterminate, 0)
+	}
 	return v
+}
+
+func (a *App) windowTitle() string {
+	if a.projectKey == "" {
+		return "lazyjira"
+	}
+	return "lazyjira · " + a.projectKey
+}
+
+// isLoading reports whether a visible dialog shows a loading state.
+func (a *App) isLoading() bool {
+	return a.modal.IsLoading() || a.createForm.IsLoading() || a.jqlModal.IsLoading()
 }
 
 func (a *App) render() string {
