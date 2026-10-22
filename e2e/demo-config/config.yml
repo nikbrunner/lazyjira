@@ -1,5 +1,8 @@
 gui:
   sidePanelWidth: 32
+  themeLight:
+    cyan: "2"
+    brightCyan: "8"
   issueListFields: [key, type, status, priority, summary, assignee, updated]
 statusOrder: [In Progress, In Review, To Do, Done]
 issueTabs:
