@@ -5,6 +5,50 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 
 ## [0.15.0](https://github.com/nikbrunner/lazyjira/compare/v0.14.0...v0.15.0) (2026-10-22)
 
+### Highlights
+
+#### Tabs load past their first page
+
+A tab used to stop at `maxResults` issues and only hint at the rest in the footer. Now, when the cursor lands on the last
+loaded issue, lazyjira loads the next `maxResults` issues, and the cursor stays where it was. A refresh, by `r` or the
+30-second auto-refresh, keeps everything loaded so far. `R` and switching projects start over at one page.
+
+#### `#` opens the Issue Edit View
+
+Picking an issue in the `#` lookup opens it in the Issue Edit View, with its fields next to the summary and description,
+so you can change them right there. This works for issues in other projects and issues that no tab has loaded. `esc` closes the view.
+
+#### Checklists in descriptions
+
+Jira task lists show as `[x]` and `[ ]` items in the Body view. In the Description they become Markdown task lines,
+and saving turns them back into Jira task lists.
+
+#### A Parent column
+
+Add `parent` to `issueListFields` to show each issue's parent key. `backspace` on an issue with a parent opens that
+parent in a temporary tab.
+
+```yaml
+gui:
+  issueListFields: [key, parent, summary, status]
+```
+
+#### Column colors follow your theme overrides
+
+Issue list columns take their colors from the theme palette, so `themeColors`, `themeDark` and `themeLight` reach them.
+Three new keys cover the columns that use bright colors: `brightBlue` for Updated, `brightMagenta` for Sprint and
+`brightCyan` for Assignee. If your light theme draws Key too faintly, override its color:
+
+```yaml
+gui:
+  themeLight:
+    cyan: "2"
+```
+
+#### Smaller changes
+
+- Refreshing a tab fetches full details only for issues that are new or were updated since lazyjira last loaded them.
+- The README screenshot and demo recordings use a light theme.
 
 ### Features
 
@@ -13,7 +57,6 @@ point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/
 * **tui:** open an issue by key in the Issue Edit View ([de8b897](https://github.com/nikbrunner/lazyjira/commit/de8b897f8a2c023e75fe35887ce40df8067312a6)), closes [#41](https://github.com/nikbrunner/lazyjira/issues/41)
 * **tui:** show and edit Jira checklists ([a474757](https://github.com/nikbrunner/lazyjira/commit/a474757b74ed8d747af159623d4e1ed627081e6b))
 * **tui:** show the parent key as an issue list column ([8fecc63](https://github.com/nikbrunner/lazyjira/commit/8fecc638a96044b8284f05d2f480e90dff426251)), closes [#40](https://github.com/nikbrunner/lazyjira/issues/40)
-
 
 ### Performance
 
