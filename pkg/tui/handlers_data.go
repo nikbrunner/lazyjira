@@ -28,9 +28,7 @@ func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	if msg.tab == a.issuesList.GetTabIndex() {
 		a.issuesList.SetIssues(msg.issues)
-		for _, issue := range msg.issues {
-			cmds = append(cmds, prefetchIssue(a.client, issue.Key))
-		}
+		cmds = append(cmds, a.prefetchChanged(msg.issues)...)
 	}
 	if msg.tab == a.issuesList.GetTabIndex() {
 		if a.issuesList.SelectedIssue() == nil {
@@ -86,6 +84,19 @@ func (a *App) handleIssueDetailLoaded(msg issueDetailLoadedMsg) (tea.Model, tea.
 	a.issuesList.PatchIssue(msg.issue)
 
 	return a, a.prefetchRelated(msg.issue)
+}
+
+// prefetchChanged fetches the full data of issues that are not cached yet or
+// were updated in Jira since they were cached.
+func (a *App) prefetchChanged(issues []jira.Issue) []tea.Cmd {
+	var cmds []tea.Cmd
+	for _, issue := range issues {
+		if cached, ok := a.issueCache[issue.Key]; ok && cached != nil && !issue.Updated.After(cached.Updated) {
+			continue
+		}
+		cmds = append(cmds, prefetchIssue(a.client, issue.Key))
+	}
+	return cmds
 }
 
 // handleIssuePrefetched caches prefetched issue data silently

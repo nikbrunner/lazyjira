@@ -4,9 +4,11 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/nikbrunner/lazyjira/pkg/internal/testkit"
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/jira/jiratest"
 	"github.com/nikbrunner/lazyjira/pkg/tui/views"
@@ -105,4 +107,20 @@ func TestPreviewSelectedIssue_ReturnsPrefetchCmd(t *testing.T) {
 	if !strings.Contains(got, subKey1) {
 		t.Errorf("SearchIssues JQL %q does not contain %q", got, subKey1)
 	}
+}
+
+func TestIssuesLoadedPrefetchesOnlyNewAndUpdatedIssues(t *testing.T) {
+	t.Parallel()
+	app := newAppWithFake(t, &jiratest.FakeClient{T: t})
+	then := time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
+	app.issueCache["PLAT-1"] = &jira.Issue{Key: "PLAT-1", Updated: then}
+	app.issueCache["PLAT-2"] = &jira.Issue{Key: "PLAT-2", Updated: then}
+
+	cmds := app.prefetchChanged([]jira.Issue{
+		{Key: "PLAT-1", Updated: then},
+		{Key: "PLAT-2", Updated: then.Add(time.Minute)},
+		{Key: "PLAT-3", Updated: then},
+	})
+
+	testkit.AssertEqual(t, "prefetches", len(cmds), 2)
 }

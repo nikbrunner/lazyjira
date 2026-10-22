@@ -27,11 +27,7 @@ func (a *App) handleJQLSearchResult(msg jqlSearchResultMsg) (tea.Model, tea.Cmd)
 	a.leftFocus = focusIssues
 	a.updateFocusState()
 	a.ensureActiveIssueTabVisible()
-	cmds := make([]tea.Cmd, 0, len(msg.issues))
-	for _, issue := range msg.issues {
-		cmds = append(cmds, prefetchIssue(a.client, issue.Key))
-	}
-	return a, tea.Batch(cmds...)
+	return a, tea.Batch(a.prefetchChanged(msg.issues)...)
 }
 
 // handleJQLSearchError shows error in JQL modal.
