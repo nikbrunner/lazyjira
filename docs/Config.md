@@ -339,6 +339,7 @@ Headers and values use the terminal's ANSI palette, except issue summaries, whic
 | `type` | 10 chars for names, minimum 4 for icons | magenta (5) | Issue type or configured icon |
 | `updated` | 8 chars | bright blue (12) | Time since last update |
 | `sprint` | 16 chars | bright magenta (13) | Sprint name, blank without a sprint |
+| `parent` | longest parent key | cyan (6) | Parent issue key, blank without a parent |
 
 Column widths accommodate their full labels and configured icons. Rows share the same widths, including when only some values have icon mappings. Summary fits the longest summary in the current filtered list, including rows outside the viewport, up to the available width. Extra space stays after the last column. Narrow panels clip columns at the right edge.
 

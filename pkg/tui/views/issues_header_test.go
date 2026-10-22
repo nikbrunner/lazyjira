@@ -41,6 +41,26 @@ func TestIssuesList_HeaderFollowsFields(t *testing.T) {
 	}
 }
 
+func TestIssuesList_ParentColumnShowsParentKey(t *testing.T) {
+	t.Parallel()
+	list := NewIssuesList()
+	list.SetFields([]string{"key", "parent", "summary"})
+	list.SetIssues([]jira.Issue{
+		{Key: "A-2", Summary: "Child", Parent: &jira.Issue{Key: "A-100"}},
+		{Key: "A-3", Summary: "Orphan"},
+	})
+	list.SetSize(80, 8)
+	lines := strings.Split(ansi.Strip(list.View()), "\n")
+	for i, want := range map[int]string{3: "A-2 A-100 Child", 4: "A-3 Orphan"} {
+		if got := strings.Join(strings.Fields(strings.Trim(lines[i], "│")), " "); got != want {
+			t.Errorf("row %d = %q, want %q", i, got, want)
+		}
+	}
+	if got, want := displayColumn(t, lines[4], "Orphan"), displayColumn(t, lines[3], "Child"); got != want {
+		t.Errorf("summary after a blank Parent cell starts at %d, want %d", got, want)
+	}
+}
+
 func TestIssuesList_SummaryUsesTerminalForeground(t *testing.T) {
 	t.Parallel()
 	list := NewIssuesList()

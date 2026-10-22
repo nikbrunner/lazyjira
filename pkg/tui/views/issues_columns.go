@@ -75,6 +75,13 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 			column.label, column.width, column.color = "Updated", 8, m.theme.Colors.BrightBlue
 		case "sprint":
 			column.label, column.width, column.color = "Sprint", 16, m.theme.Colors.BrightMagenta
+		case "parent":
+			column.label, column.color = "Parent", m.theme.Colors.Cyan
+			for _, issue := range m.allIssues {
+				if issue.Parent != nil {
+					column.width = max(column.width, ansi.StringWidth(issue.Parent.Key))
+				}
+			}
 		default:
 			continue
 		}
@@ -140,6 +147,10 @@ func (m *IssuesList) issueFieldValue(issue jira.Issue, field string) string {
 	case "sprint":
 		if issue.Sprint != nil {
 			return issue.Sprint.Name
+		}
+	case "parent":
+		if issue.Parent != nil {
+			return issue.Parent.Key
 		}
 	}
 	return ""

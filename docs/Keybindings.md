@@ -41,6 +41,7 @@ The Project selector opens a searchable picker with `enter` or a click. The Issu
 | `i` | Focus the Issue info pane for the selected issue; `esc` returns to the Issues panel |
 | `space` | Mark or unmark the issue |
 | `>` | Open the issue's children in a temporary tab; `backspace` opens the parent and `esc` goes back |
+| `backspace` | Open the issue's parent in a temporary tab; `esc` goes back |
 | `v` | Start a marked range at the cursor; press again to end it and keep the range marked |
 | `f` | Filter the loaded issues by the configured `status`, `type`, `priority`, `assignee`, and `sprint` columns, in column order; `space` toggles a value, `enter` applies. Counts show the issues each value would leave, and values that would leave none are dimmed. Each tab keeps its own filter for the session |
 | `ctrl+g` | Filter the loaded issues by text like `/`, also matching descriptions. The filter shows as `~/query` |
