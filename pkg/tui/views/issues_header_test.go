@@ -13,6 +13,7 @@ import (
 
 	"github.com/nikbrunner/lazyjira/pkg/jira"
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
+	"github.com/nikbrunner/lazyjira/pkg/tui/theme"
 )
 
 func TestIssuesList_HeaderFollowsFields(t *testing.T) {
@@ -298,6 +299,26 @@ func TestIssuesList_ColumnColorsUseANSIForHeadersAndValues(t *testing.T) {
 			t.Errorf("separator foreground = %d, want %d", got, wantSeparatorColor)
 		}
 		assertRowBackground(t, lines[3], 120, wantBackground)
+	}
+}
+
+func TestIssuesList_ColumnColorsFollowThemePalette(t *testing.T) {
+	t.Parallel()
+	list := NewIssuesList()
+	palette := theme.Default.Colors
+	palette.Cyan = lipgloss.Color("#111111")
+	palette.BrightMagenta = lipgloss.Color("#222222")
+	list.theme = &theme.Theme{Colors: palette}
+	list.SetFields([]string{"key", "summary", "sprint"})
+	colors := map[string]any{}
+	for _, column := range list.issueColumns(80) {
+		colors[column.field] = column.color
+	}
+	if colors["key"] != palette.Cyan {
+		t.Errorf("key color = %v, want palette cyan", colors["key"])
+	}
+	if colors["sprint"] != palette.BrightMagenta {
+		t.Errorf("sprint color = %v, want palette brightMagenta", colors["sprint"])
 	}
 }
 

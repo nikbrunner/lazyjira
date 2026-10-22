@@ -228,18 +228,21 @@ Three optional maps override individual colors:
 
 The precedence is the ANSI palette, then `themeColors`, then `themeDark` or `themeLight`. Empty values and unknown keys are ignored.
 
-| Key         | Role                                                  |
-|-------------|-------------------------------------------------------|
-| `green`     | Primary accent: titles, active borders, success       |
-| `blue`      | Secondary accent                                      |
-| `red`       | Errors, high priority                                 |
-| `yellow`    | Warnings, in-progress, medium priority                |
-| `cyan`      | Search mode indicators                                |
-| `magenta`   | JQL keywords                                          |
-| `orange`    | Loading indicator                                     |
-| `white`     | Foreground text; use a dark color on light backgrounds |
-| `gray`      | Subtitles, hint bars                                  |
-| `highlight` | Selection and cursor background                       |
+| Key             | Role                                                   |
+|-----------------|--------------------------------------------------------|
+| `green`         | Primary accent: titles, active borders, success, Status column |
+| `blue`          | Secondary accent                                       |
+| `red`           | Errors, high priority                                  |
+| `yellow`        | Warnings, in-progress, medium priority, Priority column |
+| `cyan`          | Search mode indicators, Key column                     |
+| `magenta`       | JQL keywords, Type column                              |
+| `orange`        | Loading indicator                                      |
+| `white`         | Foreground text; use a dark color on light backgrounds |
+| `gray`          | Subtitles, hint bars                                   |
+| `highlight`     | Selection and cursor background                        |
+| `brightBlue`    | Updated column                                         |
+| `brightMagenta` | Sprint column                                          |
+| `brightCyan`    | Assignee column                                        |
 
 Values are hex (`"#9ccfd8"`), ANSI 16 (`"4"`), or ANSI 256 (`"208"`). Hex values require a terminal with truecolor support. If a value is not a recognized color, that key falls back to the terminal's default color and a warning is logged (visible with `--debug`).
 

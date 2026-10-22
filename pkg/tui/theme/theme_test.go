@@ -94,10 +94,11 @@ func TestInitResetsAuthorCache(t *testing.T) {
 func TestInitAppliesSharedOverrides(t *testing.T) {
 	Init(Options{
 		Colors: map[string]string{
-			"green":     "#abcdef",
-			"highlight": "#123456",
-			"bogus":     "ignored",
-			"red":       "", // empty value must be skipped
+			"green":      "#abcdef",
+			"highlight":  "#123456",
+			"brightCyan": "#fedcba",
+			"bogus":      "ignored",
+			"red":        "", // empty value must be skipped
 		},
 	})
 	if Default.Colors.Green != lipgloss.Color("#abcdef") {
@@ -105,6 +106,9 @@ func TestInitAppliesSharedOverrides(t *testing.T) {
 	}
 	if ColorGreen != lipgloss.Color("#abcdef") {
 		t.Errorf("ColorGreen not synced: %v", ColorGreen)
+	}
+	if Default.Colors.BrightCyan != lipgloss.Color("#fedcba") {
+		t.Errorf("BrightCyan = %v, want #fedcba", Default.Colors.BrightCyan)
 	}
 	if Default.Colors.Highlight != lipgloss.Color("#123456") {
 		t.Errorf("Highlight = %v, want #123456", Default.Colors.Highlight)

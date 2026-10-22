@@ -44,11 +44,11 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 		column := issueColumn{field: field}
 		switch field {
 		case "key":
-			column.label, column.width, column.color = "Key", m.keyColWidth, lipgloss.Color("6")
+			column.label, column.width, column.color = "Key", m.keyColWidth, m.theme.Colors.Cyan
 		case fieldStatus:
-			column.label, column.width, column.color = "Status", m.statusIconCols, lipgloss.Color("2")
+			column.label, column.width, column.color = "Status", m.statusIconCols, m.theme.Colors.Green
 		case "type":
-			column.label, column.width, column.color = "Type", m.typeIconCols, lipgloss.Color("5")
+			column.label, column.width, column.color = "Type", m.typeIconCols, m.theme.Colors.Magenta
 			if len(m.typeIcons) == 0 {
 				column.width = 10
 			}
@@ -58,7 +58,7 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 				}
 			}
 		case "priority":
-			column.label, column.width, column.color = "Priority", m.priorityIconCols, lipgloss.Color("3")
+			column.label, column.width, column.color = "Priority", m.priorityIconCols, m.theme.Colors.Yellow
 			if len(m.priorityIcons) == 0 {
 				column.width = 8
 			}
@@ -70,11 +70,11 @@ func (m *IssuesList) issueColumns(width int) []issueColumn {
 		case fieldSummary:
 			column.label, column.color = "Summary", lipgloss.NoColor{}
 		case "assignee":
-			column.label, column.width, column.color = "Assignee", 12, lipgloss.Color("14")
+			column.label, column.width, column.color = "Assignee", 12, m.theme.Colors.BrightCyan
 		case "updated":
-			column.label, column.width, column.color = "Updated", 8, lipgloss.Color("12")
+			column.label, column.width, column.color = "Updated", 8, m.theme.Colors.BrightBlue
 		case "sprint":
-			column.label, column.width, column.color = "Sprint", 16, lipgloss.Color("13")
+			column.label, column.width, column.color = "Sprint", 16, m.theme.Colors.BrightMagenta
 		default:
 			continue
 		}

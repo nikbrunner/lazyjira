@@ -26,6 +26,10 @@ type ColorPalette struct {
 	Orange    color.Color
 	None      color.Color
 	Highlight color.Color // selection/cursor background
+
+	BrightBlue    color.Color
+	BrightMagenta color.Color
+	BrightCyan    color.Color
 }
 
 // Package-level color variables. These are kept in sync with Default.Colors
@@ -87,6 +91,10 @@ func defaultPalette() ColorPalette {
 		Orange:    lipgloss.Color("11"),
 		None:      lipgloss.NoColor{},
 		Highlight: lipgloss.Color("4"), // same as blue for default theme
+
+		BrightBlue:    lipgloss.Color("12"),
+		BrightMagenta: lipgloss.Color("13"),
+		BrightCyan:    lipgloss.Color("14"),
 	}
 }
 
@@ -195,7 +203,8 @@ func syncColors() {
 //  3. ColorsDark or ColorsLight, whichever matches the terminal background.
 //
 // Override map keys are lowercase palette field names: "green", "blue",
-// "red", "yellow", "cyan", "magenta", "white", "gray", "orange", "highlight".
+// "red", "yellow", "cyan", "magenta", "white", "gray", "orange", "highlight",
+// "brightblue", "brightmagenta", "brightcyan".
 // Unknown keys and empty values are silently ignored so configs stay
 // forward-compatible.
 //
@@ -425,6 +434,12 @@ func applyOverrides(p ColorPalette, m map[string]string, scope string) ColorPale
 			p.Orange = c
 		case "highlight":
 			p.Highlight = c
+		case "brightblue":
+			p.BrightBlue = c
+		case "brightmagenta":
+			p.BrightMagenta = c
+		case "brightcyan":
+			p.BrightCyan = c
 		}
 	}
 	return p
