@@ -340,37 +340,54 @@ func (c *Client) SearchIssues(ctx context.Context, jql string, startAt, maxResul
 		fields += "," + strings.Join(c.customFieldIDs, ",")
 	}
 
-	var path string
-	if c.isCloud {
-		path = fmt.Sprintf("/search/jql?jql=%s&startAt=%d&maxResults=%d&fields=%s",
-			url.QueryEscape(jql), startAt, maxResults, fields)
-	} else {
-		path = fmt.Sprintf("/search?jql=%s&startAt=%d&maxResults=%d&fields=%s",
-			url.QueryEscape(jql), startAt, maxResults, fields)
-	}
+	result := &SearchResult{MaxResults: maxResults, StartAt: startAt}
+	token := ""
+	for {
+		remaining := maxResults - len(result.Issues)
+		var path string
+		if c.isCloud {
+			path = fmt.Sprintf("/search/jql?jql=%s&startAt=%d&maxResults=%d&fields=%s",
+				url.QueryEscape(jql), startAt, remaining, fields)
+			if token != "" {
+				path += "&nextPageToken=" + url.QueryEscape(token)
+			}
+		} else {
+			path = fmt.Sprintf("/search?jql=%s&startAt=%d&maxResults=%d&fields=%s",
+				url.QueryEscape(jql), startAt, remaining, fields)
+		}
 
-	var raw searchResponse
-	err := c.do(ctx, http.MethodGet, path, nil, &raw)
-	if err != nil {
-		return nil, fmt.Errorf("search issues: %w", err)
-	}
+		var raw searchResponse
+		err := c.do(ctx, http.MethodGet, path, nil, &raw)
+		if err != nil {
+			return nil, fmt.Errorf("search issues: %w", err)
+		}
 
-	result := &SearchResult{
-		Total:      raw.Total,
-		MaxResults: raw.MaxResults,
-		StartAt:    raw.StartAt,
-		Issues:     make([]Issue, len(raw.Issues)),
+		result.Total = raw.Total
+		for _, ri := range raw.Issues {
+			issue := ri.toIssue()
+			c.fillSprintFromCustomField(&issue, ri.Fields.RawExtra)
+			result.Issues = append(result.Issues, issue)
+		}
+		if c.isCloud {
+			result.HasMore = raw.NextPageToken != "" || (raw.IsLast != nil && !*raw.IsLast)
+		} else {
+			result.HasMore = raw.StartAt+len(raw.Issues) < raw.Total
+		}
+		// Jira caps each page below the requested size, so keep asking until
+		// maxResults is reached. A page without issues or, on Cloud, without a
+		// token to continue from ends the loop.
+		if !result.HasMore || len(result.Issues) >= maxResults || len(raw.Issues) == 0 {
+			return result, nil
+		}
+		if c.isCloud {
+			if raw.NextPageToken == "" {
+				return result, nil
+			}
+			token = raw.NextPageToken
+		} else {
+			startAt = raw.StartAt + len(raw.Issues)
+		}
 	}
-	if c.isCloud {
-		result.HasMore = raw.NextPageToken != "" || (raw.IsLast != nil && !*raw.IsLast)
-	} else {
-		result.HasMore = raw.StartAt+len(raw.Issues) < raw.Total
-	}
-	for i, ri := range raw.Issues {
-		result.Issues[i] = ri.toIssue()
-		c.fillSprintFromCustomField(&result.Issues[i], ri.Fields.RawExtra)
-	}
-	return result, nil
 }
 
 // GetChildren returns child issues of parentKey on Cloud (parent-link model).

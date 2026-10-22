@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -136,4 +137,40 @@ func TestFirstLoadedProjectActivatesItsFirstTab(t *testing.T) {
 	_, _ = app.Update(projectsLoadedMsg{projects: []jira.Project{{Key: scopedTabProject, ID: "1"}}})
 
 	testkit.AssertEqual(t, "tab after projects load", app.issuesList.ActiveTab().Name, "Web")
+}
+
+func TestReachingTheLastIssueLoadsTheNextPage(t *testing.T) {
+	t.Parallel()
+	fake := &jiratest.FakeClient{T: t}
+	fake.SearchIssuesFunc = func(_ context.Context, _ string, _, maxResults int) (*jira.SearchResult, error) {
+		issues := make([]jira.Issue, min(maxResults, 120))
+		for i := range issues {
+			issues[i] = jira.Issue{Key: fmt.Sprintf("PLAT-%d", i+1)}
+		}
+		return &jira.SearchResult{Issues: issues, HasMore: len(issues) < 120}, nil
+	}
+	app := projectTabsApp(t, fake)
+	pickProject(app, testProject)
+	testkit.AssertEqual(t, "first page", len(app.issuesList.CurrentIssues()), 50)
+	staleRefresh := app.fetchActiveTab()
+
+	if app.loadMoreIssues() != nil {
+		t.Fatal("load more fired before the cursor reached the last issue")
+	}
+	app.issuesList.SelectByKey("PLAT-50")
+	loadMore := app.loadMoreIssues()
+	if loadMore == nil {
+		t.Fatal("reaching the last issue should load the next page")
+	}
+	if app.loadMoreIssues() != nil {
+		t.Fatal("a second load started while the first is in flight")
+	}
+	_, _ = app.Update(loadMore())
+	_, _ = app.Update(staleRefresh())
+
+	testkit.AssertEqual(t, "loaded", len(app.issuesList.CurrentIssues()), 100)
+	testkit.AssertEqual(t, "selected", app.issuesList.SelectedIssue().Key, "PLAT-50")
+
+	_ = app.fetchActiveTab()()
+	testkit.AssertEqual(t, "refresh keeps the limit", fake.SearchIssuesCalls[len(fake.SearchIssuesCalls)-1].MaxResults, 100)
 }

@@ -369,7 +369,7 @@ Set `maxResults` on a tab to choose its page size. See [Page size](#page-size-ma
 
 ## Page size (`maxResults`)
 
-The number of issues fetched per query. Can be set globally and overridden per tab:
+The number of issues a tab loads at first, and loads again each time the cursor reaches its last issue. Can be set globally and overridden per tab:
 
 ```yaml
 maxResults: 75          # global default for all tabs and ad-hoc JQL searches
@@ -382,9 +382,9 @@ issueTabs:
                         # inherits global 75
 ```
 
-Resolution order: per-tab `maxResults` → global `maxResults` → built-in default (50). Values `<= 0` are treated as unset. Note that the Jira server may enforce its own upper bound and silently return fewer issues than requested.
+Resolution order: per-tab `maxResults` → global `maxResults` → built-in default (50). Values `<= 0` are treated as unset. When Jira returns fewer issues per request than asked for, lazyjira requests the following pages until it has them.
 
-When Jira holds more results than a tab loaded, the Issues panel footer shows a hint such as `50/312 loaded`. Jira Cloud does not report a total, so there the hint reads `50+ loaded`. Status order and the filter picker work on the loaded issues only.
+When Jira holds more results than a tab loaded, the Issues panel footer shows a hint such as `50/312 loaded`. Jira Cloud does not report a total, so there the hint reads `50+ loaded`. Moving the cursor onto the last issue loads the next `maxResults` issues, and refreshing the tab keeps every issue loaded so far. Status order and the filter picker work on the loaded issues only.
 
 ## Status order (`statusOrder`)
 

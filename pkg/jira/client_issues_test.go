@@ -99,6 +99,68 @@ func TestClient_SearchIssues_HasMore(t *testing.T) {
 	}
 }
 
+func TestClient_SearchIssues_PagesUntilMaxResults(t *testing.T) {
+	t.Parallel()
+
+	issue := func(key string) string { return `{"id": "` + key + `", "key": "` + key + `", "fields": {}}` }
+	cases := []struct {
+		name       string
+		opts       ClientOpts
+		pages      []string
+		wantKeys   int
+		wantMore   bool
+		checkQuery func(t *testing.T, second testkit.RecordedRequest)
+	}{
+		{
+			name: "cloud follows the page token",
+			opts: cloudOpts(),
+			pages: []string{
+				`{"issues": [` + issue("A-1") + `, ` + issue("A-2") + `], "nextPageToken": "tok"}`,
+				`{"issues": [` + issue("A-3") + `], "nextPageToken": "tok2"}`,
+			},
+			wantKeys: 3,
+			wantMore: true,
+			checkQuery: func(t *testing.T, second testkit.RecordedRequest) {
+				t.Helper()
+				testkit.AssertEqual(t, "second nextPageToken", second.Query.Get("nextPageToken"), "tok")
+				testkit.AssertEqual(t, "second maxResults", second.Query.Get("maxResults"), "1")
+			},
+		},
+		{
+			name: "server advances startAt",
+			opts: serverOpts(),
+			pages: []string{
+				`{"issues": [` + issue("A-1") + `, ` + issue("A-2") + `], "total": 3, "startAt": 0}`,
+				`{"issues": [` + issue("A-3") + `], "total": 3, "startAt": 2}`,
+			},
+			wantKeys: 3,
+			wantMore: false,
+			checkQuery: func(t *testing.T, second testkit.RecordedRequest) {
+				t.Helper()
+				testkit.AssertEqual(t, "second startAt", second.Query.Get("startAt"), "2")
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			responses := make([]testkit.StubResponse, len(tc.pages))
+			for i, body := range tc.pages {
+				responses[i] = testkit.StubResponse{Status: http.StatusOK, Body: body}
+			}
+			client, recorded := newSequenceClient(t, tc.opts, responses...)
+			result, err := client.SearchIssues(t.Context(), "project = A", 0, 3)
+			if err != nil {
+				t.Fatalf("SearchIssues: %v", err)
+			}
+			testkit.AssertEqual(t, "requests", len(*recorded), 2)
+			testkit.AssertEqual(t, "issues", len(result.Issues), tc.wantKeys)
+			testkit.AssertEqual(t, "HasMore", result.HasMore, tc.wantMore)
+			tc.checkQuery(t, (*recorded)[1])
+		})
+	}
+}
+
 func TestClient_GetMyIssues_FiresCurrentUserJQL(t *testing.T) {
 	t.Parallel()
 

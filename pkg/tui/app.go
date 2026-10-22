@@ -114,6 +114,7 @@ type onChecklistFunc func([]components.ModalItem) tea.Cmd
 type issuesLoadedMsg struct {
 	issues  []jira.Issue
 	tab     int
+	limit   int
 	total   int
 	hasMore bool
 }
@@ -802,7 +803,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.infoPanel.SetIssue(msg.Issue)
 		}
 		_, previewCmd := a.Update(views.PreviewRequestMsg{Key: msg.Issue.Key})
-		return a, tea.Batch(previewCmd, a.prefetchRelated(msg.Issue), a.infoPanel.MaybeChildrenRequest())
+		return a, tea.Batch(previewCmd, a.prefetchRelated(msg.Issue), a.infoPanel.MaybeChildrenRequest(), a.loadMoreIssues())
 
 	case views.PreviewRequestMsg:
 		a.previewKey = msg.Key
@@ -1450,26 +1451,46 @@ func (a *App) handleGitBranchSwitch(name string) (tea.Model, tea.Cmd) {
 }
 
 func (a *App) fetchActiveTab() tea.Cmd {
-	if a.issuesList.IsJQLTab() {
-		jql := a.issuesList.JQLQuery()
-		if jql == "" {
-			return nil
-		}
-		tabIdx := a.issuesList.GetTabIndex()
-		*a.logFlag = true
-		return fetchIssuesByJQL(a.client, jql, tabIdx, a.cfg.ResolveGlobalMaxResults())
-	}
-	if a.projectKey == "" {
-		return nil
-	}
-	tab := a.issuesList.ActiveTab()
-	if tab.JQL == "" {
+	jql, pageSize := a.activeTabQuery()
+	if jql == "" {
 		return nil
 	}
 	tabIdx := a.issuesList.GetTabIndex()
-	jql := resolveTabJQL(tab, a.projectKey, a.cfg.Jira.Email)
 	*a.logFlag = true
-	return fetchIssuesByJQL(a.client, jql, tabIdx, a.cfg.ResolveMaxResults(tab))
+	return fetchIssuesByJQL(a.client, jql, tabIdx, max(pageSize, a.issuesList.LoadLimit(tabIdx)))
+}
+
+// activeTabQuery returns the active tab's JQL and page size, or "" when the
+// tab has no query to run.
+func (a *App) activeTabQuery() (string, int) {
+	if a.issuesList.IsJQLTab() {
+		return a.issuesList.JQLQuery(), a.cfg.ResolveGlobalMaxResults()
+	}
+	if a.projectKey == "" {
+		return "", 0
+	}
+	tab := a.issuesList.ActiveTab()
+	if tab.JQL == "" {
+		return "", 0
+	}
+	return resolveTabJQL(tab, a.projectKey, a.cfg.Jira.Email), a.cfg.ResolveMaxResults(tab)
+}
+
+// loadMoreIssues asks for one more page once the cursor reaches the last
+// loaded issue. Every later fetch of the tab keeps the raised limit. A limit
+// above the loaded count means that load is still in flight.
+func (a *App) loadMoreIssues() tea.Cmd {
+	if !a.issuesList.AtLastLoadedIssueWithMore() {
+		return nil
+	}
+	tabIdx := a.issuesList.GetTabIndex()
+	loaded := len(a.issuesList.CurrentIssues())
+	if a.issuesList.LoadLimit(tabIdx) > loaded {
+		return nil
+	}
+	_, pageSize := a.activeTabQuery()
+	a.issuesList.SetLoadLimit(tabIdx, loaded+pageSize)
+	return a.fetchActiveTab()
 }
 
 func (a *App) updateFocusState() {

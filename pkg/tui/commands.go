@@ -60,7 +60,7 @@ func fetchIssuesByJQL(client jira.ClientInterface, jql string, tab, maxResults i
 		if err != nil {
 			return errorMsg{err: err}
 		}
-		return issuesLoadedMsg{issues: result.Issues, tab: tab, total: result.Total, hasMore: result.HasMore}
+		return issuesLoadedMsg{issues: result.Issues, tab: tab, limit: maxResults, total: result.Total, hasMore: result.HasMore}
 	}
 }
 

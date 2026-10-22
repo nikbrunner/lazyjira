@@ -37,6 +37,7 @@ type IssuesList struct {
 	pickerFilters    map[int]map[string]bool
 	statusRank       map[string]int
 	pageInfo         map[int]pageInfo
+	loadLimits       map[int]int
 	tabs             []config.IssueTabConfig
 	tab              int
 	project          string
@@ -289,6 +290,7 @@ func (m *IssuesList) removeTab(idx int) {
 	m.tabCache = shiftTabKeys(m.tabCache, idx)
 	m.pickerFilters = shiftTabKeys(m.pickerFilters, idx)
 	m.pageInfo = shiftTabKeys(m.pageInfo, idx)
+	m.loadLimits = shiftTabKeys(m.loadLimits, idx)
 	if m.jqlTabIdx > idx {
 		m.jqlTabIdx--
 	}
@@ -445,6 +447,7 @@ func (m *IssuesList) SetIssuesForTab(tab int, issues []jira.Issue) {
 func (m *IssuesList) InvalidateTabCache() {
 	m.tabCache = nil
 	m.pageInfo = nil
+	m.loadLimits = nil
 	trimFrom := len(m.tabs)
 	if m.jqlTabIdx >= 0 && m.jqlTabIdx < trimFrom {
 		trimFrom = m.jqlTabIdx

@@ -16,6 +16,9 @@ import (
 
 // handleIssuesLoaded processes newly fetched issues
 func (a *App) handleIssuesLoaded(msg issuesLoadedMsg) (tea.Model, tea.Cmd) {
+	if msg.limit > 0 && msg.limit < a.issuesList.LoadLimit(msg.tab) {
+		return a, nil
+	}
 	a.statusPanel.SetError("")
 	*a.logFlag = false
 	a.statusPanel.SetOnline(true)

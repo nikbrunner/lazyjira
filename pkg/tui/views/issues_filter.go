@@ -296,8 +296,27 @@ func (m *IssuesList) loadedHint() string {
 	return fmt.Sprintf("%d+ loaded", len(m.allIssues))
 }
 
-// dropTabState forgets the per-tab filter and page info of a removed tab.
+// dropTabState forgets the per-tab filter, page info and load limit of a
+// removed tab.
 func (m *IssuesList) dropTabState(tab int) {
 	delete(m.pickerFilters, tab)
 	delete(m.pageInfo, tab)
+	delete(m.loadLimits, tab)
+}
+
+// LoadLimit returns how many issues a tab asks Jira for, or 0 before it
+// loaded more than its first page.
+func (m *IssuesList) LoadLimit(tab int) int { return m.loadLimits[tab] }
+
+func (m *IssuesList) SetLoadLimit(tab, limit int) {
+	if m.loadLimits == nil {
+		m.loadLimits = make(map[int]int)
+	}
+	m.loadLimits[tab] = limit
+}
+
+// AtLastLoadedIssueWithMore reports that the cursor is on the last issue of
+// the active tab and Jira holds more issues than it loaded.
+func (m *IssuesList) AtLastLoadedIssueWithMore() bool {
+	return m.pageInfo[m.tab].hasMore && len(m.issues) > 0 && m.Cursor == len(m.issues)-1
 }
