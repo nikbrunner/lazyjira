@@ -18,6 +18,8 @@ loaded issue, lazyjira loads the next `maxResults` issues, and the cursor stays 
 Picking an issue in the `#` lookup opens it in the Issue Edit View, with its fields next to the summary and description,
 so you can change them right there. This works for issues in other projects and issues that no tab has loaded. `esc` closes the view.
 
+![Opening an issue by key](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.15.0/docs/assets/recordings/issue-lookup.gif)
+
 #### Checklists in descriptions
 
 Jira task lists show as `[x]` and `[ ]` items in the Body view. In the Description they become Markdown task lines,
@@ -49,6 +51,12 @@ gui:
 
 - Refreshing a tab fetches full details only for issues that are new or were updated since lazyjira last loaded them.
 - The README screenshot and demo recordings use a light theme.
+
+![The workspace](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.15.0/docs/assets/recordings/screenshot.png)
+
+![Moving through issues, tabs and details](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.15.0/docs/assets/recordings/preview.gif)
+
+![Creating an issue](https://raw.githubusercontent.com/nikbrunner/lazyjira/v0.15.0/docs/assets/recordings/create-issue.gif)
 
 ### Features
 
