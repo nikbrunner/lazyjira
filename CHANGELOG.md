@@ -3,6 +3,22 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.15.0](https://github.com/nikbrunner/lazyjira/compare/v0.14.0...v0.15.0) (2026-10-22)
+
+
+### Features
+
+* **tui:** color issue list columns from the theme palette ([c41cf36](https://github.com/nikbrunner/lazyjira/commit/c41cf364043acd125831832b2f96dd6e28434be3)), closes [#39](https://github.com/nikbrunner/lazyjira/issues/39)
+* **tui:** load the next page when the cursor reaches the last issue ([2821774](https://github.com/nikbrunner/lazyjira/commit/282177459a5e088df567588c568faca4d38950bb)), closes [#42](https://github.com/nikbrunner/lazyjira/issues/42)
+* **tui:** open an issue by key in the Issue Edit View ([de8b897](https://github.com/nikbrunner/lazyjira/commit/de8b897f8a2c023e75fe35887ce40df8067312a6)), closes [#41](https://github.com/nikbrunner/lazyjira/issues/41)
+* **tui:** show and edit Jira checklists ([a474757](https://github.com/nikbrunner/lazyjira/commit/a474757b74ed8d747af159623d4e1ed627081e6b))
+* **tui:** show the parent key as an issue list column ([8fecc63](https://github.com/nikbrunner/lazyjira/commit/8fecc638a96044b8284f05d2f480e90dff426251)), closes [#40](https://github.com/nikbrunner/lazyjira/issues/40)
+
+
+### Performance
+
+* **tui:** prefetch only issues that are new or updated since cached ([2ac8a35](https://github.com/nikbrunner/lazyjira/commit/2ac8a35baac9e40cec26e6e8fd9ef741aea09178))
+
 ## [0.14.0](https://github.com/nikbrunner/lazyjira/compare/v0.13.0...v0.14.0) (2026-10-15)
 
 ### Highlights
