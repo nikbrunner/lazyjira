@@ -64,11 +64,11 @@ process_line() {
             echo "Set Width $((1400 * scale))"
             echo "Set Height $((800 * scale))"
             echo "Set FontSize $((14 * scale))"
-            echo 'Set FontFamily "TX-02"'
+            echo 'Set FontFamily "TX-02 Condensed"'
             echo "Set Padding $((60 * scale))"
             echo 'Set TypingSpeed 0ms'
             echo 'Set PlaybackSpeed 0.8'
-            echo 'Set Theme "GitHub Dark"'
+            echo 'Set Theme {"name":"Black Atom Minium Sienna Light","background":"#ece3da","foreground":"#3d393a","selection":"#d2c9c1","cursor":"#ff7b26","cursorAccent":"#ece3da","black":"#585455","brightBlack":"#676261","red":"#f14d4c","brightRed":"#f14d4c","green":"#819e00","brightGreen":"#819e00","yellow":"#cd7b00","brightYellow":"#cd7b00","blue":"#00a3e9","brightBlue":"#00a3e9","magenta":"#a49c9a","brightMagenta":"#a49c9a","cyan":"#c4bcb9","brightCyan":"#c4bcb9","white":"#c4bcb9","brightWhite":"#c4bcb9"}'
             echo ''
             echo 'Env EDITOR "vim -u NONE -N"'
             echo 'Hide'
