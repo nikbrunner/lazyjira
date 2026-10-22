@@ -37,7 +37,7 @@
 | **Issue link** | A typed relation between two issues, read from each end with the link type's phrase, such as `blocks` from one issue and `is blocked by` from the other. The Issue info pane's Lnk tab lists, adds, and removes them. | Relation, dependency |
 | **Issue details pane** | The interactive pane for an issue's description, comments, and history. | Issue info pane |
 | **Command log** | The display-only panel along the bottom of the workspace listing the Jira requests the app made. `@` toggles it; `gui.showCommandLog` sets whether it starts visible. | Request log, log panel |
-| **Issue Edit View** | The full-screen view for writing an issue's type, summary, description, fields, and images. `n` opens it to create an issue, `e` to edit one. | Create form, create issue form, edit form |
+| **Issue Edit View** | The full-screen view for writing an issue's type, summary, description, fields, and images. `n` opens it to create an issue, `e` to edit one, `#` to edit one by key. | Create form, create issue form, edit form |
 
 ## Issue-list layout
 
@@ -48,7 +48,7 @@
 | **Issue tabs pane** | The focusable vertical pane listing issue tabs beside the Issues panel. Focusing it leaves the active issue tab unchanged. | Issues panel, issue list |
 | **JQL query** | A Jira Query Language expression defining which issues Jira returns and their ordering. | Local filter |
 | **Local filter** | A text filter applied to issues already loaded for the active issue tab. It matches key, summary, and assignee, and descriptions when opened with the body search key. | JQL query, search without qualification |
-| **Issue lookup** | The prompt opened with `#` that completes a project key, then an issue key, and opens that issue in the maximized Issue details pane. | Quick open, go to issue |
+| **Issue lookup** | The prompt opened with `#` that completes a project key, then an issue key, and opens that issue in the Issue Edit View. | Quick open, go to issue |
 | **Picker filter** | A per-tab selection of statuses, issue types, and priorities that narrows the loaded issues. Values in one group are alternatives; groups combine with each other and with the local filter. | Local filter, JQL query |
 | **Status order** | The configured `statusOrder` list that groups issue lists by status while keeping JQL order within each status. | JQL ordering, sort without qualification |
 | **Issue list** | The ordered collection of issues in the active issue tab after status order and any local or picker filter are applied. | Visible rows when referring to all matching issues |

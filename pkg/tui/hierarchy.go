@@ -186,11 +186,8 @@ func (a *App) pushNav(title, parentKey string, src navstack.Source, issues []jir
 	a.updateFocusState()
 }
 
-// Closes an issue opened by key, or pops the top NavFrame and restores it; removes the hierarchy tab when the stack empties.
+// Pops the top NavFrame and restores it; removes the hierarchy tab when the stack empties.
 func (a *App) goBack() (tea.Cmd, bool) {
-	if a.lookupReturn != nil && a.side == sideRight {
-		return a.closeIssueLookup(), true
-	}
 	if a.side != sideLeft || a.leftFocus != focusIssues || !a.issuesList.IsHierarchyTab() {
 		return nil, false
 	}

@@ -213,7 +213,6 @@ type App struct {
 	issueLookup     components.IssueLookup
 	parentLookupFor string
 	linkLookup      *pendingLink
-	lookupReturn    *lookupReturn
 	overlays        components.OverlayStack
 
 	jqlFields []jira.AutocompleteField
@@ -1483,7 +1482,6 @@ func (a *App) updateFocusState() {
 			a.maximized = false
 		}
 	}
-	a.endIssueLookupIfLeft()
 	a.statusPanel.SetFocused(false)
 	a.issuesList.SetFocused(false)
 	a.infoPanel.SetFocused(false)

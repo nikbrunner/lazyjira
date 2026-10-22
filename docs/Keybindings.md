@@ -19,7 +19,7 @@ Actions exposed under `keybinding` can be remapped in `config.yml`. Main-workspa
 | `@` | Show or hide the Command log for the session; the Issues and Details panes take the freed rows |
 | `enter` in Issue tabs | Focus Issues without changing collection |
 | `s` in Issue tabs | Open JQL search starting from the focused tab's query |
-| `#` | Open an issue by key. The prompt starts with the active project key, completes project keys and issue numbers, and opens the issue in maximized Issue details; `esc` returns to the previous layout |
+| `#` | Open an issue by key. The prompt starts with the active project key, completes project keys and issue numbers, and opens the issue in the Issue Edit View; `esc` closes it |
 
 The Project selector opens a searchable picker with `enter` or a click. The Issue tabs pane is directly focusable; `enter` there focuses Issues.
 
@@ -82,7 +82,7 @@ Every copy runs the system clipboard command (`pbcopy`, `clip`, or `xclip`) and 
 
 ## Issue Edit View
 
-`n` opens the Issue Edit View to create an issue, and `e` opens it on the selected issue to edit it. The view shows Fields beside Summary and Description, or stacks them on narrow terminals. Its keys are fixed.
+`n` opens the Issue Edit View to create an issue, `e` opens it on the selected issue to edit it, and `#` on any issue by key. The view shows Fields beside Summary and Description, or stacks them on narrow terminals. Its keys are fixed.
 
 Type is the first row in Fields. When creating, it starts on the type last used in the project this session, or on the first type Jira lists, and editing it switches the view to another type. A subtask's Type and an edited issue's Type can't be changed.
 

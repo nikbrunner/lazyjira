@@ -11,15 +11,6 @@ import (
 	"github.com/nikbrunner/lazyjira/pkg/tui/components"
 )
 
-// lookupReturn is the focus and maximize state restored when an issue opened
-// by key is closed.
-type lookupReturn struct {
-	side          focusSide
-	leftFocus     focusPanel
-	maximized     bool
-	maximizedPane focusPanel
-}
-
 type issueSuggestionsLoadedMsg struct {
 	query       string
 	suggestions []jira.IssueSuggestion
@@ -113,62 +104,6 @@ func (a *App) handleIssueLookupSelected(key string) tea.Cmd {
 		a.parentLookupFor = ""
 		return a.applyParentEdit(issueKey, key)
 	}
-	return a.openLookupIssue(key)
-}
-
-// openLookupIssue shows key in the maximized Issue details pane.
-func (a *App) openLookupIssue(key string) tea.Cmd {
-	if a.lookupReturn == nil {
-		a.lookupReturn = &lookupReturn{
-			side:          a.side,
-			leftFocus:     a.leftFocus,
-			maximized:     a.maximized,
-			maximizedPane: a.maximizedPane,
-		}
-	}
-	a.previewEpoch++
-	a.previewKey = key
-	if cached, ok := a.issueCache[key]; ok && cached != nil {
-		a.detailView.SetIssue(cached)
-	} else {
-		a.detailView.SetIssue(&jira.Issue{Key: key})
-	}
-	a.side = sideRight
-	a.maximized = true
-	a.maximizedPane = focusDetailPane
-	a.updateFocusHints()
-	a.updateFocusState()
-	return fetchIssueDetail(a.client, key)
-}
-
-// closeIssueLookup restores the layout from before the lookup and shows the
-// selected issue again.
-func (a *App) closeIssueLookup() tea.Cmd {
-	ret := a.lookupReturn
-	a.lookupReturn = nil
-	a.side = ret.side
-	a.leftFocus = ret.leftFocus
-	a.maximized = ret.maximized
-	a.maximizedPane = ret.maximizedPane
-	a.updateFocusHints()
-	a.updateFocusState()
-	return a.restoreSelectionPreview()
-}
-
-// endIssueLookupIfLeft drops the lookup once focus leaves the maximized Issue
-// details pane by other means than esc.
-func (a *App) endIssueLookupIfLeft() {
-	if a.lookupReturn == nil || (a.side == sideRight && a.maximized && a.maximizedPane == focusDetailPane) {
-		return
-	}
-	a.lookupReturn = nil
-	a.restoreSelectionPreview()
-}
-
-func (a *App) restoreSelectionPreview() tea.Cmd {
-	if a.issuesList.SelectedIssue() == nil {
-		a.clearIssuePreview()
-		return nil
-	}
-	return a.previewSelectedIssue()
+	_, cmd := a.startEditIssue(key)
+	return cmd
 }

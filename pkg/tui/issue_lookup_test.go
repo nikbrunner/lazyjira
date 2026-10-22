@@ -35,43 +35,24 @@ func TestIssueLookupOpensWithProjectPrefix(t *testing.T) {
 	}
 }
 
-func TestIssueLookupShowsIssueMaximizedAndEscRestores(t *testing.T) {
+func TestIssueLookupOpensIssueEditViewForUnloadedIssue(t *testing.T) {
 	t.Parallel()
-	app := newLookupApp(t)
+	other := editableIssue()
+	other.Key = "WEBSDK-205"
+	app, _ := newEditApp(t, other, nil)
+	app.issuesList.SetIssues([]jira.Issue{{Key: testKey}})
+	delete(app.issueCache, other.Key)
 
-	_, _ = app.Update(components.IssueLookupSelectedMsg{Key: "WEBSDK-205"})
+	drive(app, app.handleIssueLookupSelected(other.Key))
 
-	if app.side != sideRight || !app.maximized || app.maximizedPane != focusDetailPane {
-		t.Fatalf("side = %v, maximized = %v/%v, want maximized Issue details", app.side, app.maximized, app.maximizedPane)
+	if !app.createForm.IsVisible() || app.createForm.IsLoading() {
+		t.Fatal("the Issue Edit View should be open")
 	}
-	if app.previewKey != "WEBSDK-205" || app.currentIssue().Key != "WEBSDK-205" {
-		t.Fatalf("previewKey = %q, want WEBSDK-205", app.previewKey)
+	if app.createCtx.editKey != other.Key || app.createCtx.projectKey != "WEBSDK" {
+		t.Fatalf("editKey = %q, projectKey = %q, want %s in WEBSDK", app.createCtx.editKey, app.createCtx.projectKey, other.Key)
 	}
-
-	_, _ = app.handleIssuesLoaded(issuesLoadedMsg{tab: 0, issues: []jira.Issue{{Key: testKey}, {Key: testKey2}}})
-	if app.previewKey != "WEBSDK-205" {
-		t.Fatalf("a list refresh moved the preview to %q", app.previewKey)
-	}
-
-	pressKey(app, "esc")
-
 	if app.side != sideLeft || app.leftFocus != focusIssues || app.maximized {
-		t.Fatalf("side = %v, focus = %v, maximized = %v, want the split layout on Issues", app.side, app.leftFocus, app.maximized)
-	}
-	if app.previewKey != testKey {
-		t.Fatalf("previewKey = %q, want the selected %s", app.previewKey, testKey)
-	}
-}
-
-func TestIssueLookupEndsWhenFocusLeaves(t *testing.T) {
-	t.Parallel()
-	app := newLookupApp(t)
-	_, _ = app.Update(components.IssueLookupSelectedMsg{Key: "WEBSDK-205"})
-
-	app.focusPane(focusIssues)
-
-	if app.lookupReturn != nil || app.previewKey != testKey {
-		t.Fatalf("lookup = %v, previewKey = %q, want the lookup ended on %s", app.lookupReturn, app.previewKey, testKey)
+		t.Fatalf("side = %v, focus = %v, maximized = %v, want the workspace layout unchanged", app.side, app.leftFocus, app.maximized)
 	}
 }
 

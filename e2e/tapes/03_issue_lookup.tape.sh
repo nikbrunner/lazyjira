@@ -17,15 +17,13 @@ Sleep 1000ms
 Tab
 Sleep 1000ms
 
-# Type the number and open the issue
+# Type the number and open the issue in the Issue Edit View
 Set TypingSpeed 150ms
 Type "3"
 Set TypingSpeed 0ms
 Sleep 1200ms
 @confirm
-@wait 1500
-Ctrl+d
-Sleep 1200ms
+@wait 2500
 
 # esc returns to where you were
 @close
