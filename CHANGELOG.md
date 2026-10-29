@@ -3,6 +3,13 @@
 lazyjira continues [textfuel/lazyjira](https://github.com/textfuel/lazyjira) from its `2.19.2` release. Changes up to that
 point are in the [upstream changelog](https://github.com/textfuel/lazyjira/blob/main/CHANGELOG.md).
 
+## [0.15.1](https://github.com/nikbrunner/lazyjira/compare/v0.15.0...v0.15.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **config:** use an existing ~/.config/lazyjira on macOS ([c8f2e72](https://github.com/nikbrunner/lazyjira/commit/c8f2e72a8fd1b78235c7a6672851602cb1822090))
+
 ## [0.15.0](https://github.com/nikbrunner/lazyjira/compare/v0.14.0...v0.15.0) (2026-10-22)
 
 ### Highlights
