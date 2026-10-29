@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+const goosWindows = "windows"
+
 func TestConfigDir_LazyJiraConfigDirPrecedence(t *testing.T) {
 	lazyjiraDir := t.TempDir()
 	xdgDir := t.TempDir()
@@ -21,7 +23,7 @@ func TestConfigDir_LazyJiraConfigDirPrecedence(t *testing.T) {
 }
 
 func TestConfigDir_IgnoresLegacyConfigDir(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == goosWindows {
 		t.Skip("XDG_CONFIG_HOME precedence is not used on Windows")
 	}
 
@@ -426,12 +428,13 @@ func TestValidateRendererStyle(t *testing.T) {
 }
 
 func TestConfigDir_FallsBackToUserConfigDir(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == goosWindows {
 		t.Skip("env fallback chain differs on Windows")
 	}
 
 	t.Setenv("LAZYJIRA_CONFIG_DIR", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", t.TempDir())
 
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
@@ -443,8 +446,27 @@ func TestConfigDir_FallsBackToUserConfigDir(t *testing.T) {
 	}
 }
 
+func TestConfigDir_PrefersExistingDotConfig(t *testing.T) {
+	if runtime.GOOS == goosWindows {
+		t.Skip("env fallback chain differs on Windows")
+	}
+
+	home := t.TempDir()
+	t.Setenv("LAZYJIRA_CONFIG_DIR", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", home)
+
+	want := filepath.Join(home, ".config", "lazyjira")
+	if err := os.MkdirAll(want, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := ConfigDir(); got != want {
+		t.Errorf("ConfigDir() = %q, want %q", got, want)
+	}
+}
+
 func TestConfigDir_FallsBackToDotConfigWithoutHome(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == goosWindows {
 		t.Skip("env fallback chain differs on Windows")
 	}
 

@@ -400,7 +400,7 @@ func DefaultIssueTabs() []IssueTabConfig {
 }
 
 // ConfigDir returns the lazyjira configuration directory path
-// Order of precedence: LAZYJIRA_CONFIG_DIR env, XDG_CONFIG_HOME/lazyjira, os.UserConfigDir()/lazyjira, ~/.config/lazyjira
+// Order of precedence: LAZYJIRA_CONFIG_DIR env, XDG_CONFIG_HOME/lazyjira, ~/.config/lazyjira if it exists, os.UserConfigDir()/lazyjira, ~/.config/lazyjira
 func ConfigDir() string {
 	if dir := os.Getenv("LAZYJIRA_CONFIG_DIR"); dir != "" {
 		return dir
@@ -408,14 +408,18 @@ func ConfigDir() string {
 	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
 		return filepath.Join(dir, "lazyjira")
 	}
-	if dir, err := os.UserConfigDir(); err == nil {
-		return filepath.Join(dir, "lazyjira")
-	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		home = "."
 	}
-	return filepath.Join(home, ".config", "lazyjira")
+	dotConfig := filepath.Join(home, ".config", "lazyjira")
+	if info, err := os.Stat(dotConfig); err == nil && info.IsDir() {
+		return dotConfig
+	}
+	if dir, err := os.UserConfigDir(); err == nil {
+		return filepath.Join(dir, "lazyjira")
+	}
+	return dotConfig
 }
 
 // ConfigPath returns the full path to the config file
